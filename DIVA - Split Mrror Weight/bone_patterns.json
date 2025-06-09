@@ -1,0 +1,12 @@
+{
+    "info": "このファイルにボーン識別文字ペアを追加してください。",
+    "example": [
+        { "right": "_r_", "left": "_l_" },
+        { "right": ".R", "left": ".L" }
+    ]
+}
+
+[
+    { "right": ".R", "left": ".L" },
+    { "right": "right_", "left": "left_" }
+]
