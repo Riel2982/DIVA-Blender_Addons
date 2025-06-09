@@ -1,5 +1,6 @@
 # DIVA-Blender_Addons
 DIVAのモデル編集に活用するアドオン集
+コードはMicrosoft Copilotを使用して生成され、若干の調整が加えられています。
 
 ## DIVA - Split Mirror Weight
 Blender標準機能では対応していない**DIVA独自の左右ボーン名規則**に対応するアドオンです。  
