@@ -1,17 +1,17 @@
 bl_info = {
-    "name": "DIVA - Split Mrror Weight",
+    "name": "DIVA - Split Mirror Weight",
     "author": "Riel",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (3, 6, 0),
     "location": "Nパネル > DIVA",
     "description": "DIVA-CustomRigMirror",
     "category": "Object",
 }
 
-import bpy
-import bmesh
 import os
 import json
+import bpy
+import bmesh
 
 # JSONデータをグローバル変数として定義
 bone_pattern_choices = []
@@ -21,17 +21,30 @@ def load_bone_patterns():
     addon_folder = os.path.dirname(__file__)
     file_path = os.path.join(addon_folder, "bone_patterns.json")
 
+    # **デフォルト値**
+    default_values = [("_r_, _l_", "_r_ , _l_")]
+
     if not os.path.exists(file_path):
-        return [("_r_", "_l_")]  # **デフォルト値**
+        return default_values  # ✅ **JSONがない場合はデフォルトのみ返す**
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        
-        return [(f"{entry['right']}, {entry['left']}", f"{entry['right']} , {entry['left']}") for entry in data]
+
+        # ✅ JSONデータが取得できたか確認
+        print("JSONデータ:", data)  
+
+        # ✅ **デフォルト値の後に JSON のデータを追加**
+        if isinstance(data, list):
+            pattern_list = default_values + [(f"{entry['right']}, {entry['left']}", f"{entry['right']} , {entry['left']}") for entry in data]
+        else:
+            print("⚠ JSONファイルの構造が正しくありません")
+            return default_values
+
+        return pattern_list
     except json.JSONDecodeError:
         print("⚠ JSONファイルのフォーマットにエラーがあります")
-        return [("_r_", "_l_")]  # **デフォルト値**
+        return default_values  # **JSONが壊れている場合もデフォルト値のみ**
 
 # **Blenderの登録前にロード**
 bone_pattern_choices = load_bone_patterns()
@@ -79,12 +92,18 @@ def disable_mirror_modifier(obj):
             mod.show_render = False
 
 # オブジェクト複製＆ミラー適用
-def duplicate_and_apply_mirror(obj):
+def duplicate_and_apply_mirror(obj, delete_side):
     """オリジナルオブジェクトを複製し、複製にミラーモディファイアを適用"""
     bpy.ops.object.select_all(action='DESELECT')  
     obj.select_set(True)
     bpy.ops.object.duplicate()
     mirrored_obj = bpy.context.selected_objects[0]  
+
+    # **複製オブジェクトの名前をカスタムリネーム**
+    if delete_side == 'RIGHT':
+        mirrored_obj.name = f"{obj.name}_R"
+    else:
+        mirrored_obj.name = f"{obj.name}_L"
 
     # ミラーを追加＆適用
     bpy.context.view_layer.objects.active = mirrored_obj
@@ -137,7 +156,7 @@ def rename_symmetric_weight_groups(obj, pattern_left, pattern_right, delete_side
 # アドオン処理
 class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
     bl_idname = "object.symmetric_weight_transfer"
-    bl_label = "DIVA-CustomRigMirror"
+    bl_label = "ミラー実行"
 
     def execute(self, context):
         obj = bpy.context.object
@@ -149,7 +168,7 @@ class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
             armature = obj.parent
 
             disable_mirror_modifier(obj)  
-            mirrored_obj = duplicate_and_apply_mirror(obj)  
+            mirrored_obj = duplicate_and_apply_mirror(obj, properties.delete_side)  # **リネーム処理を適用**
 
             delete_x_side_mesh(mirrored_obj, delete_positive_x)  
 
@@ -157,7 +176,7 @@ class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
 
             rename_symmetric_weight_groups(mirrored_obj, pattern_left, pattern_right, properties.delete_side)
 
-            self.report({'INFO'}, "ミラー適用 & ウェイト転送完了")
+            self.report({'INFO'}, f"ミラー適用 & ウェイト転送完了: {mirrored_obj.name}")
         return {'FINISHED'}
 
 # 登録
