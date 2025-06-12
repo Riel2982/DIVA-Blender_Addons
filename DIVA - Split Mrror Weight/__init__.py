@@ -1,8 +1,8 @@
 bl_info = {
     "name": "DIVA - Split Mirror Weight",
     "author": "Riel",
-    "version": (1, 1),
-    "blender": (3, 6, 0),
+    "version": (1, 2),
+    "blender": (3, 6, 22),
     "location": "Nパネル > DIVA",
     "description": "DIVA-CustomRigMirror",
     "category": "Object",
@@ -128,10 +128,21 @@ def duplicate_and_mirror(obj):
         print("エラー: 有効なメッシュオブジェクトではありません")
         return None
 
+    # ミラーモディファイアを無効化（オリジナル）
+    for mod in obj.modifiers:
+        if mod.type == 'MIRROR':
+            mod.show_viewport = False
+            mod.show_render = False
+
     bpy.ops.object.select_all(action='DESELECT')
     obj.select_set(True)
     bpy.ops.object.duplicate()
     mirrored_obj = bpy.context.selected_objects[0]
+
+    # ミラーモディファイア削除（複製後のオブジェクト）
+    for mod in mirrored_obj.modifiers:
+        if mod.type == 'MIRROR':
+            bpy.ops.object.modifier_remove(modifier=mod.name)
 
     # カスタムリネーム（"_R" → "_L" / "_L" → "_R"）
     if obj.name.endswith("_R"):
