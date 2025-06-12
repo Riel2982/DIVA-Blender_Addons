@@ -25,16 +25,16 @@ def load_bone_patterns():
     default_values = [("_r_, _l_", "_r_ , _l_")]
 
     if not os.path.exists(file_path):
-        return default_values  # ✅ **JSONがない場合はデフォルトのみ返す**
+        return default_values  # **JSONがない場合はデフォルトのみ返す**
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # ✅ JSONデータが取得できたか確認
+        # JSONデータが取得できたか確認
         print("JSONデータ:", data)  
 
-        # ✅ **デフォルト値の後に JSON のデータを追加**
+        # **デフォルト値の後に JSON のデータを追加**
         if isinstance(data, list):
             pattern_list = default_values + [(f"{entry['right']}, {entry['left']}", f"{entry['right']} , {entry['left']}") for entry in data]
         else:
@@ -54,7 +54,7 @@ class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
         name="ボーン識別文字",
         description="ドロップダウンから選択",
-        items=[(entry[0], entry[1], "") for entry in bone_pattern_choices],  # ✅ 形式を修正
+        items=[(entry[0], entry[1], "") for entry in bone_pattern_choices],  # 形式を修正
         default=bone_pattern_choices[0][0] if bone_pattern_choices else "_r_, _l_"
     )
 
@@ -70,8 +70,8 @@ class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
 
 # Nパネル設定
 class SplitMirrorWeightPanel(bpy.types.Panel):
-    bl_label = "DIVA-CustomRigMirror"
-    bl_idname = "OBJECT_PT_symmetric_weight_transfer"
+    bl_label = "Split Mirror Weight"
+    bl_idname = "DIVA_PT_split_mirror_weight"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "DIVA"
@@ -79,7 +79,7 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         properties = context.scene.symmetric_weight_transfer_props
-        layout.prop(properties, "bone_pattern")  # ✅ **ドロップダウン化**
+        layout.prop(properties, "bone_pattern")  #  **ドロップダウン化**
         layout.prop(properties, "delete_side")  # 削除する側を選択
         layout.operator("object.symmetric_weight_transfer")
 
@@ -91,19 +91,24 @@ def disable_mirror_modifier(obj):
             mod.show_viewport = False
             mod.show_render = False
 
-# オブジェクト複製＆ミラー適用
+# **オブジェクト複製＆ミラー適用（カスタムリネーム対応）**
 def duplicate_and_apply_mirror(obj, delete_side):
-    """オリジナルオブジェクトを複製し、複製にミラーモディファイアを適用"""
+    """オリジナルオブジェクトを複製し、複製にミラーモディファイアを適用しながらリネーム"""
     bpy.ops.object.select_all(action='DESELECT')  
     obj.select_set(True)
     bpy.ops.object.duplicate()
     mirrored_obj = bpy.context.selected_objects[0]  
 
-    # **複製オブジェクトの名前をカスタムリネーム**
-    if delete_side == 'RIGHT':
-        mirrored_obj.name = f"{obj.name}_R"
+    # **オリジナル名の末尾が「_R」または「_L」かチェック**
+    if obj.name.endswith("_R"):
+        new_name = obj.name.replace("_R", "_L")
+    elif obj.name.endswith("_L"):
+        new_name = obj.name.replace("_L", "_R")
     else:
-        mirrored_obj.name = f"{obj.name}_L"
+        # **通常のリネーム**
+        new_name = f"{obj.name}_R" if delete_side == 'RIGHT' else f"{obj.name}_L"
+
+    mirrored_obj.name = new_name  # **リネーム適用**
 
     # ミラーを追加＆適用
     bpy.context.view_layer.objects.active = mirrored_obj
@@ -155,6 +160,7 @@ def rename_symmetric_weight_groups(obj, pattern_left, pattern_right, delete_side
 
 # アドオン処理
 class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
+    """オリジナルを選択した状態でミラー実行"""
     bl_idname = "object.symmetric_weight_transfer"
     bl_label = "ミラー実行"
 
