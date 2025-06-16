@@ -11,16 +11,16 @@ bl_info = {
 import bpy
 import importlib
 from . import BoneTransferTools_N  # Nパネル用
-from . import BoneTransferTools # 右クリック用 
+# from . import BoneTransferTools # 右クリック用 
 
 # ✅ **モジュールのリロードを試みる**
 importlib.reload(BoneTransferTools_N)
-importlib.reload(BoneTransferTools)
+# importlib.reload(BoneTransferTools) # 右クリック用 
 
 def register():
     BoneTransferTools_N.register()  # ✅ **モジュール経由で `register()` を呼び出す**
-    BoneTransferTools.register()    
+    # BoneTransferTools.register()  # 右クリック用 
 
 def unregister():
     BoneTransferTools_N.unregister()  # ✅ **モジュール経由で `unregister()` を呼び出す**
-    BoneTransferTools.unregister()
+    # BoneTransferTools.unregister()

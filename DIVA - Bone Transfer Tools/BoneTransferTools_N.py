@@ -81,8 +81,8 @@ def move_object_to_armature(obj, a_armature):
     bpy.context.view_layer.objects.active = a_armature
     bpy.ops.object.parent_set(type='ARMATURE_NAME', keep_transform=True)
 
-def run_transfer_logic(a, b, b1, duplicate=True):
-    """ ボーン移植処理の実行関数（Nパネル・右クリック共通処理）
+def run_transfer_logic(a, b, b1, duplicate=True, bones_only=False):
+    """ ボーン移植処理の実行関数
         - b1を複製するかどうかのオプション
         - 必要なボーンをB → Aに移植
         - 親関係を整理し、オブジェクトをAアーマーチュアへ移動
@@ -93,6 +93,12 @@ def run_transfer_logic(a, b, b1, duplicate=True):
 
     # ✅ 統合先アーマーチュアのコレクションを取得
     target_collection = a.users_collection[0] if a.users_collection else bpy.context.collection
+
+    # ボーンのみを移植する場合の分岐条件
+    if bones_only:
+        bones = transfer_bones(b, a, b1)
+        reparent_and_cleanup(a, bones, "Koshi")
+        return "（ボーンのみ移植）", len(bones)
 
     if duplicate:
         bpy.ops.object.mode_set(mode='OBJECT')  # ✅ **オブジェクトモードに変更**
@@ -165,6 +171,12 @@ class BoneTransferPanel(bpy.types.Panel):
         else:
             layout.label(text="⚠️ 複製オプションが未登録です")
 
+        # 🔹 ボーンのみ複製オプション
+        if hasattr(context.scene, "bones_only_transfer"):
+            layout.prop(context.scene, "bones_only_transfer")
+        else:
+            layout.label(text="⚠️ ボーンのみ移植オプションが未登録です")
+
         # 🔹 実行ボタン
         layout.operator("object.bone_transfer", icon="ARMATURE_DATA")
 
@@ -180,6 +192,11 @@ class BoneTransferOperator(bpy.types.Operator):
         b1 = context.scene.source_object
         dupe = context.scene.duplicate_object
 
+        # 「ボーンのみ移植」がオンなら「複製して移植」を強制オフ
+        bones_only = context.scene.bones_only_transfer
+        if bones_only:
+            context.scene.duplicate_object = False
+
         # ✅ 修正：必要なオブジェクトが適切に選択されているか確認
         if not a or a.type != 'ARMATURE':
             self.report({'ERROR'}, "統合先アーマーチュアはArmatureオブジェクトである必要があります")
@@ -191,7 +208,7 @@ class BoneTransferOperator(bpy.types.Operator):
             self.report({'ERROR'}, "移植元オブジェクト（b1）を選択してください")
             return {'CANCELLED'}
 
-        new_name, count = run_transfer_logic(a, b, b1, dupe)
+        new_name, count = run_transfer_logic(a, b, b1, dupe, bones_only)
         self.report({'INFO'}, f"{new_name} に {count} 本のボーンを移植")
         return {'FINISHED'}
 
@@ -232,6 +249,12 @@ def register():
             type=bpy.types.Object,
             poll=lambda self, obj: obj.type == 'ARMATURE'
         )
+    if not hasattr(bpy.types.Scene, "bones_only_transfer"):
+        bpy.types.Scene.bones_only_transfer = bpy.props.BoolProperty(
+            name="ボーンのみ移植",
+            default=False
+        )
+
 
 def unregister():
     for cls in reversed(classes):  # ✅ **逆順で登録解除**
@@ -249,6 +272,9 @@ def unregister():
         del bpy.types.Scene.duplicate_object
     if hasattr(bpy.types.Scene, "armature_b"):
         del bpy.types.Scene.armature_b
+    if hasattr(bpy.types.Scene, "bones_only_transfer"):
+        del bpy.types.Scene.bones_only_transfer
+
 
 '''
 # __init__.py以外には不要
