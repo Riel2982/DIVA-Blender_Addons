@@ -20,4 +20,4 @@ DIVAのモデル編集に活用するBlenderアドオン集。
   - ウエイトも左右反転に対応。
   
 
-各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-PVDataManager/wiki)を確認してください。 
+各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki)を確認してください。 
