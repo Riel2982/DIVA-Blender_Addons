@@ -2,9 +2,12 @@ bl_info = {
     "name": "DIVA - Bone Data Exporter",
     "author": "Saltlapse, Riel",
     "version": (0, 1, 0),
-    "blender": (3, 6, 0),
+    "blender": (3, 0, 0),
     "location": "Nパネル > DIVA",
-    "description": "DIVA-CustomRig",
+    "description": "This addon allows you to extract bone data from a Blender armature and save it to a file",
+    "support": "COMMUNITY",
+    "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Bone-Position-Rotation-Scale",
+    "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons",
     "category": "Rigging",
 }
 
