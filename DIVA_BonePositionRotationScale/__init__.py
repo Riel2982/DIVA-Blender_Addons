@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Bone Data Exporter",
     "author": "Saltlapse, Riel",
-    "version": (1, 0),
+    "version": (0, 1, 0),
     "blender": (3, 6, 0),
     "location": "Nパネル > DIVA",
     "description": "DIVA-CustomRig",
