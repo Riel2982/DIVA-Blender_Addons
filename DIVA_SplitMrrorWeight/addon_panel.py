@@ -1,6 +1,6 @@
 import bpy
-from .SplitMirrorWeight import (
-    bone_pattern_choices,
+from .addon_main import (
+    get_selected_rules,
     detect_original_side,
     disable_mirror_modifier,
     duplicate_and_apply_mirror,
@@ -9,6 +9,7 @@ from .SplitMirrorWeight import (
     delete_x_side_mesh,
     rename_symmetric_weight_groups
 )
+from .addon_preferences import get_json_path  # ← もし保存に関するユーティリティ関数などがあれば
 
 # Nパネル設定
 class SplitMirrorWeightPanel(bpy.types.Panel):
@@ -18,24 +19,43 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "DIVA"
 
+    # セクションの左側にアイコンを追加
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(icon='MOD_MIRROR') # 左右反転風
+
     def draw(self, context):
+
+        print("Nパネル draw 実行確認") # デバック用
+
         layout = self.layout
         props = context.scene.split_mirror_weight
 
+        box = layout.box()  # 枠付きセクションを作成
+
         # ボーン識別文字（ドロップダウン）
-        layout.prop(props, "bone_pattern")
+        row1 = box.row()
+        split1 = row1.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
+        split1.label(text="ボーン識別子:")
+        right1 = split1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+        right1.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
+        right1.operator("diva.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
         # オリジナル側
-        layout.prop(props, "delete_side")
-
+        row2 = box.row()
+        split2 = row2.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウン
+        split2.label(text="オリジナル側:")
+        right2 = split2.row(align=True)
+        right2.prop(props, "delete_side", text="")  # ドロップダウン（ラベル非表示）
+  
         # ミラー自動判別（チェックボタン）
-        row = layout.row()
-        row.prop(props, "mirror_auto_detect", text="")  # チェックボックス
-        row.label(text="ミラー自動判別")  # ラベル
+        row3 = box.row()
+        row3.prop(props, "mirror_auto_detect", text="")  # チェックボックス
+        row3.label(text="ミラー自動判別")  # ラベル
 
         # ミラー実行ボタン
-        layout.separator()
-        layout.operator("object.split_mirror_weight", icon="MOD_MIRROR")
+        box.separator()
+        box.operator("object.split_mirror_weight", icon="MOD_MIRROR")
 
 # アドオン処理
 class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
@@ -78,20 +98,40 @@ class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
 
             delete_x_side_mesh(mirrored_obj, delete_positive_x)  
 
-            pattern_right, pattern_left = properties.bone_pattern.split(", ")  
+            # 識別子セットに対応
+            selected_label = properties.bone_pattern
+            selected_rules = get_selected_rules(selected_label)
+            if not selected_rules:
+                self.report({'ERROR'}, "識別ルールが見つかりません。")
+                return {'CANCELLED'}
 
-            rename_symmetric_weight_groups(mirrored_obj, pattern_left, pattern_right, properties.delete_side)
+            rename_symmetric_weight_groups(mirrored_obj, selected_rules, properties.delete_side)
 
             self.report({'INFO'}, f"ミラー適用 & ウェイト転送完了: {mirrored_obj.name}")
         return {'FINISHED'}
 
+
+# ボーン識別子セットの取得
+def get_bone_pattern_items(self, context):
+    prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
+    items = []
+
+    for i, pattern in enumerate(prefs.bone_patterns):
+        label = pattern.label.strip()
+
+        # 識別子としてそのまま使える名前に（ascii前提）
+        identifier = label
+        name = label  # 表示用にもそのまま使う（日本語でない前提）
+
+        items.append((identifier, name, ""))
+
+    return items
+
 # プロパティグループ
 class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
-        name="ボーン識別文字",
-        description="ドロップダウンから選択",
-        items=[(entry[0], entry[1], "") for entry in bone_pattern_choices], 
-        default=bone_pattern_choices[0][0] if bone_pattern_choices else "_r_, _l_"
+        name="識別子セット",
+        items=get_bone_pattern_items # JSONから読み込み
     )
 
     delete_side: bpy.props.EnumProperty(
@@ -110,18 +150,16 @@ class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
         default=False
     )
 
+#  DIVAアドオン設定画面（プリファレンス）を開く
+class DIVA_OT_OpenPreferences(bpy.types.Operator):
+    bl_idname = "diva.open_preferences"
+    bl_label = "DIVA 設定を開く"
 
+    def execute(self, context):
+        bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く
+        context.preferences.active_section = 'ADDONS'
+        context.window_manager.addon_search = "diva"
+        # アドオン指定でプリファレンスを開きたい場合はアドオンフォルダ名を設定
+        # context.window_manager.addon_search = "DIVA_SplitMirrorWeight"
+        return {'FINISHED'}
 
-def register():
-    bpy.utils.register_class(SplitMirrorWeightProperties)
-    bpy.utils.register_class(OBJECT_OT_SplitMirrorWeight)
-    bpy.utils.register_class(SplitMirrorWeightPanel)
-    bpy.types.Scene.split_mirror_weight = bpy.props.PointerProperty(type=SplitMirrorWeightProperties)
-
-def unregister():
-    bpy.utils.unregister_class(SplitMirrorWeightProperties)
-    bpy.utils.unregister_class(OBJECT_OT_SplitMirrorWeight)
-    bpy.utils.unregister_class(SplitMirrorWeightPanel)
-    del bpy.types.Scene.split_mirror_weight
-if __name__ == "__main__":
-    register()

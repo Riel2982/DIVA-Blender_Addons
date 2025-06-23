@@ -2,43 +2,49 @@ import os
 import json
 import bpy
 import bmesh
+from .addon_preferences import get_json_path
 
-# JSONデータをグローバル変数として定義
-bone_pattern_choices = []
+# ボーン識別子の読み込み（JSON）
+def load_bone_patterns_to_preferences(prefs):
+    path = get_json_path()
+    prefs.bone_patterns.clear()
 
-def load_bone_patterns():
-    """JSONファイルを読み込み、ボーン識別文字の選択肢を作成"""
-    addon_folder = os.path.dirname(__file__)
-    file_path = os.path.join(addon_folder, "bone_patterns.json")
-
-    # **デフォルト値**
-    default_values = [("_r_, _l_", "_r_ , _l_")]
-
-    if not os.path.exists(file_path):
-        return default_values  # **JSONがない場合はデフォルトのみ返す**
+    if not os.path.exists(path):
+        return
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # JSONデータが取得できたか確認
-        print("JSONデータ:", data)  
+        unnamed_count = 1
+        for entry in data:
+            label = entry.get("label", "").strip()
+            if not label:
+                label = f"未定義セット{unnamed_count}"
+                unnamed_count += 1
 
-        # **デフォルト値の後に JSON のデータを追加**
-        if isinstance(data, list):
-            pattern_list = default_values + [(f"{entry['right']}, {entry['left']}", f"{entry['right']} , {entry['left']}") for entry in data]
-        else:
-            print("⚠ JSONファイルの構造が正しくありません")
-            return default_values
+            pattern = prefs.bone_patterns.add()
+            pattern.label = label
 
-        return pattern_list
-    except json.JSONDecodeError:
-        print("⚠ JSONファイルのフォーマットにエラーがあります")
-        return default_values  # **JSONが壊れている場合もデフォルト値のみ**
+            for rule_data in entry.get("rules", []):
+                rule = pattern.rules.add()
+                rule.right = rule_data.get("right", "")
+                rule.left = rule_data.get("left", "")
+    except Exception as e:
+        print(f"[DIVA] ⚠ JSON読み込みエラー: {e}")
 
-# **Blenderの登録前にロード**
-bone_pattern_choices = load_bone_patterns()
 
+# ラベルに対応するルールセットを取得
+def get_selected_rules(label):
+    addon = bpy.context.preferences.addons.get("DIVA_SplitMirrorWeight")
+    if not addon:
+        return []
+
+    prefs = addon.preferences
+    for p in prefs.bone_patterns:
+        if p.label.strip() == label:
+            return [{"right": r.right, "left": r.left} for r in p.rules]
+    return []
 
 
 # 指定したX方向に頂点があるか調べる
@@ -113,27 +119,31 @@ def delete_x_side_mesh(obj, delete_positive_x=True):
     bm.free()
 
 # 頂点グループリネーム処理
-def rename_symmetric_weight_groups(obj, pattern_left, pattern_right, delete_side):
+def rename_symmetric_weight_groups(obj, rules, delete_side):
     """削除する側を考慮し、頂点グループを適切にリネーム"""
     vgroup_map = {vg.name for vg in obj.vertex_groups}
 
-    if delete_side == 'RIGHT':
-        for vg_name in list(vgroup_map):
-            if pattern_right in vg_name:
-                obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
+    for rule in rules:
+        right = rule["right"]
+        left = rule["left"]
 
-        for vg_name in list(vgroup_map):
-            if pattern_left in vg_name:
-                new_name = vg_name.replace(pattern_left, pattern_right)
-                obj.vertex_groups.get(vg_name).name = new_name
-
-    else:
-        for vg_name in list(vgroup_map):
-            if pattern_left in vg_name:
-                obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
-
-        for vg_name in list(vgroup_map):
-            if pattern_right in vg_name:
-                new_name = vg_name.replace(pattern_right, pattern_left)
-                obj.vertex_groups.get(vg_name).name = new_name
+        if delete_side == 'RIGHT':
+            for vg_name in list(vgroup_map):
+                if left in vg_name and obj.vertex_groups.get(vg_name):
+                    obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
+                    
+            for vg_name in list(vgroup_map):
+                if right in vg_name and obj.vertex_groups.get(vg_name):
+                    new_name = vg_name.replace(right, left)
+                    obj.vertex_groups.get(vg_name).name = new_name
+        
+        else:
+            for vg_name in list(vgroup_map):
+                if right in vg_name and obj.vertex_groups.get(vg_name):
+                    obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
+            
+            for vg_name in list(vgroup_map):
+                if left in vg_name and obj.vertex_groups.get(vg_name):
+                    new_name = vg_name.replace(left, right)
+                    obj.vertex_groups.get(vg_name).name = new_name
 
