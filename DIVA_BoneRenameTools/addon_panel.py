@@ -16,6 +16,96 @@ class BoneRenamePanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
+
+        # --- セクション 1: ボーン連番リネーム -------------------------------------
+        box1 = layout.box()
+        row = box1.row(align=True)
+        row.prop(scene, "show_renumber_tools", text="", icon='TRIA_DOWN' if scene.show_renumber_tools else 'TRIA_RIGHT', emboss=False)
+        row.label(text="Rename Selected Bones", icon="PRESET") # セクションタイトル
+
+        if scene.show_renumber_tools:
+            row = box1.row(align=True)
+            row.prop(scene, "rename_prefix", text="共通部分") # テキストボックス
+            row.operator("object.detect_common_prefix", text="", icon='BONE_DATA') # スポイトツール
+
+            row = box1.row(align=True)
+            row.prop(scene, "rename_start_number", text="連番開始番号")
+            row.prop(scene, "rename_rule", text="法則") # ドロップダウン
+            row.prop(scene, "rename_suffix", text="末尾") # ドロップダウン
+
+            box1.operator("object.rename_selected_bones", text="連番リネーム実行", icon="PRESET") # 実行ボタン
+
+
+        # --- セクション 2: 指定名で置換 ------------------------------------------
+        box2 = layout.box()
+        row = box2.row(align=True)
+        row.prop(scene, "show_replace_tools", text="", icon='TRIA_DOWN' if scene.show_replace_tools else 'TRIA_RIGHT', emboss=False)
+        row.label(text="Replace Bone Name", icon="GREASEPENCIL")# セクションタイトル
+
+        if scene.show_replace_tools:
+            row = box2.row(align=True)
+            row.label(text="　Before Name:") # ラベル名
+            row.operator("object.extract_source_name", text="", icon="BONE_DATA") # スポイトツール
+            row.label(text="　After Name:") # ラベル名
+
+            row = box2.row(align=True)
+            row.prop(scene, "rename_source_name", text="") # テキストボックス
+            row.label(icon='FORWARD')
+            row.prop(scene, "rename_target_name", text="") # テキストボックス
+
+            row = box2.row()
+            row.prop(scene, "remove_number_suffix", text="")  # チェックボックス
+            row.label(text="重複識別子を削除") # 非連動
+
+            box2.operator("object.replace_bone_name", text="指定名でボーン名変更", icon="GREASEPENCIL") # 実行ボタン
+
+
+        # --- セクション 3: 反転リネーム ------------------------------------------
+        box3 = layout.box()
+        row = box3.row(align=True)
+        row.prop(scene, "show_invert_tools", text="", icon='TRIA_DOWN' if scene.show_invert_tools else 'TRIA_RIGHT', emboss=False)
+        row.label(text="Invert Selected Bones", icon='GROUP_BONE') # セクションタイトル
+
+        if scene.show_invert_tools:
+            if not hasattr(context.scene, "invert_selected_bones"):
+                return  # ← プロパティ未登録なら描画をスキップ
+
+            props = context.scene.invert_selected_bones
+
+            # ボーン識別文字（ドロップダウン）
+            row = box3.row()
+            split = row.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
+            split.label(text="ボーン識別子:")
+            right = split.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+            right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
+            right.operator("diva.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
+
+            row = box3.row()
+            row.prop(scene, "bone_x_mirror", text="")  # チェックボックス
+            row.label(text="選択ボーンをグローバルXミラーする") # 非連動
+
+            row = box3.row()
+            row.prop(scene, "duplicate_and_rename", text="")  # チェックボックス
+            row.label(text="複製してリネームする") # 非連動
+
+            box3.operator("object.invert_selected_bones", text="選択ボーン反転リネーム", icon="GROUP_BONE") # 実行ボタン
+
+
+        # --- セクション 4: その他リネームツール操作 ----------------------------------
+        box4 = layout.box()
+        row = box4.row(align=True)
+        row.prop(scene, "show_group_tools", text="", icon='TRIA_DOWN' if scene.show_group_tools else 'TRIA_RIGHT', emboss=False)
+        row.label(text="Other Rename Tools", icon="DOT") # セクションタイトル
+
+        if scene.show_group_tools:
+            row = box4.row()
+            row.operator("object.rename_groups", text="全対称化付与", icon="PLUS") # 実行ボタン
+            row.operator("object.revert_names", text="全対称化削除", icon="CANCEL") # 実行ボタン
+
+    ''' ツールボックス１つのみ版
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
         box1 = layout.box() # 枠付きセクションを作成
 
         # 連番リネームタイトル
@@ -79,7 +169,7 @@ class BoneRenamePanel(bpy.types.Panel):
             row2.operator("object.invert_selected_bones", text="選択ボーン反転リネーム")# 上から順に左側から設置
             row2.operator("object.rename_groups", text="全対称化付与")
             row2.operator("object.revert_names", text="全対称化削除")
-
+    '''
 
 class RenameSelectedBonesOperator(bpy.types.Operator):
     """ボーン連番リネーム"""
@@ -266,4 +356,41 @@ class ReplaceBoneNameOperator(bpy.types.Operator):
             self.report({'WARNING'}, message)
         else:
             self.report({'INFO'}, "ボーン名の置換を完了しました")
+        return {'FINISHED'}
+    
+
+# ボーン識別子セットの取得
+def get_bone_pattern_items(self, context):
+    prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
+    items = []
+
+    for i, pattern in enumerate(prefs.bone_patterns):
+        label = pattern.label.strip()
+
+        # 識別子としてそのまま使える名前に（ascii前提）
+        identifier = label
+        name = label  # 表示用にもそのまま使う（日本語でない前提）
+
+        items.append((identifier, name, ""))
+
+    return items
+
+# プロパティグループ
+class InvertSelectedBonesProperties(bpy.types.PropertyGroup):
+    bone_pattern: bpy.props.EnumProperty(
+        name="識別子セット",
+        items=get_bone_pattern_items # JSONから読み込み
+    )
+
+#  DIVAアドオン設定画面（プリファレンス）を開く
+class DIVA_OT_OpenPreferences(bpy.types.Operator):
+    bl_idname = "diva.open_preferences"
+    bl_label = "DIVA 設定を開く"
+
+    def execute(self, context):
+        bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く
+        context.preferences.active_section = 'ADDONS'
+        context.window_manager.addon_search = "diva"
+        # アドオン指定でプリファレンスを開きたい場合はアドオンフォルダ名を設定
+        # context.window_manager.addon_search = "DIVA_BoneRenameTools"
         return {'FINISHED'}

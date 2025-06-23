@@ -1,0 +1,32 @@
+[
+  {
+    "label": "DIVA",
+    "rules": [
+      {
+        "right": "_r_",
+        "left": "_l_"
+      },
+      {
+        "right": "_r0",
+        "left": "_l0"
+      },
+      {
+        "right": "_r1",
+        "left": "_l1"
+      }
+    ]
+  },
+  {
+    "label": "Blender",
+    "rules": [
+      {
+        "right": ".R",
+        "left": ".L"
+      },
+      {
+        "right": "_R",
+        "left": "_L"
+      }
+    ]
+  }
+]
