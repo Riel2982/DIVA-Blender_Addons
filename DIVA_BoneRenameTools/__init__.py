@@ -1,11 +1,11 @@
 bl_info = {
     "name": "DIVA - Bone Rename Tools",
     "author": "Riel",
-    "version": (0, 0, 3),
+    "version": (0, 0, 5),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > DIVA",
     "description": "Nパネルからボーンと頂点グループをリネームするアドオン",
-    # "warning": "強制リロード必須問題あり",
+    "warning": "一部機能の未実装",
     "support": "COMMUNITY",
     "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Bone-Rename-Tools",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons", 
@@ -25,7 +25,8 @@ classes = [
     addon_panel.RenameGroupsOperator,
     addon_panel.RevertNamesOperator,
     addon_panel.InvertSelectedBonesOperator,
-    addon_panel.RenameBonePairOperator,
+    addon_panel.ReplaceBoneNameOperator,
+    addon_panel.ExtractSourceNameOperator,
 ]
 
 def register_properties():
@@ -80,6 +81,12 @@ def register_properties():
         default=""
     )
 
+    bpy.types.Scene.remove_number_suffix = bpy.props.BoolProperty(
+        name="番号サフィックスを削除",
+        description=".001 などの複製識別子を削除します",
+        default=False
+    )
+
 def unregister_properties():
     del bpy.types.Scene.rename_prefix
     del bpy.types.Scene.rename_start_number
@@ -88,6 +95,7 @@ def unregister_properties():
     del bpy.types.Scene.show_symmetric_tools
     del bpy.types.Scene.rename_source_name
     del bpy.types.Scene.rename_target_name
+    del bpy.types.Scene.remove_number_suffix
 
 def register():
     register_properties()

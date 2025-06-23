@@ -26,7 +26,8 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
 
     def draw(self, context):
 
-        print("Nパネル draw 実行確認") # デバック用
+        # デバック用
+        # print("NパネルSMW draw 実行確認") 
 
         layout = self.layout
         props = context.scene.split_mirror_weight

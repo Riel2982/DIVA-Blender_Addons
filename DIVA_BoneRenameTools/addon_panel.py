@@ -18,10 +18,14 @@ class BoneRenamePanel(bpy.types.Panel):
         scene = context.scene
         box1 = layout.box() # 枠付きセクションを作成
 
+        # 連番リネームタイトル
+        row0 = box1.row()
+        row0.label(text="Rename Selected Bones", icon="PRESET")
+
         # box1.label(text="ボーン連番リネーム")
         row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         row.prop(scene, "rename_prefix", text="共通部分") # 共通部分入力
-        row.operator("object.detect_common_prefix", text="", icon='EYEDROPPER') # スポイトアイコンボタン
+        row.operator("object.detect_common_prefix", text="", icon='BONE_DATA') # スポイトツール
 
         row1 = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         row1.prop(scene, "rename_start_number", text="連番開始番号") # 連番開始番号
@@ -31,7 +35,7 @@ class BoneRenamePanel(bpy.types.Panel):
         # box1.prop(scene, "rename_suffix") # 末尾選択
         # box1.prop(scene, "rename_rule") # 連番法則選択
 
-        box1.operator("object.rename_selected_bones", text="連番リネーム実行")
+        box1.operator("object.rename_selected_bones", text="連番リネーム実行", icon="PRESET")
         
         # 折りたたみ式ツールボックス
         row = box1.row(align=True)
@@ -39,6 +43,16 @@ class BoneRenamePanel(bpy.types.Panel):
         row.label(text="その他リネームツール")
 
         if scene.show_symmetric_tools:
+
+            # 指定名で置き換えタイトル
+            row1 = box1.row()
+            row1.label(text="Replace Bone Name", icon="GREASEPENCIL")
+
+            row0 = box1.row()
+            row0.label(text="　Before Name: ")
+            row0.operator("object.extract_source_name", text="", icon="BONE_DATA") # スポイトツール
+            row0.label(text="　After Name: ")
+ 
             # 変更前後のボーン名入力フィールド（横並び）
             row = box1.row(align=True)
 
@@ -51,8 +65,14 @@ class BoneRenamePanel(bpy.types.Panel):
             col3 = row.column()
             col3.prop(scene, "rename_target_name", text="")  # 右のテキストボックス
 
+            # オプション
+            row = box1.row()
+            row.prop(context.scene, "remove_number_suffix", text="")  # ラベルと非連動
+            row.label(text="重複識別子を削除", icon='NONE')
+            # row.operator("object.extract_source_name", text="", icon="BONE_DATA") # スポイトツール
+
             # 実行ボタンを下に配置
-            box1.operator("object.rename_bone_pair", text="指定名でボーン名変更")
+            box1.operator("object.replace_bone_name", text="指定名でボーン名変更", icon="GREASEPENCIL")
             
             box1.separator()
             row2 = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
@@ -89,7 +109,7 @@ class DetectCommonPrefixOperator(bpy.types.Operator):
     )
 
     filter_inconsistent: bpy.props.BoolProperty(
-        name="共通部分に一致しないボーンを除外",
+        name="一致しないボーンを除外",
         description="明らかにネーミングルールが異なるボーンを共通抽出対象から除外します",
         default=True
     )
@@ -139,6 +159,61 @@ class DetectCommonPrefixOperator(bpy.types.Operator):
 
         return {'FINISHED'} if prefix else {'CANCELLED'}
 
+class ExtractSourceNameOperator(bpy.types.Operator):
+    """選択ボーンから置換元名を抽出"""
+    bl_idname = "object.extract_source_name"
+    bl_label = "抽出:置換元"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    use_auto_select: bpy.props.BoolProperty(
+        name="線形チェーンを選択",
+        description="ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
+        default=True
+    )
+
+    def execute(self, context):
+        from .rename_detect import detect_common_prefix, select_linear_chain_inclusive
+
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'WARNING'}, "アーマチュアが選択されていません")
+            return {'CANCELLED'}
+
+        mode = context.mode
+        if mode == 'POSE':
+            bones = [b for b in obj.pose.bones if b.bone.select]
+        elif mode == 'EDIT_ARMATURE':
+            bones = [b for b in obj.data.edit_bones if b.select]
+        else:
+            self.report({'WARNING'}, "対応しているのは Pose または Edit モードです")
+            return {'CANCELLED'}
+
+        if not bones:
+            self.report({'WARNING'}, "ボーンが選択されていません")
+            return {'CANCELLED'}
+
+        # ネーミング規則に基づいて共通部分を抽出
+        prefix = detect_common_prefix(
+            bones,
+            suffix_enum=context.scene.rename_suffix,
+            rule_enum=context.scene.rename_rule
+        )
+
+        if prefix:
+            context.scene.rename_source_name = prefix
+            self.report({'INFO'}, f"抽出結果: {prefix}")
+        else:
+            self.report({'WARNING'}, "共通部分が検出できませんでした")
+
+        # 自動選択が ON の場合はチェーンを選択
+        if self.use_auto_select:
+            select_linear_chain_inclusive(
+                bones[0].name,
+                prefix_filter=prefix
+            )
+
+        return {'FINISHED'} if prefix else {'CANCELLED'}
+
 class RenameGroupsOperator(bpy.types.Operator):
     """特定単語リネーム"""
     bl_idname = "object.rename_groups"
@@ -169,19 +244,26 @@ class InvertSelectedBonesOperator(bpy.types.Operator):
         self.report({'INFO'}, "選択ボーンの反転リネームを実行しました（仮動作）")
         return {'FINISHED'}
 
-class RenameBonePairOperator(bpy.types.Operator):
-    """ボーン名の一部を一括変更"""
-    bl_idname = "object.rename_bone_pair"
-    bl_label = "Rename Bone by Name"
+class ReplaceBoneNameOperator(bpy.types.Operator):
+    """ボーン名の一部を一括置換"""
+    bl_idname = "object.replace_bone_name"
+    bl_label = "Replace Bone Name"
+
+
 
     def execute(self, context):
+        from .rename_rules import replace_bone_names_by_rule
+
         src = context.scene.rename_source_name
         tgt = context.scene.rename_target_name
 
-        for obj in context.selected_objects:
-            if obj.type == 'ARMATURE':
-                for bone in obj.data.bones:
-                    if bone.name == src:
-                        bone.name = tgt
+        success, partial, message = replace_bone_names_by_rule(context, src, tgt)
 
+        if not success:
+            self.report({'WARNING'}, message)
+            return {'CANCELLED'}
+        elif partial:
+            self.report({'WARNING'}, message)
+        else:
+            self.report({'INFO'}, "ボーン名の置換を完了しました")
         return {'FINISHED'}

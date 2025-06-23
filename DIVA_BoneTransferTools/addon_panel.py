@@ -59,7 +59,7 @@ class BoneTransferOperator(bpy.types.Operator):
         dupe = scene.duplicate_object
         bones_only = scene.bones_only_transfer
 
-        # ✅ `a` と `b` が `ARMATURE` 型のオブジェクトであることを保証
+        # `a` と `b` が `ARMATURE` 型のオブジェクトであることを保証
         if not a or not isinstance(a, bpy.types.Object) or a.type != 'ARMATURE':
             self.report({'ERROR'}, "統合先アーマーチュア (A) は 'ARMATURE' 型のオブジェクトである必要があります。")
             return {'CANCELLED'}
@@ -93,20 +93,20 @@ class AddToTransferListOperator(bpy.types.Operator):
         scene = bpy.data.scenes[0]
         transfer_list = scene.source_objects
 
-        # ✅ 現在選択されているメッシュオブジェクトのみを取得
+        # 現在選択されているメッシュオブジェクトのみを取得
         selected_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
 
-        # ✅ 選択オブジェクトがない場合はエラーを返す
+        # 選択オブジェクトがない場合はエラーを返す
         if not selected_objects:
             self.report({'ERROR'}, "メッシュオブジェクトが選択されていません")
             return {'CANCELLED'}
 
-        # ✅ リストの上限を設定（大量登録によるクラッシュを防ぐ）
+        # リストの上限を設定（大量登録によるクラッシュを防ぐ）
         if len(transfer_list) + len(selected_objects) > 100:
             self.report({'ERROR'}, "移植リストが上限に達しました（最大100個）")
             return {'CANCELLED'}
 
-        # ✅ 重複登録を防ぐ
+        # 重複登録を防ぐ
         existing_names = {item.name for item in transfer_list}
         added_count = 0
 
@@ -170,7 +170,7 @@ class TransferObjectUIList(bpy.types.UIList):
 classes = [
     BoneTransferPanel,
     BoneTransferOperator,
-    TransferObjectUIList,  # ✅ `UIList` を追加
+    TransferObjectUIList,
     AddToTransferListOperator,
     RemoveFromTransferListOperator,
     ClearTransferListOperator,
