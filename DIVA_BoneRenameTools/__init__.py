@@ -1,11 +1,11 @@
 bl_info = {
     "name": "DIVA - Bone Rename Tools",
     "author": "Riel",
-    "version": (0, 0, 3),
+    "version": (0, 0, 4),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > DIVA",
     "description": "Nパネルからボーンと頂点グループをリネームするアドオン",
-    # "warning": "強制リロード必須問題あり",
+    "warning": "一部機能が未実装",
     "support": "COMMUNITY",
     "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Bone-Rename-Tools",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons", 
