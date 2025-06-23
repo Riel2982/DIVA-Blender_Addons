@@ -18,20 +18,48 @@ class BoneRenamePanel(bpy.types.Panel):
         scene = context.scene
         box1 = layout.box() # 枠付きセクションを作成
 
-        box1.label(text="ボーン連番リネーム")
-        box1.prop(scene, "rename_prefix") # 共通部分入力
-        box1.prop(scene, "rename_start_number") # 連番開始番号
-        box1.prop(scene, "rename_suffix") # 末尾選択
-        box1.prop(scene, "rename_rule") # 連番法則選択
+        # box1.label(text="ボーン連番リネーム")
+        row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+        row.prop(scene, "rename_prefix", text="共通部分") # 共通部分入力
+        row.operator("object.detect_common_prefix", text="", icon='EYEDROPPER') # スポイトアイコンボタン
+
+        row1 = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+        row1.prop(scene, "rename_start_number", text="連番開始番号") # 連番開始番号
+        row1.prop(scene, "rename_rule", text="法則") # 連番法則選択
+        row1.prop(scene, "rename_suffix", text="末尾") # 末尾選択
+        # box1.prop(scene, "rename_start_number") # 連番開始番号
+        # box1.prop(scene, "rename_suffix") # 末尾選択
+        # box1.prop(scene, "rename_rule") # 連番法則選択
 
         box1.operator("object.rename_selected_bones", text="連番リネーム実行")
         
-        layout.separator()
-        
-        box2 = layout.box() # 枠付きセクションを作成
-        box2.label(text="特定単語のリネーム")
-        box2.operator("object.rename_groups", text="単語リネーム実行")
-        box2.operator("object.revert_names", text="リネーム解除")
+        # 折りたたみ式ツールボックス
+        row = box1.row(align=True)
+        row.prop(scene, "show_symmetric_tools", text="", icon='TRIA_DOWN' if scene.show_symmetric_tools else 'TRIA_RIGHT', emboss=False)
+        row.label(text="その他リネームツール")
+
+        if scene.show_symmetric_tools:
+            # 変更前後のボーン名入力フィールド（横並び）
+            row = box1.row(align=True)
+
+            col1 = row.column()
+            col1.prop(scene, "rename_source_name", text="")  # 左のテキストボックス
+
+            col2 = row.column()
+            col2.label(icon='FORWARD')  # または 'TRIA_RIGHT', 'PLAY'
+
+            col3 = row.column()
+            col3.prop(scene, "rename_target_name", text="")  # 右のテキストボックス
+
+            # 実行ボタンを下に配置
+            box1.operator("object.rename_bone_pair", text="指定名でボーン名変更")
+            
+            box1.separator()
+            row2 = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+            row2.operator("object.invert_selected_bones", text="選択ボーン反転リネーム")# 上から順に左側から設置
+            row2.operator("object.rename_groups", text="全対称化付与")
+            row2.operator("object.revert_names", text="全対称化削除")
+
 
 class RenameSelectedBonesOperator(bpy.types.Operator):
     """ボーン連番リネーム"""
@@ -47,6 +75,69 @@ class RenameSelectedBonesOperator(bpy.types.Operator):
             context.scene.rename_rule
         )
         return {'FINISHED'}
+
+class DetectCommonPrefixOperator(bpy.types.Operator):
+    """選択ボーン名の共通部分を抽出 または 線形チェーン選択"""
+    bl_idname = "object.detect_common_prefix"
+    bl_label = "共通部分を検出"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    use_auto_select: bpy.props.BoolProperty(
+        name="線形チェーンを選択",
+        description="ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
+        default=True
+    )
+
+    filter_inconsistent: bpy.props.BoolProperty(
+        name="共通部分に一致しないボーンを除外",
+        description="明らかにネーミングルールが異なるボーンを共通抽出対象から除外します",
+        default=True
+    )
+
+    def execute(self, context):
+        from . import rename_detect  # 外部ロジックに分離
+
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'WARNING'}, "アーマチュアが選択されていません")
+            return {'CANCELLED'}
+
+        mode = context.mode
+        if mode == 'POSE':
+            bones = [b for b in obj.pose.bones if b.bone.select]
+            clear_selection = lambda: bpy.ops.pose.select_all(action='DESELECT')
+        elif mode == 'EDIT_ARMATURE':
+            bones = [b for b in obj.data.edit_bones if b.select]
+            clear_selection = lambda: [setattr(b, "select", False) for b in bones]
+        else:
+            self.report({'WARNING'}, "対応しているのは Pose モードまたは Edit モードです")
+            return {'CANCELLED'}
+
+        if not bones:
+            self.report({'WARNING'}, "ボーンが選択されていません")
+            return {'CANCELLED'}
+
+        # 共通プレフィックス名を抽出
+        prefix = rename_detect.detect_common_prefix(
+            bones=bones,
+            suffix_enum=context.scene.rename_suffix,
+            rule_enum=context.scene.rename_rule
+        )
+
+        if prefix:
+            context.scene.rename_prefix = prefix
+            self.report({'INFO'}, f"共通部分を設定: {prefix}")
+        else:
+            self.report({'WARNING'}, "共通部分が検出できませんでした")
+
+        # use_auto_select が ON の場合は選択処理も行う
+        if self.use_auto_select:
+            rename_detect.select_linear_chain_inclusive(
+                bones[0].name,
+                prefix_filter=prefix if self.filter_inconsistent else None
+            )
+
+        return {'FINISHED'} if prefix else {'CANCELLED'}
 
 class RenameGroupsOperator(bpy.types.Operator):
     """特定単語リネーム"""
@@ -68,24 +159,29 @@ class RevertNamesOperator(bpy.types.Operator):
         revert_renamed_names()
         return {'FINISHED'}
 
-# UIとオペレータクラスの登録のみ行う
-def register():
-    # register_properties() や context.scene の初期化処理は __init__.py が担当する（初回登録時に RestrictContext で落ちるのを防ぐ）
-    # 以前はここで context.scene.rename_xxx に初期値を代入していたが、アドオンが初回に有効化される時点では Blender が "_RestrictContext" という制限付き環境で register() を実行するため、context.scene 自体が存在しない。 
-    # そのため、scene にアクセスする処理は load_post ハンドラー経由で Blender の起動完了後に遅延実行する構成に変更した。
-    # これにより初回登録時と、Blender再起動後のどちらでもエラーを防げる。
+class InvertSelectedBonesOperator(bpy.types.Operator):
+    """選択ボーンの左右反転リネーム"""
+    bl_idname = "object.invert_selected_bones"
+    bl_label = "Invert Selected Bones"
 
-    bpy.utils.register_class(BoneRenamePanel)
-    bpy.utils.register_class(RenameSelectedBonesOperator)
-    bpy.utils.register_class(RenameGroupsOperator)
-    bpy.utils.register_class(RevertNamesOperator)
+    def execute(self, context):
+        # （後でロジックを実装する場合はここに）
+        self.report({'INFO'}, "選択ボーンの反転リネームを実行しました（仮動作）")
+        return {'FINISHED'}
 
+class RenameBonePairOperator(bpy.types.Operator):
+    """ボーン名の一部を一括変更"""
+    bl_idname = "object.rename_bone_pair"
+    bl_label = "Rename Bone by Name"
 
-def unregister():
-    bpy.utils.unregister_class(BoneRenamePanel)
-    bpy.utils.unregister_class(RenameSelectedBonesOperator)
-    bpy.utils.unregister_class(RenameGroupsOperator)
-    bpy.utils.unregister_class(RevertNamesOperator)
+    def execute(self, context):
+        src = context.scene.rename_source_name
+        tgt = context.scene.rename_target_name
 
-if __name__ == "__main__":
-    register()
+        for obj in context.selected_objects:
+            if obj.type == 'ARMATURE':
+                for bone in obj.data.bones:
+                    if bone.name == src:
+                        bone.name = tgt
+
+        return {'FINISHED'}

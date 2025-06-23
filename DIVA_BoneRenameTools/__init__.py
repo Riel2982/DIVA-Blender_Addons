@@ -13,22 +13,20 @@ bl_info = {
 }
 
 import bpy
-import importlib
 
 from . import addon_panel
 from . import rename_bones
 from . import rename_groups
 
-modules = [addon_panel, rename_bones, rename_groups]
-
 classes = [
     addon_panel.BoneRenamePanel,
     addon_panel.RenameSelectedBonesOperator,
+    addon_panel.DetectCommonPrefixOperator,
     addon_panel.RenameGroupsOperator,
-    addon_panel.RevertNamesOperator
+    addon_panel.RevertNamesOperator,
+    addon_panel.InvertSelectedBonesOperator,
+    addon_panel.RenameBonePairOperator,
 ]
-
-# プロパティの登録
 
 def register_properties():
     bpy.types.Scene.rename_prefix = bpy.props.StringProperty(
@@ -36,7 +34,6 @@ def register_properties():
         description="ボーン名の共通部分を入力",
         default=""
     )
-
     bpy.types.Scene.rename_start_number = bpy.props.IntProperty(
         name="開始番号",
         description="連番の開始値の設定",
@@ -44,7 +41,6 @@ def register_properties():
         min=0,
         max=20
     )
-
     bpy.types.Scene.rename_suffix = bpy.props.EnumProperty(
         name="末尾",
         description="ボーン名の末尾を選択",
@@ -56,7 +52,6 @@ def register_properties():
         ],
         default="_wj"
     )
-
     bpy.types.Scene.rename_rule = bpy.props.EnumProperty(
         name="連番法則",
         description="ボーンの連番ルールを選択",
@@ -67,55 +62,39 @@ def register_properties():
         default="000"
     )
 
-# Blender起動時にモジュールを強制リロードして UI を更新する。
-# 登録済みクラスを再度読み込んで二回目以降の UI 欠落を防ぐ。
-def on_startup(dummy):
-    importlib.reload(addon_panel)
-    addon_panel.register()
+    bpy.types.Scene.show_symmetric_tools = bpy.props.BoolProperty(
+        name="Other Reneme Tools",
+        description="その他のボーンリネーム操作",
+        default=True
+    )    
 
-    # 起動時にしか使わない初期化ハンドラーを削除
-    if set_default_scene_values in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.remove(set_default_scene_values)
+    bpy.types.Scene.rename_source_name = bpy.props.StringProperty(
+        name="変更前ボーン名",
+        description="元のボーン名を入力",
+        default=""
+    )
 
-# 初回登録時は bpy.context.scene が使えないため、load_post ハンドラーで Blender 起動完了後に scene プロパティの初期値を安全に設定する。
-def set_default_scene_values(dummy=None):
-    scene = bpy.context.scene
-    if scene:
-        if not hasattr(scene, "rename_prefix") or scene.rename_prefix == "":
-            scene.rename_prefix = ""
-        if not hasattr(scene, "rename_start_number") or scene.rename_start_number == 0:
-            scene.rename_start_number = 0
-        if not hasattr(scene, "rename_suffix") or scene.rename_suffix == "":
-            scene.rename_suffix = "_wj"
-        if not hasattr(scene, "rename_rule") or scene.rename_rule == "":
-            scene.rename_rule = "000"
+    bpy.types.Scene.rename_target_name = bpy.props.StringProperty(
+        name="変更後ボーン名",
+        description="新しいボーン名を入力",
+        default=""
+    )
 
-def register():
-
-
-    register_properties() # クラス登録をここだけに集約
-    addon_panel.register() # クラス登録（addon_panel 側で登録しておく）
-
-
-    # 初回登録時は context.scene が存在しないので、直接初期値は代入しない。
-    # 初期化関数を load_post に渡して、起動完了後に一度だけ呼び出すようにする。
-    if set_default_scene_values not in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.append(set_default_scene_values)
-
-    # 起動時は UI 表示が崩れる場合があるので強制リロードで再登録する
-    if on_startup not in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.append(on_startup)
-
-def unregister():
-    if on_startup in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.remove(on_startup)
-    if set_default_scene_values in bpy.app.handlers.load_post:
-        bpy.app.handlers.load_post.remove(set_default_scene_values)
-
-    for cls in reversed(classes):
-        bpy.utils.unregister_class(cls)
-
+def unregister_properties():
     del bpy.types.Scene.rename_prefix
     del bpy.types.Scene.rename_start_number
     del bpy.types.Scene.rename_suffix
     del bpy.types.Scene.rename_rule
+    del bpy.types.Scene.show_symmetric_tools
+    del bpy.types.Scene.rename_source_name
+    del bpy.types.Scene.rename_target_name
+
+def register():
+    register_properties()
+    for cls in classes:
+        bpy.utils.register_class(cls)
+
+def unregister():
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
+    unregister_properties()
