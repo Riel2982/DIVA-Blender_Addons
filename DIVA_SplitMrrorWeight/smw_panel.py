@@ -1,5 +1,5 @@
 import bpy
-from .addon_main import (
+from .smw_main import (
     get_selected_rules,
     detect_original_side,
     disable_mirror_modifier,
@@ -9,7 +9,7 @@ from .addon_main import (
     delete_x_side_mesh,
     rename_symmetric_weight_groups
 )
-from .addon_preferences import get_json_path  # ← もし保存に関するユーティリティ関数などがあれば
+from .smw_preferences import get_json_path  # ← もし保存に関するユーティリティ関数などがあれば
 
 # Nパネル設定
 class SplitMirrorWeightPanel(bpy.types.Panel):
@@ -152,7 +152,7 @@ class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
     )
 
 #  DIVAアドオン設定画面（プリファレンス）を開く
-class DIVA_OT_OpenPreferences(bpy.types.Operator):
+class SMW_OT_OpenPreferences(bpy.types.Operator):
     bl_idname = "diva.open_preferences"
     bl_label = "DIVA 設定を開く"
 

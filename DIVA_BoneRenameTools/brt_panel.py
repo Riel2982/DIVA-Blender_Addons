@@ -20,15 +20,15 @@ class BoneRenamePanel(bpy.types.Panel):
         # --- セクション 1: ボーン連番リネーム -------------------------------------
         box1 = layout.box()
         row = box1.row(align=True)
-        row.prop(scene, "show_renumber_tools", text="", icon='TRIA_DOWN' if scene.show_renumber_tools else 'TRIA_RIGHT', emboss=False)
+        row.prop(scene, "show_renumber_tools", text="", icon='DOWNARROW_HLT' if scene.show_renumber_tools else 'RIGHTARROW', emboss=False)
         row.label(text="Rename Selected Bones", icon="PRESET") # セクションタイトル
 
         if scene.show_renumber_tools:
-            row = box1.row(align=True)
+            row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
             row.prop(scene, "rename_prefix", text="共通部分") # テキストボックス
             row.operator("object.detect_common_prefix", text="", icon='BONE_DATA') # スポイトツール
 
-            row = box1.row(align=True)
+            row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
             row.prop(scene, "rename_start_number", text="連番開始番号")
             row.prop(scene, "rename_rule", text="法則") # ドロップダウン
             row.prop(scene, "rename_suffix", text="末尾") # ドロップダウン
@@ -39,15 +39,43 @@ class BoneRenamePanel(bpy.types.Panel):
         # --- セクション 2: 指定名で置換 ------------------------------------------
         box2 = layout.box()
         row = box2.row(align=True)
-        row.prop(scene, "show_replace_tools", text="", icon='TRIA_DOWN' if scene.show_replace_tools else 'TRIA_RIGHT', emboss=False)
-        row.label(text="Replace Bone Name", icon="GREASEPENCIL")# セクションタイトル
+        split = row.split(factor=0.85)
+
+        # 左エリア：トグルボタン＋ラベル（常に表示）
+        left = split.row(align=True)
+        left.prop(scene, "show_replace_tools", text="", 
+                icon='DOWNARROW_HLT' if scene.show_replace_tools else 'RIGHTARROW', emboss=False)
+        left.label(text="Replace Bone Name", icon="GREASEPENCIL")
+
+        # 右エリア：スポイトツール（開いているときだけ表示）
+        right = split.row(align=True)
+        right.alignment = 'RIGHT'
+        if scene.show_replace_tools:
+            right.operator("object.extract_source_name", text="", icon="BONE_DATA")
 
         if scene.show_replace_tools:
+            '''
+            # 説明表示あり版
+            # ▼ 親 row：3分割
             row = box2.row(align=True)
-            row.label(text="　Before Name:") # ラベル名
-            row.operator("object.extract_source_name", text="", icon="BONE_DATA") # スポイトツール
-            row.label(text="　After Name:") # ラベル名
 
+            # --- 左ブロック：説明 + 入力欄（置換元） ---
+            col1 = row.column(align=True)
+            col1.label(text=" Part to change:") #, icon='BLANK1')
+            col1.prop(scene, "rename_source_name", text="")
+
+            # --- 中央ブロック：スポイト + FORWARD ---
+            col_mid = row.column(align=True)
+            # col_mid.operator("object.extract_source_name", text="", icon="BONE_DATA")
+            col_mid.label(icon='BLANK1') # スポイトツールをセクション名に移動させる場合
+            col_mid.label(icon='FORWARD')
+
+            # --- 右ブロック：説明 + 入力欄（置換先） ---
+            col2 = row.column(align=True)
+            col2.label(text=" Change to:") #, icon='BLANK1')
+            col2.prop(scene, "rename_target_name", text="")
+            '''
+            # テキストボックスのみ版
             row = box2.row(align=True)
             row.prop(scene, "rename_source_name", text="") # テキストボックス
             row.label(icon='FORWARD')
@@ -63,7 +91,7 @@ class BoneRenamePanel(bpy.types.Panel):
         # --- セクション 3: 反転リネーム ------------------------------------------
         box3 = layout.box()
         row = box3.row(align=True)
-        row.prop(scene, "show_invert_tools", text="", icon='TRIA_DOWN' if scene.show_invert_tools else 'TRIA_RIGHT', emboss=False)
+        row.prop(scene, "show_invert_tools", text="", icon='DOWNARROW_HLT' if scene.show_invert_tools else 'RIGHTARROW', emboss=False)
         row.label(text="Invert Selected Bones", icon='GROUP_BONE') # セクションタイトル
 
         if scene.show_invert_tools:
@@ -78,7 +106,7 @@ class BoneRenamePanel(bpy.types.Panel):
             split.label(text="ボーン識別子:")
             right = split.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
             right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
-            right.operator("diva.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
+            right.operator("brt.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
             row = box3.row()
             row.prop(scene, "bone_x_mirror", text="")  # チェックボックス
@@ -94,7 +122,7 @@ class BoneRenamePanel(bpy.types.Panel):
         # --- セクション 4: その他リネームツール操作 ----------------------------------
         box4 = layout.box()
         row = box4.row(align=True)
-        row.prop(scene, "show_group_tools", text="", icon='TRIA_DOWN' if scene.show_group_tools else 'TRIA_RIGHT', emboss=False)
+        row.prop(scene, "show_group_tools", text="", icon='DOWNARROW_HLT' if scene.show_group_tools else 'RIGHTARROW', emboss=False)
         row.label(text="Other Rename Tools", icon="DOT") # セクションタイトル
 
         if scene.show_group_tools:
@@ -129,7 +157,7 @@ class BoneRenamePanel(bpy.types.Panel):
         
         # 折りたたみ式ツールボックス
         row = box1.row(align=True)
-        row.prop(scene, "show_symmetric_tools", text="", icon='TRIA_DOWN' if scene.show_symmetric_tools else 'TRIA_RIGHT', emboss=False)
+        row.prop(scene, "show_symmetric_tools", text="", icon='DOWNARROW_HLT' if scene.show_symmetric_tools else 'RIGHTARROW', emboss=False)
         row.label(text="その他リネームツール")
 
         if scene.show_symmetric_tools:
@@ -150,7 +178,7 @@ class BoneRenamePanel(bpy.types.Panel):
             col1.prop(scene, "rename_source_name", text="")  # 左のテキストボックス
 
             col2 = row.column()
-            col2.label(icon='FORWARD')  # または 'TRIA_RIGHT', 'PLAY'
+            col2.label(icon='FORWARD')  # または 'RIGHTARROW', 'PLAY'
 
             col3 = row.column()
             col3.prop(scene, "rename_target_name", text="")  # 右のテキストボックス
@@ -383,8 +411,8 @@ class InvertSelectedBonesProperties(bpy.types.PropertyGroup):
     )
 
 #  DIVAアドオン設定画面（プリファレンス）を開く
-class DIVA_OT_OpenPreferences(bpy.types.Operator):
-    bl_idname = "diva.open_preferences"
+class BRT_OT_OpenPreferences(bpy.types.Operator):
+    bl_idname = "brt.open_preferences"
     bl_label = "DIVA 設定を開く"
 
     def execute(self, context):

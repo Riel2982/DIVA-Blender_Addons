@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Bone Rename Tools",
     "author": "Riel",
-    "version": (0, 0, 5),
+    "version": (0, 0, 6),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > DIVA",
     "description": "Nパネルからボーンと頂点グループをリネームするアドオン",
@@ -14,51 +14,50 @@ bl_info = {
 
 import bpy
 
-from . import addon_panel
-from .addon_panel import InvertSelectedBonesProperties
+from . import brt_panel
 from . import rename_bones
 from . import rename_groups
 
-from .addon_preferences import (
-    DIVAAddonPreferences,
-    DIVA_OT_AddBonePattern,
-    DIVA_OT_AddBoneRule,
-    DIVA_OT_DeleteBonePattern,
-    DIVA_OT_DeleteBoneRule,
-    DIVA_OT_MoveBonePatternUp,
-    DIVA_OT_MoveBonePatternDown,
-    DIVA_OT_ResetBonePatterns,
-    DIVA_OT_SaveBonePatterns,
-    DIVA_OT_AppendDefaultSet,
+from .brt_preferences import (
+    BRT_AddonPreferences,
+    BRT_OT_AddBonePattern,
+    BRT_OT_AddBoneRule,
+    BRT_OT_DeleteBonePattern,
+    BRT_OT_DeleteBoneRule,
+    BRT_OT_MoveBonePatternUp,
+    BRT_OT_MoveBonePatternDown,
+    BRT_OT_ResetBonePatterns,
+    BRT_OT_SaveBonePatterns,
+    BRT_OT_AppendDefaultSet,
     load_bone_patterns_to_preferences,
-	BoneRuleItem,
-	BonePatternItem,
+	BRT_BoneRuleItem,
+	BRT_BonePatternItem,
 )
 
 
 classes = [
-    addon_panel.BoneRenamePanel,
-    addon_panel.RenameSelectedBonesOperator,
-    addon_panel.DetectCommonPrefixOperator,
-    addon_panel.RenameGroupsOperator,
-    addon_panel.RevertNamesOperator,
-    addon_panel.InvertSelectedBonesOperator,
-    addon_panel.ReplaceBoneNameOperator,
-    addon_panel.ExtractSourceNameOperator,
-    addon_panel.DIVA_OT_OpenPreferences,
-    addon_panel.InvertSelectedBonesProperties,
-    addon_preferences.DIVA_OT_AddBonePattern,
-    addon_preferences.DIVA_OT_AddBoneRule,
-    addon_preferences.DIVA_OT_DeleteBonePattern,
-    addon_preferences.DIVA_OT_DeleteBoneRule,
-    addon_preferences.DIVA_OT_MoveBonePatternUp,
-    addon_preferences.DIVA_OT_MoveBonePatternDown,
-    addon_preferences.DIVA_OT_ResetBonePatterns,
-    addon_preferences.DIVA_OT_SaveBonePatterns,
-    addon_preferences.DIVA_OT_AppendDefaultSet,
-	addon_preferences.BoneRuleItem,
-	addon_preferences.BonePatternItem,
-    addon_preferences.DIVAAddonPreferences,
+    brt_panel.BoneRenamePanel,
+    brt_panel.RenameSelectedBonesOperator,
+    brt_panel.DetectCommonPrefixOperator,
+    brt_panel.RenameGroupsOperator,
+    brt_panel.RevertNamesOperator,
+    brt_panel.InvertSelectedBonesOperator,
+    brt_panel.ReplaceBoneNameOperator,
+    brt_panel.ExtractSourceNameOperator,
+    brt_panel.BRT_OT_OpenPreferences,
+    brt_panel.InvertSelectedBonesProperties,
+    brt_preferences.BRT_OT_AddBonePattern,
+    brt_preferences.BRT_OT_AddBoneRule,
+    brt_preferences.BRT_OT_DeleteBonePattern,
+    brt_preferences.BRT_OT_DeleteBoneRule,
+    brt_preferences.BRT_OT_MoveBonePatternUp,
+    brt_preferences.BRT_OT_MoveBonePatternDown,
+    brt_preferences.BRT_OT_ResetBonePatterns,
+    brt_preferences.BRT_OT_SaveBonePatterns,
+    brt_preferences.BRT_OT_AppendDefaultSet,
+	brt_preferences.BRT_BoneRuleItem,
+	brt_preferences.BRT_BonePatternItem,
+    brt_preferences.BRT_AddonPreferences,
 ]
 
 def register_properties():
@@ -175,7 +174,7 @@ def register():
         bpy.utils.register_class(cls)
 
     bpy.types.Scene.invert_selected_bones = bpy.props.PointerProperty(
-        type=addon_panel.InvertSelectedBonesProperties
+        type=brt_panel.InvertSelectedBonesProperties
     )
 
     addon = bpy.context.preferences.addons.get(__name__)
@@ -184,9 +183,9 @@ def register():
 
 
 def unregister():
-    del bpy.types.Scene.invert_selected_bones
-
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
+    del bpy.types.Scene.invert_selected_bones
 
     unregister_properties()

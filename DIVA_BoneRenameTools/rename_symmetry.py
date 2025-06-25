@@ -81,3 +81,11 @@ def apply_name_flip(name: str, mapping: dict) -> str:
         if a in name:
             return name.replace(a, b)
     return name
+
+# サフィックス除去関数
+def strip_duplicate_suffix(name: str) -> str:
+    """
+    Blenderが自動で付ける `.001`, `.002` などを除去。
+    例: 'Head_L.001' → 'Head_L'
+    """
+    return re.sub(r"\.\d{3}$", "", name)

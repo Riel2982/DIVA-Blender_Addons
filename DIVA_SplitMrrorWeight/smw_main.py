@@ -2,7 +2,7 @@ import os
 import json
 import bpy
 import bmesh
-from .addon_preferences import get_json_path
+from .smw_preferences import get_json_path
 
 # ボーン識別子の読み込み（JSON）
 def load_bone_patterns_to_preferences(prefs):
@@ -43,7 +43,14 @@ def get_selected_rules(label):
     prefs = addon.preferences
     for p in prefs.bone_patterns:
         if p.label.strip() == label:
-            return [{"right": r.right, "left": r.left} for r in p.rules]
+            return [
+                {
+                    "right": r.right,
+                    "left": r.left,
+                    "use_regex": getattr(r, "use_regex", False)
+                }
+                for r in p.rules
+            ]
     return []
 
 
@@ -119,31 +126,35 @@ def delete_x_side_mesh(obj, delete_positive_x=True):
     bm.free()
 
 # 頂点グループリネーム処理
-def rename_symmetric_weight_groups(obj, rules, delete_side):
-    """削除する側を考慮し、頂点グループを適切にリネーム"""
-    vgroup_map = {vg.name for vg in obj.vertex_groups}
+import re
 
+def rename_symmetric_weight_groups(obj, rules, delete_side):
+    """削除する側を考慮し、頂点グループを適切にリネーム（削除→改名を分離）"""
+   
     for rule in rules:
         right = rule["right"]
         left = rule["left"]
 
-        if delete_side == 'RIGHT':
-            for vg_name in list(vgroup_map):
-                if left in vg_name and obj.vertex_groups.get(vg_name):
-                    obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
-                    
-            for vg_name in list(vgroup_map):
-                if right in vg_name and obj.vertex_groups.get(vg_name):
-                    new_name = vg_name.replace(right, left)
-                    obj.vertex_groups.get(vg_name).name = new_name
-        
-        else:
-            for vg_name in list(vgroup_map):
-                if right in vg_name and obj.vertex_groups.get(vg_name):
-                    obj.vertex_groups.remove(obj.vertex_groups.get(vg_name))
-            
-            for vg_name in list(vgroup_map):
-                if left in vg_name and obj.vertex_groups.get(vg_name):
-                    new_name = vg_name.replace(left, right)
-                    obj.vertex_groups.get(vg_name).name = new_name
+        # --- Step 1: 削除処理（delete_side に対応する方を消す） ---
+        pattern = right if delete_side == 'RIGHT' else left
+        for vg in list(obj.vertex_groups):
+            name = vg.name
+            if pattern in name:
+                print(f"[DIVA] 削除: {name}")
+                obj.vertex_groups.remove(vg)
 
+        # --- Step 2: リネーム処理（反対側の名前を変換する） ---
+        source = left if delete_side == 'RIGHT' else right
+        target = right if delete_side == 'RIGHT' else left
+
+        for vg in list(obj.vertex_groups):
+            name = vg.name
+            if source in name:
+                new_name = name.replace(source, target)
+                if new_name != name:
+                    # 衝突がある場合は先に削除
+                    if obj.vertex_groups.get(new_name):
+                        print(f"[DIVA] 衝突先削除: {new_name}")
+                        obj.vertex_groups.remove(obj.vertex_groups.get(new_name))
+                    print(f"[DIVA] リネーム: {name} → {new_name}")
+                    vg.name = new_name
