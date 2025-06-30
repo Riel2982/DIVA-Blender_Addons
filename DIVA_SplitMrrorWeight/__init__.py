@@ -15,10 +15,10 @@ bl_info = {
 import bpy
 
 from .smw_panel import (
-    SplitMirrorWeightPanel,
+    DIVA_PT_SplitMirrorWeightPanel,
     SMW_OT_OpenPreferences,
-    OBJECT_OT_SplitMirrorWeight,
-    SplitMirrorWeightProperties,
+    DIVA_OT_SplitMirrorWeight,
+    DIVA_SplitMirrorWeightProps,
 )
 
 from .smw_preferences import (
@@ -51,21 +51,21 @@ def register():
         SMW_OT_ResetBonePatterns,
         SMW_OT_SaveBonePatterns,
         SMW_OT_AppendDefaultSet,
-        SplitMirrorWeightPanel,
+        DIVA_SplitMirrorWeightProps,        
+        DIVA_PT_SplitMirrorWeightPanel,
         SMW_OT_OpenPreferences,
-        OBJECT_OT_SplitMirrorWeight,
-        SplitMirrorWeightProperties,
+        DIVA_OT_SplitMirrorWeight,
     ):
         bpy.utils.register_class(cls)
 
-    bpy.types.Scene.split_mirror_weight = bpy.props.PointerProperty(type=SplitMirrorWeightProperties)
+    bpy.types.Scene.diva_split_mirror_weight = bpy.props.PointerProperty(type=DIVA_SplitMirrorWeightProps)
 
     addon = bpy.context.preferences.addons.get(__name__)
     if addon:
         load_bone_patterns_to_preferences(addon.preferences)
 
 def unregister():
-    del bpy.types.Scene.split_mirror_weight
+    del bpy.types.Scene.diva_split_mirror_weight
 
     for cls in reversed((
         SMW_BoneRuleItem,
@@ -80,10 +80,10 @@ def unregister():
         SMW_OT_ResetBonePatterns,
         SMW_OT_SaveBonePatterns,
         SMW_OT_AppendDefaultSet,
-        SplitMirrorWeightPanel,
+        DIVA_SplitMirrorWeightProps,
+        DIVA_PT_SplitMirrorWeightPanel,
         SMW_OT_OpenPreferences,
-        OBJECT_OT_SplitMirrorWeight,
-        SplitMirrorWeightProperties,
+        DIVA_OT_SplitMirrorWeight,
     )):
         bpy.utils.unregister_class(cls)
 

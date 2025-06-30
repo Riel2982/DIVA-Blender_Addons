@@ -11,8 +11,9 @@ from .smw_main import (
 )
 from .smw_preferences import get_json_path  # ← もし保存に関するユーティリティ関数などがあれば
 
+
 # Nパネル設定
-class SplitMirrorWeightPanel(bpy.types.Panel):
+class DIVA_PT_SplitMirrorWeightPanel(bpy.types.Panel):
     bl_label = "Split Mirror Weight"
     bl_idname = "DIVA_PT_split_mirror_weight"
     bl_space_type = "VIEW_3D"
@@ -30,7 +31,7 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
         # print("NパネルSMW draw 実行確認") 
 
         layout = self.layout
-        props = context.scene.split_mirror_weight
+        props = context.scene.diva_split_mirror_weight
 
         box = layout.box()  # 枠付きセクションを作成
 
@@ -40,7 +41,7 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
         split1.label(text="ボーン識別子:")
         right1 = split1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         right1.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
-        right1.operator("diva.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
+        right1.operator("smw.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
         # オリジナル側
         row2 = box.row()
@@ -54,18 +55,23 @@ class SplitMirrorWeightPanel(bpy.types.Panel):
         row3.prop(props, "mirror_auto_detect", text="")  # チェックボックス
         row3.label(text="ミラー自動判別")  # ラベル
 
+        # ほぼ片側だが原点からはみ出しているメッシュ対応（チェックボタン）
+        row4 = box.row()
+        row4.prop(props, "allow_origin_overlap", text="") # チェックボックス
+        row4.label(text="原点越えに対応")  # ラベル
+
         # ミラー実行ボタン
-        box.separator()
-        box.operator("object.split_mirror_weight", icon="MOD_MIRROR")
+        # box.separator()
+        box.operator("diva.split_mirror_weight", icon="MOD_MIRROR")
 
 # アドオン処理
-class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
-    bl_idname = "object.split_mirror_weight"
+class DIVA_OT_SplitMirrorWeight(bpy.types.Operator):
+    bl_idname = "diva.split_mirror_weight"
     bl_label = "ミラー実行"
 
     def execute(self, context):
         obj = bpy.context.object
-        properties = bpy.context.scene.split_mirror_weight
+        properties = bpy.context.scene.diva_split_mirror_weight
 
         # 3Dビューで選択されているか確認する
         if not obj or obj not in context.selected_objects:
@@ -83,6 +89,21 @@ class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
 
         delete_positive_x = (properties.delete_side == 'RIGHT')
 
+        # 識別子セットに対応
+        selected_label = properties.bone_pattern
+        selected_rules = get_selected_rules(selected_label)
+        if not selected_rules:
+            self.report({'ERROR'}, "識別ルールが見つかりません。")
+            return {'CANCELLED'}
+
+        # allow_origin_overlap の条件に基づいて特殊処理を実行（原点越え対応がオンなら分岐して終了）
+        if properties.allow_origin_overlap:
+            from .smw_sub import process_origin_overlap
+            process_origin_overlap(obj, properties.delete_side, selected_rules)
+            self.report({'INFO'}, f"原点越えミラー処理完了: {obj.name}")
+            return {'FINISHED'}
+
+        # 通常の左右分離によるミラー処理
         if obj and obj.type == 'MESH' and obj.parent and obj.parent.type == 'ARMATURE':
             armature = obj.parent
 
@@ -99,12 +120,14 @@ class OBJECT_OT_SplitMirrorWeight(bpy.types.Operator):
 
             delete_x_side_mesh(mirrored_obj, delete_positive_x)  
 
+            """ # allow_origin_overlap の分岐の前に移動
             # 識別子セットに対応
             selected_label = properties.bone_pattern
             selected_rules = get_selected_rules(selected_label)
             if not selected_rules:
                 self.report({'ERROR'}, "識別ルールが見つかりません。")
                 return {'CANCELLED'}
+            """
 
             rename_symmetric_weight_groups(mirrored_obj, selected_rules, properties.delete_side)
 
@@ -129,7 +152,7 @@ def get_bone_pattern_items(self, context):
     return items
 
 # プロパティグループ
-class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
+class DIVA_SplitMirrorWeightProps(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
         name="識別子セット",
         items=get_bone_pattern_items # JSONから読み込み
@@ -151,9 +174,15 @@ class SplitMirrorWeightProperties(bpy.types.PropertyGroup):
         default=False
     )
 
+    allow_origin_overlap: bpy.props.BoolProperty(
+        name="原点越えに対応",
+        description="原点からわずかにはみ出した片側メッシュでも反転する（ミラー自動判別と併用不可）",
+        default=False
+    )
+
 #  DIVAアドオン設定画面（プリファレンス）を開く
 class SMW_OT_OpenPreferences(bpy.types.Operator):
-    bl_idname = "diva.open_preferences"
+    bl_idname = "smw.open_preferences"
     bl_label = "DIVA 設定を開く"
 
     def execute(self, context):

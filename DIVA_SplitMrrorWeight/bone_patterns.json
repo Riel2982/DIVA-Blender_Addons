@@ -4,15 +4,18 @@
     "rules": [
       {
         "right": "_r_",
-        "left": "_l_"
+        "left": "_l_",
+        "use_regex": false
       },
       {
         "right": "_r0",
-        "left": "_l0"
+        "left": "_l0",
+        "use_regex": false
       },
       {
         "right": "_r1",
-        "left": "_l1"
+        "left": "_l1",
+        "use_regex": false
       }
     ]
   },
@@ -21,11 +24,13 @@
     "rules": [
       {
         "right": ".R",
-        "left": ".L"
+        "left": ".L",
+        "use_regex": false
       },
       {
         "right": "_R",
-        "left": "_L"
+        "left": "_L",
+        "use_regex": false
       }
     ]
   }
