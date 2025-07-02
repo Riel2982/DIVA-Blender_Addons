@@ -1,33 +1,43 @@
 bl_info = {
     "name": "DIVA - Bone Transfer Tools",
     "author": "Riel",
-    "version": (1, 0),
-    "blender": (3, 6, 22),
+    "version": (0, 0, 4),
+    "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA",
     "description": "Transfer bones and optionally duplicate b1 object to new armature",
-    "category": "Rigging"
+    "warning": "一部のボーンの親が正常にペアレントされない。アドオン登録時やUI表示に不具合の可能性あり",
+    "support": "COMMUNITY",
+    "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Bone-Transfer-Tools",
+    "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons",
+    "category": "Rigging",
 }
 
 import bpy
-import importlib
-# from . import BoneTransferTools_N  # Nパネル用
-from . import addon_panel 
-# from . import BoneTransferTools # 右クリック用 
-# from . import MergeSelectedMeshes # 右クリック用 
 
-# ✅ **モジュールのリロードを試みる**
-# importlib.reload(BoneTransferTools_N)
-# importlib.reload(BoneTransferTools) # 右クリック用 
-# importlib.reload(MergeSelectedMeshes) # 右クリック用 
+from . import btt_panel
+from . import btt_main
+from . import btt_sub
 
+# すべてのクラスをまとめる
+modules = [btt_panel, btt_main, btt_sub]
+# 定義していたグローバル変数は削除
+# classes = [] ← 消してOK
+
+# register() 内で動的にクラスを取得
 def register():
-    addon_panel.register()  
-    # BoneTransferTools_N.register()  # ✅ **モジュール経由で `register()` を呼び出す**
-    # BoneTransferTools.register()  # 右クリック用 
-    # MergeSelectedMeshes.register()  # 右クリック用 
+    for mod in modules:
+        if hasattr(mod, "get_classes"):
+            for cls in mod.get_classes():
+                bpy.utils.register_class(cls)
+
+    if hasattr(btt_panel, "register_properties"):
+        btt_panel.register_properties()
 
 def unregister():
-    addon_panel.unregister() 
-    # BoneTransferTools_N.unregister()  # ✅ **モジュール経由で `unregister()` を呼び出す**
-    # BoneTransferTools.unregister()
-    # MergeSelectedMeshes.unregister()
+    for mod in reversed(modules):
+        if hasattr(mod, "get_classes"):
+            for cls in reversed(mod.get_classes()):
+                bpy.utils.unregister_class(cls)
+
+    if hasattr(btt_panel, "unregister_properties"):
+        btt_panel.unregister_properties()
