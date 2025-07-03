@@ -1,6 +1,6 @@
 import bpy
 # from .btt_panel import BTT_PG_TransferObject  # 循環インポート対策のためこのファイル内に移設
-
+from .btt_types import BTT_PG_TransferObject
 
 # 処理系
 
@@ -112,86 +112,86 @@ def move_object_to_armature(obj, a_armature):
     bpy.context.view_layer.objects.active = a_armature
     bpy.ops.object.parent_set(type='ARMATURE_NAME', keep_transform=True)
 
-def run_transfer_logic(a, b, b1, duplicate=True, bones_only=False):
+def run_transfer_logic(a, b, obj, duplicate=True, bones_only=False, use_child_bones=True):
     """ ボーン移植処理の実行関数
-        - b1を複製するかどうかのオプション
+        - objを複製するかどうかのオプション
         - 必要なボーンをB → Aに移植
         - 親関係を整理し、オブジェクトをAアーマーチュアへ移動
     """
-    if not b1:
-        raise RuntimeError("移植元オブジェクト (`b1`) が None です。適切なオブジェクトを選択してください。")
+    if not obj:
+        raise RuntimeError("移植元オブジェクト (`obj`) が None です。適切なオブジェクトを選択してください。")
 
-    # b1 が PropertyGroup 由来なら .object を取り出す
-    if hasattr(b1, "object") and isinstance(b1.object, bpy.types.Object):
-        use_child_bones = getattr(b1, "use_child_bones", True)
-        b1 = b1.object
-    else:
-        use_child_bones = True
-
-    # b1 が Object でなければエラー
-    if not isinstance(b1, bpy.types.Object):
-        raise RuntimeError(f"b1 is not a valid object for selection. Type: {type(b1)}")
+    # obj が Object でなければエラー
+    if not isinstance(obj, bpy.types.Object):
+        raise RuntimeError(f"obj is not a valid object for selection. Type: {type(obj)}")
 
     # 統合先アーマーチュアのコレクションを取得
     target_collection = a.users_collection[0] if a.users_collection else bpy.context.collection
 
     # ボーンのみを移植する場合の分岐条件
     if bones_only:
-        bone_names = collect_transfer_bone_names(b, [b1], include_children=use_child_bones)
+        bone_names = collect_transfer_bone_names(b, [obj], include_children=use_child_bones)
         bones = transfer_bones(b, a, bone_names)
         reparent_and_cleanup(a, bones, "Koshi")
         return "（ボーンのみ移植）", len(bones)
 
     if duplicate:
         # 元オブジェクトの非表示状態を記録し、一時的に表示・選択可能にする
-        was_hidden = b1.hide_get()
-        was_hidden_select = b1.hide_select
+        was_hidden = obj.hide_get()
+        was_hidden_select = obj.hide_select
 
-        b1.hide_set(False)
-        b1.hide_select = False
+        obj.hide_set(False)
+        obj.hide_select = False
 
         bpy.ops.object.select_all(action='DESELECT')  # 選択解除
-        b1.select_set(True)  # b1を選択
-        bpy.context.view_layer.objects.active = b1  # b1をアクティブに設定
+        obj.select_set(True)  # objを選択
+        bpy.context.view_layer.objects.active = obj  # objをアクティブに設定
         bpy.ops.object.mode_set(mode='OBJECT')  # オブジェクトモードに変更        
         bpy.ops.object.duplicate()  # Blenderのアンドゥシステムに統合された複製処理
 
-        b1_copy = bpy.context.selected_objects[0]  # 複製されたオブジェクトを取得
-        target_collection.objects.link(b1_copy)  # 統合先アーマーチュアのコレクションへ移動
+        obj_copy = bpy.context.selected_objects[0]  # 複製されたオブジェクトを取得
+        target_collection.objects.link(obj_copy)  # 統合先アーマーチュアのコレクションへ移動
 
-        b1_copy.name = b1.name + "_copy"
+        obj_copy.name = obj.name + "_copy"
         
-        # 元の非表示状態に戻す（移植後の b1 は非表示でOK）
+        # 元の非表示状態に戻す（移植後の obj は非表示でOK）
         if was_hidden:
-            b1.hide_set(True)
-        b1.hide_select = was_hidden_select
+            obj.hide_set(True)
+        obj.hide_select = was_hidden_select
 
-        # 元のコレクションから `b1_copy` を削除
-        for coll in b1.users_collection:
-            if b1_copy.name in coll.objects:
-                coll.objects.unlink(b1_copy)  # 旧コレクションから削除
+        # 元のコレクションから `obj_copy` を削除
+        for coll in obj.users_collection:
+            if obj_copy.name in coll.objects:
+                coll.objects.unlink(obj_copy)  # 旧コレクションから削除
 
-        b1 = b1_copy  # 複製したオブジェクトに切り替え
+        obj = obj_copy  # 複製したオブジェクトに切り替え
 
     else:
         # 非表示だった場合でも、表示状態にして処理（元に戻さない）
-        b1.hide_set(False)
-        b1.hide_select = False
+        obj.hide_set(False)
+        obj.hide_select = False
 
         # 複製しない場合でも統合先のコレクションへ移動
-        for coll in b1.users_collection:
-            coll.objects.unlink(b1)  # 旧コレクションからオブジェクトを削除
+        for coll in obj.users_collection:
+            coll.objects.unlink(obj)  # 旧コレクションからオブジェクトを削除
         
-        target_collection.objects.link(b1)  # 統合先アーマーチュアのコレクションへ移動
+        target_collection.objects.link(obj)  # 統合先アーマーチュアのコレクションへ移動
 
     # 使用ボーン名のみ抽出 → 移植
-    bone_names = collect_transfer_bone_names(b, [b1], include_children=use_child_bones)
-    bones = transfer_bones(b, a, bone_names) # b1 をリストにして渡す
+    bone_names = collect_transfer_bone_names(b, [obj], include_children=use_child_bones)
+    bones = transfer_bones(b, a, bone_names)  # obj をリストにして渡す
 
     reparent_and_cleanup(a, bones, "Koshi")
-    move_object_to_armature(b1, a)
+    move_object_to_armature(obj, a)
 
-    return b1.name, len(bones)
+    if bones:
+        print(f"\n▶ {obj.name} : {len(bones)} bones")
+        for bname in sorted(bones):
+            print(f"    - {bname}")
+    else:
+        print(f"\n▶ {obj.name} : 0 bones (no new bones transferred)")
+
+    return obj.name, len(bones)
 
 
 #　ウエイトありグループ取得関数
@@ -271,7 +271,7 @@ def collect_transfer_bone_names(b_armature, mesh_objs, include_children=True):
     return relevant
 
 
-
+'''
 class BTT_PG_TransferObject(bpy.types.PropertyGroup):
     """ ボーン移植リスト用のプロパティグループ """
     name: bpy.props.StringProperty(name="オブジェクト名")
@@ -281,3 +281,4 @@ class BTT_PG_TransferObject(bpy.types.PropertyGroup):
         default=True,
         description="ウェイトのある親ボーンを移植する際に、ウエイトのない子ボーンも一緒に移植するかを切り替えます"
     )
+'''    

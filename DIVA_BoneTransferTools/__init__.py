@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Bone Transfer Tools",
     "author": "Riel",
-    "version": (0, 0, 4),
+    "version": (0, 0, 6),
     "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA",
     "description": "Transfer bones and optionally duplicate b1 object to new armature",
@@ -17,9 +17,10 @@ import bpy
 from . import btt_panel
 from . import btt_main
 from . import btt_sub
+from . import btt_types
 
 # すべてのクラスをまとめる
-modules = [btt_panel, btt_main, btt_sub]
+modules = [btt_panel, btt_main, btt_sub, btt_types]
 # 定義していたグローバル変数は削除
 # classes = [] ← 消してOK
 
