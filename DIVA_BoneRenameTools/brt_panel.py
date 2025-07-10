@@ -1,6 +1,7 @@
 import bpy
+from bpy.app.translations import pgettext as _
 
-class BoneRenamePanel(bpy.types.Panel):
+class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
     """NパネルのUI"""
     bl_label = "Bone Rename Tools"
     bl_idname = "DIVA_PT_BoneRenamePanel"
@@ -25,15 +26,15 @@ class BoneRenamePanel(bpy.types.Panel):
 
         if scene.brt_show_renumber_tools:
             row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-            row.prop(scene, "brt_rename_prefix", text="共通部分") # テキストボックス
+            row.prop(scene, "brt_rename_prefix", text=_("共通部分")) # テキストボックス
             row.operator("brt.detect_common_prefix", text="", icon='BONE_DATA') # スポイトツール
 
             row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-            row.prop(scene, "brt_rename_start_number", text="連番開始番号")
-            row.prop(scene, "brt_rename_rule", text="法則") # ドロップダウン
-            row.prop(scene, "brt_rename_suffix", text="末尾") # ドロップダウン
+            row.prop(scene, "brt_rename_start_number", text=_("連番開始番号"))
+            row.prop(scene, "brt_rename_rule", text=_("法則")) # ドロップダウン
+            row.prop(scene, "brt_rename_suffix", text=_("末尾")) # ドロップダウン
 
-            box1.operator("brt.rename_selected_bones", text="連番リネーム実行", icon="PRESET") # 実行ボタン
+            box1.operator("brt.rename_selected_bones", text=_("連番リネーム実行"), icon="PRESET") # 実行ボタン
 
 
         # --- セクション 2: 指定名で置換 ------------------------------------------
@@ -83,9 +84,9 @@ class BoneRenamePanel(bpy.types.Panel):
 
             row = box2.row()
             row.prop(scene, "brt_remove_number_suffix", text="")  # チェックボックス
-            row.label(text="重複識別子を削除") # 非連動
+            row.label(text=_("重複識別子を削除")) # 非連動
 
-            box2.operator("brt.replace_bone_name", text="指定名でボーン名変更", icon="GREASEPENCIL") # 実行ボタン
+            box2.operator("brt.replace_bone_name", text=_("指定名でボーン名変更"), icon="GREASEPENCIL") # 実行ボタン
 
 
         # --- セクション 3: 反転リネーム ------------------------------------------
@@ -103,7 +104,7 @@ class BoneRenamePanel(bpy.types.Panel):
         right = split.row(align=True)
         right.alignment = 'RIGHT'
         if scene.brt_show_invert_tools:
-            right.operator("brt.brt_select_linear_chain", text="", icon="BONE_DATA")
+            right.operator("brt.select_linear_chain", text="", icon="BONE_DATA")
 
         """
         # スポイトツールを使わないときのセクションタイトル部
@@ -122,7 +123,7 @@ class BoneRenamePanel(bpy.types.Panel):
             # ボーン識別文字（ドロップダウン）
             row = box3.row()
             split = row.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
-            split.label(text="ボーン識別子:")
+            split.label(text=_("ボーン識別子:"))
             right = split.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
             right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
             right.operator("brt.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
@@ -141,18 +142,18 @@ class BoneRenamePanel(bpy.types.Panel):
 
             row = box3.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
             row.prop(scene, "brt_assign_identifier", text="")  # チェックボックス
-            row.label(text="左右識別子を付与する") # 非連動
+            row.label(text=_("左右識別子を付与する")) # 非連動
             row.prop(props, "bone_rule", text="") # 判別ペアのドロップダウン（選択中のセットに応じた項目）
 
             row = box3.row()
             row.prop(scene, "brt_bone_x_mirror", text="")  # チェックボックス
-            row.label(text="選択ボーンをグローバルXミラーする") # 非連動
+            row.label(text=_("選択ボーンをグローバルXミラーする")) # 非連動
 
             row = box3.row()
             row.prop(scene, "brt_duplicate_and_rename", text="")  # チェックボックス
-            row.label(text="複製してリネームする") # 非連動
+            row.label(text=_("複製してリネームする")) # 非連動
 
-            box3.operator("brt.invert_selected_bones", text="選択ボーン反転リネーム", icon="GROUP_BONE") # 実行ボタン
+            box3.operator("brt.invert_selected_bones", text=_("選択ボーン反転リネーム"), icon="GROUP_BONE") # 実行ボタン
 
 
         # --- セクション 4: その他リネームツール操作 ----------------------------------
@@ -163,8 +164,8 @@ class BoneRenamePanel(bpy.types.Panel):
 
         if scene.brt_show_group_tools:
             row = box4.row()
-            row.operator("brt.rename_groups", text="全対称化付与", icon="PLUS") # 実行ボタン
-            row.operator("brt.revert_names", text="全対称化削除", icon="CANCEL") # 実行ボタン
+            row.operator("brt.rename_groups", text=_("全対称化付与"), icon="PLUS") # 実行ボタン
+            row.operator("brt.revert_names", text=_("全対称化削除"), icon="CANCEL") # 実行ボタン
 
     ''' ツールボックス１つのみ版
     def draw(self, context):
@@ -257,14 +258,14 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     use_auto_select: bpy.props.BoolProperty(
-        name="線形チェーンを選択",
-        description="ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
+        name=_("線形チェーンを選択"),
+        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
         default=True
     )
 
     filter_inconsistent: bpy.props.BoolProperty(
-        name="一致しないボーンを除外",
-        description="明らかにネーミングルールが異なるボーンを共通抽出対象から除外します",
+        name=_("一致しないボーンを除外"),
+        description=_("明らかにネーミングルールが異なるボーンを共通抽出対象から除外します"),
         default=True
     )
 
@@ -273,7 +274,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, "アーマチュアが選択されていません")
+            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -284,11 +285,11 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
             bones = [b for b in obj.data.edit_bones if b.select]
             clear_selection = lambda: [setattr(b, "select", False) for b in bones]
         else:
-            self.report({'WARNING'}, "対応しているのは Pose モードまたは Edit モードです")
+            self.report({'WARNING'}, _("対応しているのは Pose モードまたは Edit モードです"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, "ボーンが選択されていません")
+            self.report({'WARNING'}, _("ボーンが選択されていません"))
             return {'CANCELLED'}
 
         # 共通プレフィックス名を抽出
@@ -302,7 +303,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
             context.scene.brt_rename_prefix = prefix
             self.report({'INFO'}, f"共通部分を設定: {prefix}")
         else:
-            self.report({'WARNING'}, "共通部分が検出できませんでした")
+            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
 
         # use_auto_select が ON の場合は選択処理も行う
         if self.use_auto_select:
@@ -320,8 +321,8 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     use_auto_select: bpy.props.BoolProperty(
-        name="線形チェーンを選択",
-        description="ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
+        name=_("線形チェーンを選択"),
+        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
         default=True
     )
 
@@ -330,7 +331,7 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, "アーマチュアが選択されていません")
+            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -339,11 +340,11 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             bones = [b for b in obj.data.edit_bones if b.select]
         else:
-            self.report({'WARNING'}, "対応しているのは Pose または Edit モードです")
+            self.report({'WARNING'}, _("対応しているのは Pose または Edit モードです"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, "ボーンが選択されていません")
+            self.report({'WARNING'}, _("ボーンが選択されていません"))
             return {'CANCELLED'}
 
         # ネーミング規則に基づいて共通部分を抽出
@@ -357,7 +358,7 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
             context.scene.brt_rename_source_name = prefix
             self.report({'INFO'}, f"抽出結果: {prefix}")
         else:
-            self.report({'WARNING'}, "共通部分が検出できませんでした")
+            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
 
         # 自動選択が ON の場合はチェーンを選択
         if self.use_auto_select:
@@ -370,13 +371,13 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
 
 class BRT_OT_SelectLinearChain(bpy.types.Operator):
     """選択中ボーンから線形チェーン（分岐のない親子構造）を選択"""
-    bl_idname = "brt.brt_select_linear_chain"
+    bl_idname = "brt.select_linear_chain"
     bl_label = "線形チェーン選択"
     bl_options = {'REGISTER', 'UNDO'}
 
     filter_inconsistent: bpy.props.BoolProperty(
-        name="一致しないボーンを除外",
-        description="ネーミング規則が共通しないボーンを除外します",
+        name=_("一致しないボーンを除外"),
+        description=_("ネーミング規則が共通しないボーンを除外します"),
         default=True
     )
 
@@ -385,7 +386,7 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, "アーマチュアが選択されていません")
+            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -394,11 +395,11 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             bones = [b for b in obj.data.edit_bones if b.select]
         else:
-            self.report({'WARNING'}, "対応モードは Pose または Edit です")
+            self.report({'WARNING'}, _("対応モードは Pose または Edit です"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, "起点となるボーンが選択されていません")
+            self.report({'WARNING'}, _("起点となるボーンが選択されていません"))
             return {'CANCELLED'}
 
         # 最初に選択されているボーンを起点に線形チェーンを選択
@@ -413,7 +414,7 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
             prefix_filter=prefix
         )
 
-        self.report({'INFO'}, "線形チェーンを選択しました")
+        self.report({'INFO'}, _("線形チェーンを選択しました"))
         return {'FINISHED'}
 
 class BRT_OT_RenameGroups(bpy.types.Operator):
@@ -478,7 +479,7 @@ class BRT_OT_ReplaceBoneName(bpy.types.Operator):
         elif partial:
             self.report({'WARNING'}, message)
         else:
-            self.report({'INFO'}, "ボーン名の置換を完了しました")
+            self.report({'INFO'}, _("ボーン名の置換を完了しました"))
         return {'FINISHED'}
     
 
@@ -520,13 +521,13 @@ def get_rule_items(self, context):
 # プロパティグループ
 class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
-        name="識別子セット",
+        name=_("識別子セット"),
         items=get_bone_pattern_items # JSONから読み込み
     )
 
     bone_rule: bpy.props.EnumProperty(
-        name="識別子ペア",
-        description="現在のセット内のルールを選択",
+        name=_("識別子ペア"),
+        description=_("現在のセット内のルールを選択"),
         items=lambda self, context: get_rule_items(self, context)
     )
 
@@ -542,3 +543,19 @@ class BRT_OT_OpenPreferences(bpy.types.Operator):
         # アドオン指定でプリファレンスを開きたい場合はアドオンフォルダ名を設定
         # context.window_manager.addon_search = "DIVA_BoneRenameTools"
         return {'FINISHED'}
+
+
+def get_classes():
+    return [
+        DIVA_PT_BoneRenamePanel,
+        BRT_OT_ReplaceBoneName,
+        BRT_OT_DetectCommonPrefix,
+        BRT_OT_RenameGroups,
+        BRT_OT_RevertNames,
+        BRT_OT_InvertSelectedBones,
+        BRT_OT_RenameSelectedBones,
+        BRT_OT_ExtractSourceName,
+        BRT_OT_SelectLinearChain,
+        BRT_OT_OpenPreferences,
+        BRT_InvertSelectedBonesProps,
+    ]

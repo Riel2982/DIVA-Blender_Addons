@@ -27,7 +27,7 @@ def replace_bone_names_by_rule(context, source, target):
         print(f"Checking: {bone.name} → contains '{source}'? {'YES' if source in bone.name else 'NO'}")
         if source in bone.name:
             new_name = bone.name.replace(source, target)
-            if context.scene.remove_number_suffix:
+            if context.scene.brt_remove_number_suffix:
                 new_name = strip_number_suffix(new_name)
             bone.name = new_name
             matched += 1
