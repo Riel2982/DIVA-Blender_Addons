@@ -15,6 +15,7 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 
 - **Bone Transfer Tools**
   - ボーンを簡単に移植するためのツール。  
+  - 移植するボーンに合わせてMESHモード・BONEモード・MULTIモードの三つのモードを切り替えて実行できます。  
 
 - **Splite Mirror Weight**
   - オリジナルを左右反転したオブジェクト（メッシュ）を作成する。
