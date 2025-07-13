@@ -3,19 +3,24 @@ from bpy.app.translations import pgettext as _
 from bpy.types import AddonPreferences, PropertyGroup
 from bpy.props import StringProperty, CollectionProperty
 from bpy.types import Operator, UILayout
+from .brt_types import BRT_BonePatternItem, BRT_BoneRuleItem
+from .brt_types import get_bone_pattern_items, get_rule_items
+from .brt_update import draw_update_ui
 import os
 import json
 
 
 # デフォルト識別子の定義
-DEFAULT_BONE_PATTERN = {
-    "label": "DIVA(Default)",
-    "rules": [
-        {"right": "_r_", "left": "_l_", "use_regex": False},
-        {"right": "_r0", "left": "_l0", "use_regex": False},
-        {"right": "_r1", "left": "_l1", "use_regex": False},
-    ],
-}
+DEFAULT_BONE_PATTERN = [
+    {
+        "label": "DIVA(Default)",
+        "rules": [
+            {"right": "_r_", "left": "_l_", "use_regex": False},
+            {"right": "_r0", "left": "_l0", "use_regex": False},
+            {"right": "_r1", "left": "_l1", "use_regex": False},
+        ],
+    }
+]
 
 
 # JSONファイルの保存先（アドオンフォルダの中などに）
@@ -82,6 +87,7 @@ def load_bone_patterns_to_preferences(prefs):
             json.dump(DEFAULT_BONE_PATTERN, f, ensure_ascii=False, indent=2)
         apply_default()
 
+'''
 def get_bone_pattern_items(self, context):
     prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
     return [(p.label, p.label, "") for p in prefs.bone_patterns]
@@ -92,18 +98,8 @@ def get_rule_items(self, context):
         if p.label == self.bone_pattern:
             return [(r.left + "↔" + r.right, r.left + "↔" + r.right, "") for r in p.rules]
     return []
+'''
 
-# オプションひとつずつのデータ
-# 識別子ルールのデータ（左右ペア）
-class BRT_BoneRuleItem(bpy.types.PropertyGroup):
-    right: bpy.props.StringProperty(name="右")
-    left: bpy.props.StringProperty(name="左")
-    use_regex: bpy.props.BoolProperty(default=False, options={'HIDDEN'})  # ← 正規表現で置き換えるか（False＝使わない）/ 現時点ではUI側にこの設定は非表示
-
-# 識別子セット（ラベルとルールリスト）
-class BRT_BonePatternItem(bpy.types.PropertyGroup):
-    label: bpy.props.StringProperty(name="セット名")
-    rules: bpy.props.CollectionProperty(type=BRT_BoneRuleItem)
 
 # アドオンプリファレンス本体（表示と編集UI）
 class BRT_AddonPreferences(bpy.types.AddonPreferences):
@@ -115,9 +111,17 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
         prefs = self  # アドオンプリファレンス本体（表示と編集UI）
+        scene = context.scene
+
+        # 更新用UI
+        draw_update_ui(layout, scene)
+
+        # 左右識別子設定UI
+        main_box = layout.box() 
+        main_box.label(text=_("識別セットの編集"), icon='ASSET_MANAGER')  # 必要に応じて icon を調整
 
         for i, pattern in enumerate(prefs.bone_patterns):
-            row_outer = layout.row(align=True)
+            row_outer = main_box.row(align=True)
 
             # 左側：上下ボタン（枠の外）
             col_left = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
@@ -154,11 +158,11 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
             col_right.separator()  # セパレータで上にスペースを追加
             col_right.operator("brt.delete_bone_pattern", text="", icon="X").index = i  # セット削除ボタン
 
-        layout.separator()
+        main_box.separator()
 
-        layout.operator("brt.add_bone_pattern", icon="COLLECTION_NEW") # 識別端子セットの追加
+        main_box.operator("brt.add_bone_pattern", text=_("Add Identifier Set"), icon="COLLECTION_NEW") # 識別端子セットの追加
 
-        row1 = layout.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+        row1 = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
         row1.operator("brt.append_default_bone_set", text=_("デフォルトセットを復元"), icon="COPY_ID")
         row1.operator("brt.reset_bone_patterns", text=_("リセット"), icon="FILE_REFRESH")
         row1.operator("brt.save_bone_patterns", text=_("保存"), icon="DISC")
@@ -177,7 +181,7 @@ class BRT_OT_AddBonePattern(bpy.types.Operator):
         rule = new_pattern.rules.add()
         rule.right = "R"
         rule.left = "L"
-        rule.use_regex = False  # s正規表現置き換え不使用
+        rule.use_regex = False  # 正規表現置き換え不使用
         return {'FINISHED'}
 
 class BRT_OT_AddBoneRule(bpy.types.Operator):
@@ -301,18 +305,19 @@ class BRT_OT_AppendDefaultSet(bpy.types.Operator):
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        prefs.bone_patterns.add()
-        for i in reversed(range(len(prefs.bone_patterns) - 1)):
-            prefs.bone_patterns.move(i, i + 1)
+        pattern = prefs.bone_patterns.add()     # セットを追加
 
-        pattern = prefs.bone_patterns[0]
-        pattern.label = DEFAULT_BONE_PATTERN["label"]
+        pattern_data = DEFAULT_BONE_PATTERN[0]  #デフォルトセットの先頭の辞書を取得
+        pattern.label = pattern_data["label"]
         pattern.rules.clear()
-        for r in DEFAULT_BONE_PATTERN["rules"]:
+        for r in pattern_data["rules"]: 
             rule = pattern.rules.add()
             rule.right = r["right"]
             rule.left = r["left"]
             rule.use_regex = r.get("use_regex", False) # 正規表現置き換えは不使用
+
+        index = len(prefs.bone_patterns) - 1
+        prefs.bone_patterns.move(index, 0)   # セットを先頭へ移動
 
         self.report({'INFO'}, _("デフォルトセットを追加しました"))
         return {'FINISHED'}
@@ -366,7 +371,7 @@ def get_classes():
         BRT_OT_ResetBonePatterns,
         BRT_OT_SaveBonePatterns,
         BRT_OT_AppendDefaultSet,
-        BRT_BoneRuleItem,
-        BRT_BonePatternItem,
+        # BRT_BoneRuleItem,
+        # BRT_BonePatternItem,
         BRT_AddonPreferences,
     ]

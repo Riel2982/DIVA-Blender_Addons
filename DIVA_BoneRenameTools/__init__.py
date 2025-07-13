@@ -15,15 +15,18 @@ bl_info = {
 import bpy
 from . import brt_translation
 from . import brt_panel
-from . import rename_bones
-from . import rename_groups
 from . import brt_preferences
 from . import brt_types
+from . import brt_ui_rename
+from . import brt_ui_replace
+from . import brt_ui_invert
+from . import brt_ui_other
+from . import brt_update
 from .brt_preferences import load_bone_patterns_to_preferences
 
 
 # すべてのクラスをまとめる
-modules = [brt_panel, brt_preferences, brt_types]
+modules = [brt_types, brt_panel, brt_preferences, brt_ui_rename, brt_ui_replace, brt_ui_invert, brt_ui_other, brt_update]
 
 # register() 内で動的にクラスを取得
 def register():

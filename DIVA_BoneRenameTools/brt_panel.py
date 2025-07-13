@@ -1,5 +1,9 @@
 import bpy
 from bpy.app.translations import pgettext as _
+from .brt_ui_rename import panel_rename_ui
+from .brt_ui_replace import panel_replace_ui
+from .brt_ui_invert import panel_invert_ui
+from .brt_ui_other import panel_other_ui
 
 class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
     """NパネルのUI"""
@@ -14,6 +18,17 @@ class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
         layout = self.layout
         layout.label(icon='GROUP_BONE') # ボーンミラー風
 
+    # UIをセクションごとに分離
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        panel_rename_ui(layout, scene)
+        panel_replace_ui(layout, scene)
+        panel_invert_ui(layout, context, scene)
+        panel_other_ui(layout, scene)
+
+if False:
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -236,253 +251,8 @@ class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
             row2.operator("brt.revert_names", text="全対称化削除")
     '''
 
-class BRT_OT_RenameSelectedBones(bpy.types.Operator):
-    """ボーン連番リネーム"""
-    bl_idname = "brt.rename_selected_bones"
-    bl_label = "Rename Selected Bones"
-
-    def execute(self, context):
-        from .rename_bones import rename_selected_bones
-        rename_selected_bones(
-            context.scene.brt_rename_prefix,
-            context.scene.brt_rename_start_number,
-            context.scene.brt_rename_suffix,
-            context.scene.brt_rename_rule
-        )
-        return {'FINISHED'}
-
-class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
-    """選択ボーン名の共通部分を抽出 または 線形チェーン選択"""
-    bl_idname = "brt.detect_common_prefix"
-    bl_label = "共通部分を検出"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    use_auto_select: bpy.props.BoolProperty(
-        name=_("線形チェーンを選択"),
-        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
-        default=True
-    )
-
-    filter_inconsistent: bpy.props.BoolProperty(
-        name=_("一致しないボーンを除外"),
-        description=_("明らかにネーミングルールが異なるボーンを共通抽出対象から除外します"),
-        default=True
-    )
-
-    def execute(self, context):
-        from . import rename_detect  # 外部ロジックに分離
-
-        obj = context.object
-        if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
-            return {'CANCELLED'}
-
-        mode = context.mode
-        if mode == 'POSE':
-            bones = [b for b in obj.pose.bones if b.bone.select]
-            clear_selection = lambda: bpy.ops.pose.select_all(action='DESELECT')
-        elif mode == 'EDIT_ARMATURE':
-            bones = [b for b in obj.data.edit_bones if b.select]
-            clear_selection = lambda: [setattr(b, "select", False) for b in bones]
-        else:
-            self.report({'WARNING'}, _("対応しているのは Pose モードまたは Edit モードです"))
-            return {'CANCELLED'}
-
-        if not bones:
-            self.report({'WARNING'}, _("ボーンが選択されていません"))
-            return {'CANCELLED'}
-
-        # 共通プレフィックス名を抽出
-        prefix = rename_detect.detect_common_prefix(
-            bones=bones,
-            suffix_enum=context.scene.brt_rename_suffix,
-            rule_enum=context.scene.brt_rename_rule
-        )
-
-        if prefix:
-            context.scene.brt_rename_prefix = prefix
-            self.report({'INFO'}, f"共通部分を設定: {prefix}")
-        else:
-            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
-
-        # use_auto_select が ON の場合は選択処理も行う
-        if self.use_auto_select:
-            rename_detect.select_linear_chain_inclusive(
-                bones[0].name,
-                prefix_filter=prefix if self.filter_inconsistent else None
-            )
-
-        return {'FINISHED'} if prefix else {'CANCELLED'}
-
-class BRT_OT_ExtractSourceName(bpy.types.Operator):
-    """選択ボーンから置換元名を抽出"""
-    bl_idname = "brt.extract_source_name"
-    bl_label = "抽出:置換元"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    use_auto_select: bpy.props.BoolProperty(
-        name=_("線形チェーンを選択"),
-        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
-        default=True
-    )
-
-    def execute(self, context):
-        from .rename_detect import detect_common_prefix, select_linear_chain_inclusive
-
-        obj = context.object
-        if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
-            return {'CANCELLED'}
-
-        mode = context.mode
-        if mode == 'POSE':
-            bones = [b for b in obj.pose.bones if b.bone.select]
-        elif mode == 'EDIT_ARMATURE':
-            bones = [b for b in obj.data.edit_bones if b.select]
-        else:
-            self.report({'WARNING'}, _("対応しているのは Pose または Edit モードです"))
-            return {'CANCELLED'}
-
-        if not bones:
-            self.report({'WARNING'}, _("ボーンが選択されていません"))
-            return {'CANCELLED'}
-
-        # ネーミング規則に基づいて共通部分を抽出
-        prefix = detect_common_prefix(
-            bones,
-            suffix_enum=context.scene.brt_rename_suffix,
-            rule_enum=context.scene.brt_rename_rule
-        )
-
-        if prefix:
-            context.scene.brt_rename_source_name = prefix
-            self.report({'INFO'}, f"抽出結果: {prefix}")
-        else:
-            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
-
-        # 自動選択が ON の場合はチェーンを選択
-        if self.use_auto_select:
-            select_linear_chain_inclusive(
-                bones[0].name,
-                prefix_filter=prefix
-            )
-
-        return {'FINISHED'} if prefix else {'CANCELLED'}
-
-class BRT_OT_SelectLinearChain(bpy.types.Operator):
-    """選択中ボーンから線形チェーン（分岐のない親子構造）を選択"""
-    bl_idname = "brt.select_linear_chain"
-    bl_label = "線形チェーン選択"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    filter_inconsistent: bpy.props.BoolProperty(
-        name=_("一致しないボーンを除外"),
-        description=_("ネーミング規則が共通しないボーンを除外します"),
-        default=True
-    )
-
-    def execute(self, context):
-        from . import rename_detect
-
-        obj = context.object
-        if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
-            return {'CANCELLED'}
-
-        mode = context.mode
-        if mode == 'POSE':
-            bones = [b for b in obj.pose.bones if b.bone.select]
-        elif mode == 'EDIT_ARMATURE':
-            bones = [b for b in obj.data.edit_bones if b.select]
-        else:
-            self.report({'WARNING'}, _("対応モードは Pose または Edit です"))
-            return {'CANCELLED'}
-
-        if not bones:
-            self.report({'WARNING'}, _("起点となるボーンが選択されていません"))
-            return {'CANCELLED'}
-
-        # 最初に選択されているボーンを起点に線形チェーンを選択
-        prefix = rename_detect.detect_common_prefix(
-            bones=bones,
-            suffix_enum=context.scene.brt_rename_suffix,
-            rule_enum=context.scene.brt_rename_rule
-        ) if self.filter_inconsistent else None
-
-        rename_detect.select_linear_chain_inclusive(
-            bones[0].name,
-            prefix_filter=prefix
-        )
-
-        self.report({'INFO'}, _("線形チェーンを選択しました"))
-        return {'FINISHED'}
-
-class BRT_OT_RenameGroups(bpy.types.Operator):
-    """特定単語リネーム"""
-    bl_idname = "brt.rename_groups"
-    bl_label = "Rename Bones & Vertex Groups"
-
-    def execute(self, context):
-        from .rename_groups import rename_bones_and_vertex_groups
-        rename_bones_and_vertex_groups()
-        return {'FINISHED'}
-
-class BRT_OT_RevertNames(bpy.types.Operator):
-    """名前を元に戻す"""
-    bl_idname = "brt.revert_names"
-    bl_label = "Revert Renamed Names"
-
-    def execute(self, context):
-        from .rename_groups import revert_renamed_names
-        revert_renamed_names()
-        return {'FINISHED'}
-
-class BRT_OT_InvertSelectedBones(bpy.types.Operator):
-    """選択ボーンの左右反転リネーム"""
-    bl_idname = "brt.invert_selected_bones"
-    bl_label = "Invert Selected Bones"
-
-    def execute(self, context):
-        from .rename_symmetry import apply_mirrored_rename
-        props = context.scene.brt_invert_selected_bones
-
-        renamed = apply_mirrored_rename(
-            context,
-            pattern_name=props.bone_pattern,
-            duplicate=context.scene.brt_duplicate_and_rename,
-            mirror=context.scene.brt_bone_x_mirror,
-            assign_identifier=context.scene.brt_assign_identifier,
-            suffix_enum="wj",  # 任意の設定値
-            rule_enum="000",   # 任意の設定値
-            rule_index=int(props.bone_rule)
-        )
-
-        self.report({'INFO'}, f"{renamed}本のボーン名を変更しました")
-        return {'FINISHED'}
-
-class BRT_OT_ReplaceBoneName(bpy.types.Operator):
-    """ボーン名の一部を一括置換"""
-    bl_idname = "brt.replace_bone_name"
-    bl_label = "Replace Bone Name"
-
-    def execute(self, context):
-        from .rename_rules import replace_bone_names_by_rule
-
-        src = context.scene.brt_rename_source_name
-        tgt = context.scene.brt_rename_target_name
-
-        success, partial, message = replace_bone_names_by_rule(context, src, tgt)
-
-        if not success:
-            self.report({'WARNING'}, message)
-            return {'CANCELLED'}
-        elif partial:
-            self.report({'WARNING'}, message)
-        else:
-            self.report({'INFO'}, _("ボーン名の置換を完了しました"))
-        return {'FINISHED'}
     
-
+'''
 # ボーン識別子セットの取得
 def get_bone_pattern_items(self, context):
     prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
@@ -517,45 +287,11 @@ def get_rule_items(self, context):
             ]
 
     return []
+'''
 
-# プロパティグループ
-class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):
-    bone_pattern: bpy.props.EnumProperty(
-        name=_("識別子セット"),
-        items=get_bone_pattern_items # JSONから読み込み
-    )
-
-    bone_rule: bpy.props.EnumProperty(
-        name=_("識別子ペア"),
-        description=_("現在のセット内のルールを選択"),
-        items=lambda self, context: get_rule_items(self, context)
-    )
-
-#  DIVAアドオン設定画面（プリファレンス）を開く
-class BRT_OT_OpenPreferences(bpy.types.Operator):
-    bl_idname = "brt.open_preferences"
-    bl_label = "DIVA 設定を開く"
-
-    def execute(self, context):
-        bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く
-        context.preferences.active_section = 'ADDONS'
-        context.window_manager.addon_search = "diva"
-        # アドオン指定でプリファレンスを開きたい場合はアドオンフォルダ名を設定
-        # context.window_manager.addon_search = "DIVA_BoneRenameTools"
-        return {'FINISHED'}
 
 
 def get_classes():
     return [
         DIVA_PT_BoneRenamePanel,
-        BRT_OT_ReplaceBoneName,
-        BRT_OT_DetectCommonPrefix,
-        BRT_OT_RenameGroups,
-        BRT_OT_RevertNames,
-        BRT_OT_InvertSelectedBones,
-        BRT_OT_RenameSelectedBones,
-        BRT_OT_ExtractSourceName,
-        BRT_OT_SelectLinearChain,
-        BRT_OT_OpenPreferences,
-        BRT_InvertSelectedBonesProps,
     ]
