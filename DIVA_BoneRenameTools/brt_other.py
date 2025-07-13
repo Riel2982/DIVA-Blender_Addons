@@ -1,3 +1,5 @@
+# brt_other.py（旧rename_groups.py）
+
 import bpy
 import re
 
