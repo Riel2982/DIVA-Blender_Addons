@@ -1,3 +1,5 @@
+# brt_rename.py（旧rename_bones.py）
+
 import bpy
 
 def get_depth(bone, depth=0):
