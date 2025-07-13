@@ -1,3 +1,5 @@
+# brt_sub.py（旧rename_detect）
+
 import bpy
 import re
 from os.path import commonprefix
