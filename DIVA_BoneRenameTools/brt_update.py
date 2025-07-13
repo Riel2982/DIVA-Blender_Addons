@@ -20,6 +20,7 @@ def draw_update_ui(layout, scene):
         box.label(text="更新が完了しました。Blenderを再起動してください", icon="INFO")
 
 
+
 # 各種オペレーター
 class BRT_OT_OpenURL(bpy.types.Operator):
     """更新を確認"""
@@ -45,7 +46,6 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     filepath: bpy.props.StringProperty(
         name=_("Select ZIP File"),
         description=_("Choose a ZIP file starting with DIVA_BoneRenameTools"),
-        subtype='FILE_PATH',
         #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
     )
 
@@ -85,6 +85,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
         pattern = re.compile(r"^DIVA_BoneRenameTools.*\.zip$")
         if not pattern.match(filename):
             self.report({'WARNING'}, _("DIVA_BoneRenameTools で始まるZIPファイル以外は処理できません"))
+            context.scene.brt_update_completed = False
             return {'CANCELLED'}
 
         # 一時解凍フォルダの作成
@@ -102,12 +103,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             if not os.path.isdir(source_folder) or not os.path.isfile(source_init):
                 self.report({'WARNING'}, _("ZIP内に DIVA_BoneRenameTools フォルダまたは __init__.py が見つかりません"))
                 shutil.rmtree(extract_path)
+                context.scene.brt_update_completed = False
                 return {'CANCELLED'}
 
             source_name = self.read_bl_info_name(source_init)
             if not source_name:
                 self.report({'WARNING'}, _("ZIP内の bl_info.name を取得できません"))
                 shutil.rmtree(extract_path)
+                context.scene.brt_update_completed = False
                 return {'CANCELLED'}
 
             # 自分自身のアドオンフォルダを取得
@@ -135,6 +138,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
                 if not self.dirpath:
                     self.report({'INFO'}, _("インストールはキャンセルされました"))
                     shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
+                    context.scene.brt_update_completed = False
                     return {'CANCELLED'}
 
                 # 選ばれたフォルダに __init__.py があるか確認
@@ -142,12 +146,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
                 if not os.path.isfile(manual_init):
                     self.report({'WARNING'}, _("選択されたフォルダに __init__.py が見つかりません"))
                     shutil.rmtree(extract_path)
+                    context.scene.brt_update_completed = False
                     return {'CANCELLED'}
 
                 manual_name = self.read_bl_info_name(manual_init)
                 if manual_name != source_name:
                     self.report({'WARNING'}, _("bl_info.name が一致しないため、更新できません"))
                     shutil.rmtree(extract_path)
+                    context.scene.brt_update_completed = False
                     return {'CANCELLED'}
 
                 # 一致したので選択されたフォルダに更新実行
@@ -165,17 +171,19 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             shutil.rmtree(extract_path)
             # 更新完了ポップアップ表示
             self.report({'INFO'}, _("更新が完了しました。Blenderを再起動してください"))
+            context.scene.brt_update_completed = True
             return context.window_manager.invoke_popup(self, width=400)
 
         except Exception as e:  # 例外発生時のエラー通知とクリーンアップ
             self.report({'ERROR'}, _("更新に失敗しました: {error}").format(error=str(e)))
             shutil.rmtree(extract_path, ignore_errors=True)
+            context.scene.brt_update_completed = False
             return {'CANCELLED'}
 
     # 更新完了時のポップアップ表示内容
     def draw(self, context):
         layout = self.layout
-        layout.label(text=_("更新が完了しました。Blenderを再起動してください"), icon='INFO')
+        layout.label(text=_("更新後はBlenderを再起動してください"), icon='INFO')
 
         
 class BRT_OT_OpenAddonFolder(bpy.types.Operator):
@@ -203,3 +211,9 @@ def get_classes():
         BRT_OT_ExecuteUpdate,
         BRT_OT_OpenAddonFolder,
     ]
+
+def register_properties():
+    bpy.types.Scene.brt_update_completed = bpy.props.BoolProperty(default=False)
+
+def unregister_properties():
+    del bpy.types.Scene.brt_update_completed
