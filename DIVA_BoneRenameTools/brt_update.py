@@ -15,6 +15,9 @@ def draw_update_ui(layout, scene):
     row.operator("brt.execute_update", text=_("インストール"), icon="IMPORT") 
     row.operator("brt.open_addon_folder", text=_("アドオンフォルダを開く"), icon="FILE_FOLDER") 
 
+    # 成功時だけ表示する INFOラベル
+    if getattr(scene, "brt_update_completed", False):
+        box.label(text="更新が完了しました。Blenderを再起動してください", icon="INFO")
 
 
 # 各種オペレーター
