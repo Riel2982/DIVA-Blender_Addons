@@ -1,3 +1,5 @@
+# brt_replace.py（旧rename_rules.py）
+
 import bpy
 import re
 from os.path import commonprefix
