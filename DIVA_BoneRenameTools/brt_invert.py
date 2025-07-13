@@ -1,4 +1,4 @@
-# rename_symmetry.py
+# brt_invert.py（旧# rename_symmetry.py）
 
 import bpy
 import re
