@@ -7,7 +7,7 @@ from typing import Optional
 
 # 選択中のボーンに対して、識別パターンに基づいて名前を反転リネーム
 def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror=False, assign_identifier=False, suffix_enum="wj", rule_enum="000", rule_index=0):
-    from .rename_detect import detect_common_prefix
+    from .brt_sub import detect_common_prefix
 
     obj = context.object
     if not obj or obj.type != 'ARMATURE':

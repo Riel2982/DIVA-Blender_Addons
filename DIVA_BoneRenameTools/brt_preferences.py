@@ -164,8 +164,8 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
 
         row1 = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
         row1.operator("brt.append_default_bone_set", text=_("デフォルトセットを復元"), icon="COPY_ID")
-        row1.operator("brt.reset_bone_patterns", text=_("リセット"), icon="FILE_REFRESH")
-        row1.operator("brt.save_bone_patterns", text=_("保存"), icon="DISC")
+        row1.operator("brt.reset_bone_patterns", text=_("リセット"), icon="DECORATE_OVERRIDE")
+        row1.operator("brt.save_bone_patterns", text=_("保存"), icon="FILE_TICK")
 
 # プリファレンスの編集UI
 class BRT_OT_AddBonePattern(bpy.types.Operator):

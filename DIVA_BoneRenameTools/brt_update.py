@@ -1,6 +1,12 @@
 # brt_update.py
 
 import bpy
+import os
+import json
+import zipfile
+import shutil
+import re
+import datetime
 from bpy.app.translations import pgettext as _
 
 # --- アドオン更新UI -------------------------------------
@@ -15,10 +21,65 @@ def draw_update_ui(layout, scene):
     row.operator("brt.execute_update", text=_("インストール"), icon="IMPORT") 
     row.operator("brt.open_addon_folder", text=_("アドオンフォルダを開く"), icon="FILE_FOLDER") 
 
+    # ダウンロード先パスのラベル＋操作群をまとめて一行に並べる
+    row = box.row()
+    row.prop(scene, "brt_download_folder", text="DLフォルダパス")  # テキスト入力欄（ラベルなし）
+
     # 成功時だけ表示する INFOラベル
     if getattr(scene, "brt_update_completed", False):
-        box.label(text="更新が完了しました。Blenderを再起動してください", icon="INFO")
+        box.label(text=_("更新が完了しました。Blenderを再起動してください"), icon="INFO")
 
+    # 非実行時・失敗時に表示する 更新ファイルリスト
+    else:
+        row = box.row()
+        row.label(text=_("更新ファイル一覧: "), icon='PRESET')
+        row.operator("brt.sort_candidates_name", text="", icon="SORTALPHA")     # 名前順
+        row.operator("brt.sort_candidates_date", text="", icon="SORTTIME")      # 日付順
+        row.operator("brt.confirm_download_folder", text="", icon="FILE_REFRESH")  # リスト更新
+
+        box.template_list(
+            "BRT_UL_UpdateCandidateList", "",
+            scene, "brt_update_candidates",
+            scene, "brt_selected_candidate_index",
+            rows=2      # 初期行数
+        )
+
+
+# --- プロパティグループ＆UIリスト -------------------------------------
+class BRT_UpdateCandidateItem(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty()
+    path: bpy.props.StringProperty()
+    date: bpy.props.StringProperty()
+
+class BRT_UL_UpdateCandidateList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        row = layout.row(align=True)
+        row.label(text=item.name)   # ファイル名
+        row.label(text=item.date)   # 日時
+
+# 設定ファイル関連の関数 -------------------------------------
+def get_addon_folder():
+    return os.path.dirname(os.path.abspath(__file__))
+
+def get_settings_path():
+    return os.path.join(get_addon_folder(), "brt_settings.json")
+
+# 設定ファイルの生成・保存
+def save_download_folder(path):
+    try:        # w=存在しない場合は生成
+        with open(get_settings_path(), "w", encoding="utf-8") as f:
+            json.dump({"download_folder": path}, f)
+        print("✅ 設定ファイルを保存しました:", get_settings_path())
+    except Exception as e:
+        print("❌ 保存失敗:", str(e))
+
+def load_download_folder():
+    try:
+        with open(get_settings_path(), "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data.get("download_folder", "")
+    except Exception:
+        return ""
 
 
 # 各種オペレーター
@@ -35,6 +96,10 @@ class BRT_OT_OpenURL(bpy.types.Operator):
         webbrowser.open(self.url)
         return {'FINISHED'}
     
+    def invoke(self, context, event):
+        # ZIPファイル選択ダイアログを開く
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
 
 class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     """更新ファイルをインストール"""
@@ -56,11 +121,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
         subtype='DIR_PATH'
     )
 
-    def invoke(self, context, event):
-        # ZIPファイル選択ダイアログを開く
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-
+    # 共通処理(更新対象の照合関数)
     def read_bl_info_name(self, init_path):
         """指定された __init__.py から bl_info['name'] を抽出する"""
         import ast
@@ -78,7 +139,18 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             return None
 
     def execute(self, context):
-        import zipfile, shutil, os, re
+        # 🔹 UIリストが選ばれていて、filepath が空の場合のみ 自動補完
+        if not self.filepath:
+            index = context.scene.brt_selected_candidate_index
+            candidates = context.scene.brt_update_candidates
+            if 0 <= index < len(candidates):
+                self.filepath = candidates[index].path
+
+            # それでも filepath が空なら → ダイアログで選択させるべき
+            if not self.filepath:
+                self.report({'INFO'}, _("ZIPファイルが選択されていません。ファイルを指定してください"))
+                context.window_manager.fileselect_add(self)
+                return {'RUNNING_MODAL'}
 
         # ZIPファイル名の確認（パターンに一致しなければ処理中止）
         filename = os.path.basename(self.filepath)
@@ -183,6 +255,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     # 更新完了時のポップアップ表示内容
     def draw(self, context):
         layout = self.layout
+        layout.label(text=_("ZIPファイルを選択してください"), icon='INFO')
         layout.label(text=_("更新後はBlenderを再起動してください"), icon='INFO')
 
         
@@ -204,16 +277,123 @@ class BRT_OT_OpenAddonFolder(bpy.types.Operator):
 
         return {'FINISHED'}
 
+class BRT_OT_ConfirmDownloadFolder(bpy.types.Operator):
+    """更新ファイルリスト更新"""
+    bl_idname = "brt.confirm_download_folder"
+    bl_label = _("Confirm Download Folder")
+    bl_description = _("Scan the folder and list update candidate files")
+
+    def execute(self, context):
+        import os
+        scene = context.scene
+        folder = scene.brt_download_folder
+
+        if not os.path.isdir(folder):
+            self.report({'WARNING'}, "有効なフォルダではありません")
+            return {'CANCELLED'}
+
+        # 設定ファイルに保存
+        save_download_folder(folder)
+        self.report({'INFO'}, _("DLフォルダ設定が保存されました"))
+
+        # 候補リスト初期化
+        scene.brt_update_candidates.clear()
+        files = os.listdir(folder)
+        for fname in sorted(files, reverse=True):
+            if fname.startswith("DIVA_BoneRenameTools") and fname.endswith(".zip"):
+                full_path = os.path.join(folder, fname)
+                timestamp = os.path.getmtime(full_path)
+                import datetime
+                date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+                item = scene.brt_update_candidates.add()
+                item.name = fname
+                item.path = full_path
+                item.date = date
+
+        return {'FINISHED'}
+
+class BRT_OT_SortCandidatesByName(bpy.types.Operator):
+    """ZIPファイル名ソート(A–Z / Z–A)"""
+    bl_idname = "brt.sort_candidates_name"
+    bl_label = _("Sort by File Name")
+    bl_description = _("Sort update files by file name. Click again to toggle order.")
+
+    def execute(self, context):
+        scene = context.scene
+        items = [(i.name, i.path, i.date) for i in scene.brt_update_candidates]
+        scene.brt_update_candidates.clear()
+
+        reverse = scene.brt_sort_name_desc
+        for name, path, date in sorted(items, key=lambda x: x[0].lower(), reverse=reverse):
+            item = scene.brt_update_candidates.add()
+            item.name, item.path, item.date = name, path, date
+
+        scene.brt_sort_name_desc = not scene.brt_sort_name_desc  # トグル切替
+        return {'FINISHED'}
+
+class BRT_OT_SortCandidatesByDate(bpy.types.Operator):
+    """日時順ソート(newest ↔ oldest)"""
+    bl_idname = "brt.sort_candidates_date"
+    bl_label = _("Sort by Update Date")
+    bl_description = _("Sort update files by update/download date. Click again to toggle order.")
+
+    def execute(self, context):
+        scene = context.scene
+        items = [(i.name, i.path, i.date) for i in scene.brt_update_candidates]
+        scene.brt_update_candidates.clear()
+
+        reverse = scene.brt_sort_date_desc
+        for name, path, date in sorted(items, key=lambda x: x[2], reverse=reverse):
+            item = scene.brt_update_candidates.add()
+            item.name, item.path, item.date = name, path, date
+
+        scene.brt_sort_date_desc = not scene.brt_sort_date_desc  # トグル切替
+        return {'FINISHED'}
 
 def get_classes():
     return [
         BRT_OT_OpenURL,
         BRT_OT_ExecuteUpdate,
         BRT_OT_OpenAddonFolder,
+        BRT_OT_ConfirmDownloadFolder,
+        BRT_UpdateCandidateItem,
+        BRT_UL_UpdateCandidateList,
+        BRT_OT_SortCandidatesByName,
+        BRT_OT_SortCandidatesByDate,
     ]
 
 def register_properties():
-    bpy.types.Scene.brt_update_completed = bpy.props.BoolProperty(default=False)
+    # ダウンロードフォルダの初期値を設定ファイルから読み込む
+    bpy.types.Scene.brt_download_folder = bpy.props.StringProperty(
+        name=_("ダウンロードフォルダ"),
+        description=_("更新用ZIPが保存されているフォルダを指定してください"),
+        subtype='DIR_PATH',
+        default=load_download_folder()
+    )
+
+    # 更新候補リスト（CollectionProperty + IntProperty）
+    bpy.types.Scene.brt_update_candidates = bpy.props.CollectionProperty(
+        type=BRT_UpdateCandidateItem
+    )
+    bpy.types.Scene.brt_selected_candidate_index = bpy.props.IntProperty(
+        name=_("候補リスト選択インデックス"),
+        default=-1
+    )
+
+    # 更新完了フラグ（INFOラベル表示の制御に使用）
+    bpy.types.Scene.brt_update_completed = bpy.props.BoolProperty(
+        name=_("更新完了フラグ"),
+        default=False
+    )
+    # 名前順ソートトグル式
+    bpy.types.Scene.brt_sort_name_desc = bpy.props.BoolProperty(default=False)
+    # 日時順ソートトグル式
+    bpy.types.Scene.brt_sort_date_desc = bpy.props.BoolProperty(default=True)
 
 def unregister_properties():
+    del bpy.types.Scene.brt_download_folder
+    del bpy.types.Scene.brt_update_candidates
+    del bpy.types.Scene.brt_selected_candidate_index
     del bpy.types.Scene.brt_update_completed
+    del bpy.types.Scene.brt_sort_name_desc
+    del bpy.types.Scene.brt_sort_date_desc
