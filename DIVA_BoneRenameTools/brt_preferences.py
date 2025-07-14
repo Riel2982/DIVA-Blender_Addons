@@ -1,15 +1,16 @@
 import bpy
+import os
+import json
 from bpy.app.translations import pgettext as _
 from bpy.types import AddonPreferences, PropertyGroup
 from bpy.props import StringProperty, CollectionProperty
 from bpy.types import Operator, UILayout
 from .brt_types import BRT_BonePatternItem, BRT_BoneRuleItem
 from .brt_types import get_bone_pattern_items, get_rule_items
+from .brt_json import load_bone_patterns_to_preferences, get_json_path, DEFAULT_BONE_PATTERN
 from .brt_update import draw_update_ui
-import os
-import json
 
-
+'''
 # デフォルト識別子の定義
 DEFAULT_BONE_PATTERN = [
     {
@@ -35,7 +36,7 @@ def load_bone_patterns_to_preferences(prefs):
 
     def apply_default():
         prefs.bone_patterns.clear()
-        for p in DEFAULT_BONE_PATTERN:
+        for p in DEFAULT_BONE_PATTERN():
             pattern = prefs.bone_patterns.add()
             pattern.label = p["label"]
             for r in p["rules"]:
@@ -46,7 +47,7 @@ def load_bone_patterns_to_preferences(prefs):
 
     if not os.path.exists(path):
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(DEFAULT_BONE_PATTERN, f, ensure_ascii=False, indent=2)
+            json.dump(DEFAULT_BONE_PATTERN(), f, ensure_ascii=False, indent=2)
         apply_default()
         return
 
@@ -84,20 +85,8 @@ def load_bone_patterns_to_preferences(prefs):
 
         # デフォルトで再生成
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(DEFAULT_BONE_PATTERN, f, ensure_ascii=False, indent=2)
+            json.dump(DEFAULT_BONE_PATTERN(), f, ensure_ascii=False, indent=2)
         apply_default()
-
-'''
-def get_bone_pattern_items(self, context):
-    prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-    return [(p.label, p.label, "") for p in prefs.bone_patterns]
-
-def get_rule_items(self, context):
-    prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-    for p in prefs.bone_patterns:
-        if p.label == self.bone_pattern:
-            return [(r.left + "↔" + r.right, r.left + "↔" + r.right, "") for r in p.rules]
-    return []
 '''
 
 
@@ -116,56 +105,63 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
         # 更新用UI
         draw_update_ui(layout, scene)
 
-        # 左右識別子設定UI
-        main_box = layout.box() 
-        main_box.label(text=_("識別セットの編集"), icon='ASSET_MANAGER')  # 必要に応じて icon を調整
+        # トグル付きヘッダー行
+        main_box = layout.box()
+        row = main_box.row(align=True)
+        row.prop(scene, "brt_show_identifier_sets", text="", icon='DOWNARROW_HLT' if scene.brt_show_identifier_sets else 'RIGHTARROW', emboss=False)
+        row.label(text=_("識別子セットの編集"), icon='ASSET_MANAGER')
 
-        for i, pattern in enumerate(prefs.bone_patterns):
-            row_outer = main_box.row(align=True)
+        # 🔻折りたたみ状態なら描画（識別子セット編集のUIの中身）
+        if scene.brt_show_identifier_sets:
+            # main_box = layout.box() 
+            # main_box.label(text=_("識別セットの編集"), icon='ASSET_MANAGER')  # 必要に応じて icon を調整
 
-            # 左側：上下ボタン（枠の外）
-            col_left = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
-            col_left.separator()  # セパレータで上にスペースを追加
-            col_left.separator()  # セパレータで上にスペースを追加
-            col_left.operator("brt.move_bone_pattern_up", text="", icon="TRIA_UP").index = i
-            col_left.separator()  # セパレータで上にスペースを追加
-            col_left.separator()  # セパレータで上にスペースを追加
-            col_left.operator("brt.move_bone_pattern_down", text="", icon="TRIA_DOWN").index = i
+            for i, pattern in enumerate(prefs.bone_patterns):
+                row_outer = main_box.row(align=True)
 
-            # 中央：セット全体の枠（box）
-            box = row_outer.box()
+                # 左側：上下ボタン（枠の外）
+                col_left = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
+                col_left.separator()  # セパレータで上にスペースを追加
+                col_left.separator()  # セパレータで上にスペースを追加
+                col_left.operator("brt.move_bone_pattern_up", text="", icon="TRIA_UP").index = i
+                col_left.separator()  # セパレータで上にスペースを追加
+                col_left.separator()  # セパレータで上にスペースを追加
+                col_left.operator("brt.move_bone_pattern_down", text="", icon="TRIA_DOWN").index = i
 
-            # セット名
-            row = box.row(align=True)
-            row.prop(pattern, "label", text=_("セット名"))
-            row.separator(factor=4.5) # ペア欄と右端を揃える
+                # 中央：セット全体の枠（box）
+                box = row_outer.box()
 
-            # 識別ペアの表示
-            for j, rule in enumerate(pattern.rules):
-                row = box.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-                row.prop(rule, "right", text=_("右"))
-                row.prop(rule, "left", text=_("左"))
+                # セット名
+                row = box.row(align=True)
+                row.prop(pattern, "label", text=_("セット名"))
+                row.separator(factor=4.5) # ペア欄と右端を揃える
 
-                del_op = row.operator("brt.delete_bone_rule", text="", icon="X")  # ペア削除ボタン
-                del_op.pattern_index = i
-                del_op.rule_index = j
+                # 識別ペアの表示
+                for j, rule in enumerate(pattern.rules):
+                    row = box.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+                    row.prop(rule, "right", text=_("右"))
+                    row.prop(rule, "left", text=_("左"))
 
-            # 識別子ペア追加ボタンをセット内に設置
-            box.operator("brt.add_bone_rule", text=_("ペアを追加"), icon="ADD").index = i
+                    del_op = row.operator("brt.delete_bone_rule", text="", icon="X")  # ペア削除ボタン
+                    del_op.pattern_index = i
+                    del_op.rule_index = j
 
-            # 右側：セット削除ボタン（枠の外）
-            col_right = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
-            col_right.separator()  # セパレータで上にスペースを追加
-            col_right.operator("brt.delete_bone_pattern", text="", icon="X").index = i  # セット削除ボタン
+                # 識別子ペア追加ボタンをセット内に設置
+                box.operator("brt.add_bone_rule", text=_("ペアを追加"), icon="ADD").index = i
 
-        main_box.separator()
+                # 右側：セット削除ボタン（枠の外）
+                col_right = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
+                col_right.separator()  # セパレータで上にスペースを追加
+                col_right.operator("brt.delete_bone_pattern", text="", icon="X").index = i  # セット削除ボタン
 
-        main_box.operator("brt.add_bone_pattern", text=_("Add Identifier Set"), icon="COLLECTION_NEW") # 識別端子セットの追加
+            main_box.separator()
 
-        row1 = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
-        row1.operator("brt.append_default_bone_set", text=_("デフォルトセットを復元"), icon="COPY_ID")
-        row1.operator("brt.reset_bone_patterns", text=_("リセット"), icon="DECORATE_OVERRIDE")
-        row1.operator("brt.save_bone_patterns", text=_("保存"), icon="FILE_TICK")
+            main_box.operator("brt.add_bone_pattern", text=_("Add Identifier Set"), icon="COLLECTION_NEW") # 識別端子セットの追加
+
+            row1 = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
+            row1.operator("brt.append_default_bone_set", text=_("デフォルトセットを復元"), icon="COPY_ID")
+            row1.operator("brt.reset_bone_patterns", text=_("リセット"), icon="DECORATE_OVERRIDE")
+            row1.operator("brt.save_bone_patterns", text=_("保存"), icon="FILE_TICK")
 
 # プリファレンスの編集UI
 class BRT_OT_AddBonePattern(bpy.types.Operator):
@@ -307,7 +303,7 @@ class BRT_OT_AppendDefaultSet(bpy.types.Operator):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
         pattern = prefs.bone_patterns.add()     # セットを追加
 
-        pattern_data = DEFAULT_BONE_PATTERN[0]  #デフォルトセットの先頭の辞書を取得
+        pattern_data = DEFAULT_BONE_PATTERN()[0]  #デフォルトセットの先頭の辞書を取得
         pattern.label = pattern_data["label"]
         pattern.rules.clear()
         for r in pattern_data["rules"]: 

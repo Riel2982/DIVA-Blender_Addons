@@ -13,6 +13,8 @@ bl_info = {
 }
 
 import bpy
+import bpy.app.timers
+
 from . import brt_translation
 from . import brt_panel
 from . import brt_preferences
@@ -38,6 +40,12 @@ def register():
 
         if hasattr(mod, "register_properties"):
             mod.register_properties()
+
+        def delayed_initialize():
+            if hasattr(mod, "initialize_candidate_list"):
+                mod.initialize_candidate_list()
+            return None  # 一度だけでOK
+        bpy.app.timers.register(delayed_initialize)
 
     addon = bpy.context.preferences.addons.get(__name__)
     if addon:

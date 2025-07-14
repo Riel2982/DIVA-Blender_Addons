@@ -20,6 +20,11 @@ def panel_rename_ui(layout, scene):
         row.prop(scene, "brt_rename_rule", text=_("法則")) # ドロップダウン
         row.prop(scene, "brt_rename_suffix", text=_("末尾")) # ドロップダウン
 
+        row = box1.row()
+        row.prop(scene, "brt_末端にボーンを追加", text=(""))       # 末端にボーンを追加するチェックボックス
+        row.label(text=_("末端にボーンを追加する"))
+        row.prop(scene, "brt_追加ボーン数", text=_("追加ボーン数"))
+
         box1.operator("brt.rename_selected_bones", text=_("連番リネーム実行"), icon="PRESET") # 実行ボタン
 
 

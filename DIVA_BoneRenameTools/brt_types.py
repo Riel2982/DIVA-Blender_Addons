@@ -2,7 +2,9 @@
 
 import bpy
 from bpy.app.translations import pgettext as _
+from .brt_json import get_bone_pattern_items, get_rule_items
 
+'''
 def get_bone_pattern_items(self, context):
     prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
     items = []
@@ -36,7 +38,7 @@ def get_rule_items(self, context):
             ]
 
     return []
-
+'''
 
 # プロパティグループ
 class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):
@@ -71,6 +73,13 @@ def get_classes():
     ]
 
 def register_properties():
+    # プリファレンスの識別子セット編集折りたたみ機構
+    bpy.types.Scene.brt_show_identifier_sets = bpy.props.BoolProperty(
+        name="識別セットの表示",
+        description="識別子セット全体の編集UIを表示するかどうか",
+        default=False  # デフォルトは閉じておく
+    )
+
     bpy.types.Scene.brt_rename_prefix = bpy.props.StringProperty(
         name=_("共通部分"),
         description=_("ボーン名の共通部分を入力"),
@@ -172,6 +181,7 @@ def register_properties():
 
 
 def unregister_properties():
+    del bpy.types.Scene.brt_show_identifier_sets
     del bpy.types.Scene.brt_rename_prefix
     del bpy.types.Scene.brt_rename_start_number
     del bpy.types.Scene.brt_rename_suffix

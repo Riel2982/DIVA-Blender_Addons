@@ -31,7 +31,7 @@ translation_dict = {
         # brt_panel.py:183, brt_ui_other.py:16
         ("*", "全対称化削除"): "全対称化削除",
         # brt_preferences.py:121
-        ("*", "識別セットの編集"): "識別セット編集",
+        ("*", "識別子セットの編集"): "識別子セット編集",
         # brt_preferences.py:140
         ("*", "セット名"): "セット名",
         # brt_preferences.py:146
@@ -267,7 +267,7 @@ translation_dict = {
         # brt_panel.py:183, brt_ui_other.py:16
         ("*", "全対称化削除"): "All symmetric removal",
         # brt_preferences.py:121
-        ("*", "識別セットの編集"): "Editing Identifier Sets",
+        ("*", "識別子セットの編集"): "Editing Identifier Sets",
         # brt_preferences.py:140
         ("*", "セット名"): "Set name",
         # brt_preferences.py:146
