@@ -70,6 +70,9 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
             # X軸方向を反転してミラー
             target.head[0] *= -1
             target.tail[0] *= -1
+            
+            # ロールも反転（Z軸を基準に反転するようなイメージ）
+            target.roll *= -1
 
         # コピー時の "_copy" を削除
         name = strip_copy_suffix(target.name)
