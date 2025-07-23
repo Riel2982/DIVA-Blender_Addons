@@ -7,6 +7,7 @@ import zipfile
 import shutil
 import re
 import datetime
+from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
 
 # --- アドオン更新UI -------------------------------------

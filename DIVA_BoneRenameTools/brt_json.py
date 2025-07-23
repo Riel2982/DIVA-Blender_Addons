@@ -17,6 +17,7 @@ def DEFAULT_BONE_PATTERN():
         }
     ]
 
+
 def get_json_path():
     path = os.path.join(os.path.dirname(__file__), "bone_patterns.json")
     print("[DIVA] JSON path:", path)
@@ -110,6 +111,20 @@ def get_rule_items(self, context):
                 (str(i), f"{r.right} / {r.left}", "")
                 for i, r in enumerate(pattern.rules)
                 if r.right and r.left
+                and r.use_regex in {False, "none", None}  # 正規表現ルールを除外
             ]
 
     return []
+
+
+#　JSONファイル読み書き関数群
+def load_json_data():
+    try:
+        with open(get_json_path(), "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def save_json_data(data):
+    with open(get_json_path(), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)

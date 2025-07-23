@@ -1,11 +1,11 @@
 bl_info = {
     "name": "DIVA - Bone Rename Tools",
     "author": "Riel",
-    "version": (0, 0, 8),
+    "version": (0, 0, 9),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > DIVA",
     "description": "Nパネルからボーンと頂点グループをリネームするアドオン",
-    "warning": "oppaiボーンの左右反転不具合あり / 多言語対応途中",
+    "warning": "多言語対応途中",
     "support": "COMMUNITY",
     "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Bone-Rename-Tools",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons", 
@@ -15,24 +15,30 @@ bl_info = {
 import bpy
 import bpy.app.timers
 
-from . import brt_translation
-from . import brt_panel
-from . import brt_preferences
-from . import brt_types
-from . import brt_ui_rename
-from . import brt_ui_replace
-from . import brt_ui_invert
-from . import brt_ui_other
-from . import brt_update
+from . import (
+    brt_translation,
+    brt_panel,
+    brt_preferences,
+    brt_types,
+    brt_update,
+)
+
+# Panel-UI機能モジュール
+from . import (
+    brt_ui_rename,
+    brt_ui_replace,
+    brt_ui_invert,
+    brt_ui_other,
+)
 from .brt_preferences import load_bone_patterns_to_preferences
 
 
 # すべてのクラスをまとめる
-modules = [brt_types, brt_panel, brt_preferences, brt_ui_rename, brt_ui_replace, brt_ui_invert, brt_ui_other, brt_update]
+modules = [brt_types, brt_panel, brt_preferences, brt_ui_rename, brt_ui_replace, brt_ui_invert, brt_ui_other,brt_translation, brt_update]
 
 # register() 内で動的にクラスを取得
 def register():
-    brt_translation.register(__name__)
+    brt_translation.register()
     for mod in modules:
         if hasattr(mod, "get_classes"):
             for cls in mod.get_classes():
@@ -60,4 +66,4 @@ def unregister():
 
         if hasattr(mod, "unregister_properties"):
             mod.unregister_properties()
-    brt_translation.unregister(__name__)
+    brt_translation.unregister()

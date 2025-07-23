@@ -8,6 +8,7 @@ from bpy.types import Operator, UILayout
 from .brt_types import BRT_BonePatternItem, BRT_BoneRuleItem
 from .brt_types import get_bone_pattern_items, get_rule_items
 from .brt_json import load_bone_patterns_to_preferences, get_json_path, DEFAULT_BONE_PATTERN
+from .brt_json import load_json_data, save_json_data
 from .brt_update import draw_update_ui
 
 '''
@@ -101,21 +102,23 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
         layout = self.layout
         prefs = self  # アドオンプリファレンス本体（表示と編集UI）
         scene = context.scene
+        wm = context.window_manager
 
         # 更新用UI
         draw_update_ui(layout, scene)
 
+        # 明示的な変数名で状態を保持（折りたたみが複数増えても対応しやすくなる）
+        show_identifier_sets = wm.brt_show_identifier_sets
+
         # トグル付きヘッダー行
         main_box = layout.box()
         row = main_box.row(align=True)
-        row.prop(scene, "brt_show_identifier_sets", text="", icon='DOWNARROW_HLT' if scene.brt_show_identifier_sets else 'RIGHTARROW', emboss=False)
+
+        row.prop(wm, "brt_show_identifier_sets", text="", icon='DOWNARROW_HLT' if show_identifier_sets else 'RIGHTARROW', emboss=False)
         row.label(text=_("識別子セットの編集"), icon='ASSET_MANAGER')
 
         # 🔻折りたたみ状態なら描画（識別子セット編集のUIの中身）
-        if scene.brt_show_identifier_sets:
-            # main_box = layout.box() 
-            # main_box.label(text=_("識別セットの編集"), icon='ASSET_MANAGER')  # 必要に応じて icon を調整
-
+        if show_identifier_sets:
             for i, pattern in enumerate(prefs.bone_patterns):
                 row_outer = main_box.row(align=True)
 
@@ -123,10 +126,19 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
                 col_left = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
                 col_left.separator()  # セパレータで上にスペースを追加
                 col_left.separator()  # セパレータで上にスペースを追加
-                col_left.operator("brt.move_bone_pattern_up", text="", icon="TRIA_UP").index = i
+                # col_left.operator("brt.move_bone_pattern_up", text="", icon="TRIA_UP").index = i
+                if i > 0:
+                    col_left.operator("brt.move_bone_pattern_up", text="", icon="TRIA_UP").index = i
+                else:
+                    col_left.label(text="", icon="BLANK1")
                 col_left.separator()  # セパレータで上にスペースを追加
                 col_left.separator()  # セパレータで上にスペースを追加
-                col_left.operator("brt.move_bone_pattern_down", text="", icon="TRIA_DOWN").index = i
+                # col_left.operator("brt.move_bone_pattern_down", text="", icon="TRIA_DOWN").index = i
+                if i < len(prefs.bone_patterns) - 1:
+                    col_left.operator("brt.move_bone_pattern_down", text="", icon="TRIA_DOWN").index = i
+                else:
+                    col_left.label(text="", icon="BLANK1")
+
 
                 # 中央：セット全体の枠（box）
                 box = row_outer.box()
@@ -139,6 +151,7 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
                 # 識別ペアの表示
                 for j, rule in enumerate(pattern.rules):
                     row = box.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+                    # row.prop(rule, "use_regex", text="")    # 正規表現の切り替え
                     row.prop(rule, "right", text=_("右"))
                     row.prop(rule, "left", text=_("左"))
 
@@ -169,34 +182,42 @@ class BRT_OT_AddBonePattern(bpy.types.Operator):
     bl_idname = "brt.add_bone_pattern"
     bl_label = _("Add Identifier Set")
     bl_description = _("Add a new identifier set to the preferences")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        new_pattern = prefs.bone_patterns.add()
-        new_pattern.label = "New Set"
-        rule = new_pattern.rules.add()
+
+        pattern = prefs.bone_patterns.add()
+        pattern.label = "New Set"
+        rule = pattern.rules.add()
         rule.right = "R"
         rule.left = "L"
-        rule.use_regex = False  # 正規表現置き換え不使用
+        rule.use_regex = False
+
+        self.report({'INFO'}, _("新しい識別子セットを追加しました"))
         return {'FINISHED'}
+
 
 class BRT_OT_AddBoneRule(bpy.types.Operator):
     """識別子ルールを追加"""
     bl_idname = "brt.add_bone_rule"
     bl_label = _("Add Identifier Rule")
     bl_description = _("Add a left-right identifier rule to the selected set")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     index: bpy.props.IntProperty()  # 追加対象の bone_patterns インデックス
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        if self.index < len(prefs.bone_patterns):
-            pattern = prefs.bone_patterns[self.index]
-            rule = pattern.rules.add()
-            rule.right = ""
-            rule.left = ""
-            rule.use_regex = False
+
+        rule = prefs.bone_patterns[self.index].rules.add()
+        rule.right = ""
+        rule.left = ""
+        rule.use_regex = False
+
+        self.report({'INFO'}, _("識別子ペアを追加しました"))
         return {'FINISHED'}
+
 
 # 識別子セットの移動ボタン
 class BRT_OT_MoveBonePatternUp(bpy.types.Operator):
@@ -204,81 +225,85 @@ class BRT_OT_MoveBonePatternUp(bpy.types.Operator):
     bl_idname = "brt.move_bone_pattern_up"
     bl_label = _("Move Indentifier Set Up")
     bl_description = _("Move the identifier set up one position")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     index: bpy.props.IntProperty()
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        i = self.index  # 修正点: self.index を使う
-        if i > 0:
-            prefs.bone_patterns.move(i, i - 1)
-            prefs.bone_patterns_index = i - 1
+        i = self.index
+
+        if i <= 0:
+            self.report({'WARNING'}, _("既に先頭にあります"))
+            return {'CANCELLED'}
+
+        prefs.bone_patterns.move(i, i - 1)
+        self.report({'INFO'}, _("上に移動しました"))
         return {'FINISHED'}
+
 
 class BRT_OT_MoveBonePatternDown(bpy.types.Operator):
     """↓ 下に移動"""
     bl_idname = "brt.move_bone_pattern_down"
     bl_label = _("Move Indentifier Set Down")
     bl_description = _("Move the identifier set down one position")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     index: bpy.props.IntProperty()
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        i = self.index  # self.index を使う
+        i = self.index
+
         if i < len(prefs.bone_patterns) - 1:
             prefs.bone_patterns.move(i, i + 1)
-            prefs.bone_patterns_index = i + 1
+            self.report({'INFO'}, _("下に移動しました"))
+        else:
+            self.report({'WARNING'}, _("既に末尾にあります"))
         return {'FINISHED'}
+
+
 
 class BRT_OT_SaveBonePatterns(bpy.types.Operator):
     """識別子セットを保存"""
     bl_idname = "brt.save_bone_patterns"
     bl_label = _("Save Identifier Sets")
     bl_description = _("Save all identifier sets to a JSON file")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
+        data = []
 
-        # バリデーションチェック（ラベル未設定・不完全ペアを検出）
         for p in prefs.bone_patterns:
             label = p.label.strip()
-
-            # 日本語や全角文字の検出
-            if any(ord(c) > 127 for c in label):
-                self.report({'WARNING'}, _("{label}には使用できない文字が含まれています。セット名には半角の英数字と記号だけを使ってください").format(label=pattern.label))
-                return {'CANCELLED'}
-
             if not label:
                 self.report({'WARNING'}, _("識別子セットの名前を入力してください"))
                 return {'CANCELLED'}
-
-            complete_pairs = [r for r in p.rules if r.right.strip() and r.left.strip()]
-            incomplete_pairs = [r for r in p.rules if (r.right.strip() and not r.left.strip()) or (not r.right.strip() and r.left.strip())]
-
-            if not complete_pairs:
-                self.report({'WARNING'}, _("{label}には有効な識別子ペアがひとつもありません（両側が入力されたペアが必要です）").format(label=pattern.label))
+            if any(ord(c) > 127 for c in label):
+                self.report({'WARNING'}, _("{label}には使用できない文字が含まれています。セット名には半角英数字のみを使用してください").format(label=label))
                 return {'CANCELLED'}
 
-            if incomplete_pairs:
-                self.report({'WARNING'}, _("{label}に片側だけ空白の識別子ペアがあります（両方入力してください）").format(label=pattern.label))
+            complete = [r for r in p.rules if r.right.strip() and r.left.strip()]
+            incomplete = [r for r in p.rules if (r.right.strip() and not r.left.strip()) or (not r.right.strip() and r.left.strip())]
+
+            if not complete:
+                self.report({'WARNING'}, _("{label}には両側が入力された識別子ペアが必要です").format(label=label))
                 return {'CANCELLED'}
-            
-        # 保存後に再読込（Nパネルに反映させるため）
-        data = []
-        for pattern in prefs.bone_patterns:
+            if incomplete:
+                self.report({'WARNING'}, _("{label}に片側だけの識別子ペアがあります").format(label=label))
+                return {'CANCELLED'}
+
             rules = [{
                 "right": r.right,
                 "left": r.left,
-                "use_regex": r.use_regex  # ← 正規表現フラグも保存
-            } for r in pattern.rules]
-            data.append({"label": pattern.label, "rules": rules})
-        with open(get_json_path(), "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+                "use_regex": r.use_regex
+            } for r in p.rules]
+            data.append({"label": label, "rules": rules})
+
+        save_json_data(data)
         self.report({'INFO'}, _("保存しました！"))
-
         load_bone_patterns_to_preferences(prefs)
-
         return {'FINISHED'}
     
 class BRT_OT_ResetBonePatterns(bpy.types.Operator):
@@ -286,34 +311,36 @@ class BRT_OT_ResetBonePatterns(bpy.types.Operator):
     bl_idname = "brt.reset_bone_patterns"
     bl_label = _("Reload Identifier Sets")
     bl_description = _("Reload the identifier sets from the saved JSON file")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     def execute(self, context):
-        prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        load_bone_patterns_to_preferences(prefs)
-        self.report({'INFO'}, _("識別子セットを元に戻しました"))
+        load_bone_patterns_to_preferences(context.preferences.addons["DIVA_BoneRenameTools"].preferences)
+        self.report({'INFO'}, _("識別子セットを再読込しました"))
         return {'FINISHED'}
+
 
 class BRT_OT_AppendDefaultSet(bpy.types.Operator):
     """コード定義のデフォルトセットを先頭に追加します"""
     bl_idname = "brt.append_default_bone_set"
     bl_label = _("Append Default Set")
     bl_description = _("Insert the default set of identifiers at the top")
+    bl_options = {'INTERNAL'}
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        pattern = prefs.bone_patterns.add()     # セットを追加
+        pattern_data = DEFAULT_BONE_PATTERN()[0]
 
-        pattern_data = DEFAULT_BONE_PATTERN()[0]  #デフォルトセットの先頭の辞書を取得
+        pattern = prefs.bone_patterns.add()
         pattern.label = pattern_data["label"]
-        pattern.rules.clear()
-        for r in pattern_data["rules"]: 
+        for r in pattern_data["rules"]:
             rule = pattern.rules.add()
             rule.right = r["right"]
             rule.left = r["left"]
-            rule.use_regex = r.get("use_regex", False) # 正規表現置き換えは不使用
+            rule.use_regex = r.get("use_regex", False)
 
+        # 先頭に移動
         index = len(prefs.bone_patterns) - 1
-        prefs.bone_patterns.move(index, 0)   # セットを先頭へ移動
+        prefs.bone_patterns.move(index, 0)
 
         self.report({'INFO'}, _("デフォルトセットを追加しました"))
         return {'FINISHED'}
@@ -324,6 +351,7 @@ class BRT_OT_DeleteBonePattern(bpy.types.Operator):
     bl_idname = "brt.delete_bone_pattern"
     bl_label = _("Delete Identifier Set")
     bl_description = _("Delete the selected identifier set")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     index: bpy.props.IntProperty()
 
@@ -341,18 +369,28 @@ class BRT_OT_DeleteBoneRule(bpy.types.Operator):
     bl_idname = "brt.delete_bone_rule"
     bl_label = _("Delete Identifier Pair")
     bl_description = _("Remove the selected identifier pair from the set")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     pattern_index: bpy.props.IntProperty()
     rule_index: bpy.props.IntProperty()
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-        rules = prefs.bone_patterns[self.pattern_index].rules
-        if len(rules) <= 1:
-            self.report({'WARNING'}, _("最低でも1つの識別子ペアを設定してください"))
+
+        try:
+            pattern = prefs.bone_patterns[self.pattern_index]
+            if len(pattern.rules) <= 1:
+                self.report({'WARNING'}, "最低1ペアは必要です")
+                return {'CANCELLED'}
+
+            pattern.rules.remove(self.rule_index)
+            self.report({'INFO'}, _("識別子ペアを削除しました"))
+            return {'FINISHED'}
+
+        except Exception as e:
+            self.report({'ERROR'}, _("削除に失敗しました: {msg}").format(msg=str(e)))
             return {'CANCELLED'}
-        rules.remove(self.rule_index)
-        return {'FINISHED'}
+
 
 
 

@@ -46,7 +46,8 @@ def rename_selected_bones(prefix, start_number, suffix, rule):
 def extract_rename_settings(bone_name, prefix_filter=None):
     """ 指定ボーン名から、開始番号・ルール（桁数）・末尾サフィックスを抽出 """
     name = bone_name.split(".")[0]
-    suffix_candidates = {"_wj", "wj", "_wj_ex", "wj_ex"}
+    # 優先度順（長い方が先）
+    suffix_candidates = ["_wj_ex", "wj_ex", "_wj", "wj"]
 
     # 末尾のサフィックスを抽出（あれば）
     suffix = next((s for s in suffix_candidates if name.endswith(s)), "_wj")
@@ -135,3 +136,29 @@ def get_linear_chain(bone_name, prefix_filter=None):
             break
 
     return chain
+
+# ボーンを増やす用
+def find_terminal_bones(bones):
+    """選択されたボーンの中から末端（子がいない）ボーンを検出"""
+    selected_set = set(bones)
+    terminals = [b for b in bones if not any(child.parent == b for child in selected_set)]
+    return terminals
+
+
+def extend_and_subdivide_bone(bone, segment_count):
+    from mathutils import Vector
+
+    direction = (bone.tail - bone.head).normalized()
+    original_length = bone.length
+    total_length = original_length * (segment_count + 1)
+    bone.tail = bone.head + direction * total_length
+
+    # 既存ボーン名を記録
+    existing_names = set(bone.id_data.edit_bones.keys())
+
+    bpy.ops.armature.select_all(action='DESELECT')
+    bone.select = True
+    bpy.ops.armature.subdivide(number_cuts=segment_count)
+
+    # 新規ボーンを検出して返す
+    return [b for b in bone.id_data.edit_bones if b.name not in existing_names]

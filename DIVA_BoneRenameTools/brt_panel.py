@@ -8,7 +8,7 @@ from .brt_ui_other import panel_other_ui
 class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
     """NパネルのUI"""
     bl_label = "Bone Rename Tools"
-    bl_idname = "DIVA_PT_BoneRenamePanel"
+    bl_idname = "DIVA_PT_bone_rename"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "DIVA"

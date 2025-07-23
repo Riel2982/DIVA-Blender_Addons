@@ -53,15 +53,21 @@ class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):
         items=lambda self, context: get_rule_items(self, context)
     )
 
+
 # 識別子ルールのデータ（左右ペア）
 class BRT_BoneRuleItem(bpy.types.PropertyGroup):
-    right: bpy.props.StringProperty(name="右")
-    left: bpy.props.StringProperty(name="左")
-    use_regex: bpy.props.BoolProperty(default=False, options={'HIDDEN'})  # ← 正規表現で置き換えるか（False＝使わない）/ 現時点ではUI側にこの設定は非表示
+    right: bpy.props.StringProperty(name=_("右"))
+    left: bpy.props.StringProperty(name=_("左"))
+    use_regex: bpy.props.BoolProperty(        # チェックボックス型
+        name=_("正規表現のON/OFF"),
+        description=_("正規表現を使用するかどうか"),
+        default=False,      # ← 正規表現で置き換えるか（False＝使わない）
+        # options={'HIDDEN'}  # UI非表示のまま
+    )
 
 # 識別子セット（ラベルとルールリスト）
 class BRT_BonePatternItem(bpy.types.PropertyGroup):
-    label: bpy.props.StringProperty(name="セット名")
+    label: bpy.props.StringProperty(name=_("セット名"))
     rules: bpy.props.CollectionProperty(type=BRT_BoneRuleItem)
 
 
@@ -74,9 +80,9 @@ def get_classes():
 
 def register_properties():
     # プリファレンスの識別子セット編集折りたたみ機構
-    bpy.types.Scene.brt_show_identifier_sets = bpy.props.BoolProperty(
-        name="識別子セットの表示",
-        description="識別子セット全体の編集UIを表示するかどうか",
+    bpy.types.WindowManager.brt_show_identifier_sets = bpy.props.BoolProperty(      # SceneからWindowManagerに変更して履歴に載せない・変更扱いにしない
+        name=_("識別子セットの表示"),
+        description=_("識別子セット全体の編集UIを表示するかどうか"),# 編集履歴に乗る名目
         default=False  # デフォルトは閉じておく
     )
 
@@ -93,7 +99,7 @@ def register_properties():
         max=20
     )
     bpy.types.Scene.brt_rename_suffix = bpy.props.EnumProperty(
-        name="末尾",
+        name=_("末尾"),
         description=_("ボーン名の末尾を選択"),
         items=[
             ("_wj", "_wj", _("ボーン名の末尾に `_wj` を追加")),
@@ -112,17 +118,32 @@ def register_properties():
         ],
         default="000"
     )
-    '''
-    bpy.types.Scene.brt_ボーンを追加 = bpy.props.IntProperty(
-        name=_("開始番号"),
-        description=_("連番の開始値の設定"),
+
+    bpy.types.Scene.brt_end_bone_plus = bpy.props.BoolProperty(
+        name="End-Bone +",
+        description=_("選択したボーン枝の末端にボーンを追加する"),
+        default=False
+    )
+
+    bpy.types.Scene.brt_add_bones = bpy.props.IntProperty(
+        name=_("追加ボーン数"),
+        description=_("末端に追加するボーンの数を選択"),
         default=1,
         min=1,
         max=20
     )
-    '''
 
-    # bpy.types.Scene.brt_show_symmetric_tools = bpy.props.BoolProperty(name="Other Reneme Tools", description="その他のボーンリネーム操作", default=True)    
+    bpy.types.Scene.brt_mirror_mode = bpy.props.EnumProperty(
+        name=_("Xミラー方式選択"),
+        description=_("Xミラー時のロール補正方式を選択"),
+        items=[
+            ('SYMMETRY', _("Blender"), _("対称化モード：roll *= -1 のみ")),
+            ('DIVA', _("DIVA用"), _("roll を反転後 +180 → Blender仕様に正規化")),
+            # ('NONE', _("補正なし"), _("ロール補正をしない")),
+            # ('TEXT', _("+180"), _("+180 → Blender仕様に正規化")),
+        ],
+        default='DIVA'
+    )
 
     bpy.types.Scene.brt_rename_source_name = bpy.props.StringProperty(
         name=_("変更前ボーン名"),
@@ -163,7 +184,7 @@ def register_properties():
     bpy.types.Scene.brt_show_group_tools = bpy.props.BoolProperty(
         name="show_group_tools",
         description="左右対応名の一括リネーム（グループ名含む）や、元に戻す操作を表示",
-        default=True
+        default=False
     )
 
     bpy.types.Scene.brt_bone_x_mirror = bpy.props.BoolProperty(
@@ -190,12 +211,14 @@ def register_properties():
 
 
 def unregister_properties():
-    del bpy.types.Scene.brt_show_identifier_sets
+    del bpy.types.WindowManager.brt_show_identifier_sets
     del bpy.types.Scene.brt_rename_prefix
     del bpy.types.Scene.brt_rename_start_number
     del bpy.types.Scene.brt_rename_suffix
     del bpy.types.Scene.brt_rename_rule
-    # del bpy.types.Scene.brt_show_symmetric_tools
+    del bpy.types.Scene.brt_end_bone_plus
+    del bpy.types.Scene.brt_add_bones
+    del bpy.types.Scene.brt_mirror_mode
     del bpy.types.Scene.brt_rename_source_name
     del bpy.types.Scene.brt_rename_target_name
     del bpy.types.Scene.brt_remove_number_suffix

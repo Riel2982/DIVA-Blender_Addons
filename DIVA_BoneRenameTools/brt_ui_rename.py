@@ -20,12 +20,11 @@ def panel_rename_ui(layout, scene):
         row.prop(scene, "brt_rename_rule", text=_("法則")) # ドロップダウン
         row.prop(scene, "brt_rename_suffix", text=_("末尾")) # ドロップダウン
 
-        '''
         row = box1.row()
-        row.prop(scene, "brt_末端にボーンを追加", text=(""))       # 末端にボーンを追加するチェックボックス
+        row.prop(scene, "brt_end_bone_plus", text=(""))       # 末端にボーンを追加するチェックボックス
         row.label(text=_("末端にボーンを追加する"))
-        row.prop(scene, "brt_追加ボーン数", text=_("追加ボーン数"))
-        '''
+        if scene.brt_end_bone_plus:     # ONなら表示
+            row.prop(scene, "brt_add_bones", text=_("追加ボーン数"))     # 追加ボーン数選択
         
         box1.operator("brt.rename_selected_bones", text=_("連番リネーム実行"), icon="PRESET") # 実行ボタン
 
@@ -34,16 +33,43 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
     """ボーン連番リネーム"""
     bl_idname = "brt.rename_selected_bones"
     bl_label = "Rename Selected Bones"
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = _("Renames the selected bone rows based on the specified settings")
 
     def execute(self, context):
-        from .brt_rename import rename_selected_bones
+        from .brt_rename import rename_selected_bones, find_terminal_bones, extend_and_subdivide_bone
+        print("分割付きリネーム開始")
+
+        if bpy.context.mode != 'EDIT_ARMATURE':
+            bpy.ops.object.mode_set(mode='EDIT')
+
+        obj = context.object
+        bones = obj.data.edit_bones
+
+        selected_before_split = [b for b in bones if b.select]
+
+        if context.scene.brt_end_bone_plus and context.scene.brt_add_bones > 0:
+            existing_names = set(b.name for b in bones)
+            terminals = find_terminal_bones(selected_before_split)
+            for bone in terminals:
+                extend_and_subdivide_bone(bone, context.scene.brt_add_bones)
+            added_bones = [b for b in bones if b.name not in existing_names]
+        else:
+            added_bones = []
+
+        # 選択状態を復元（分割前 + 分割後）
+        bpy.ops.armature.select_all(action='DESELECT')
+        for b in selected_before_split + added_bones:
+            b.select = True
+
         rename_selected_bones(
             context.scene.brt_rename_prefix,
             context.scene.brt_rename_start_number,
             context.scene.brt_rename_suffix,
             context.scene.brt_rename_rule
         )
+
+        print("完了")
         return {'FINISHED'}
 
 class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
@@ -53,8 +79,14 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = _("選択ボーン名の共通部分を抽出し、設定を自動反映します")
 
+    # 従属オプションがONの時主オプションをONにする
+    def enable_auto_select(self, context):
+        if not self.use_auto_select:
+            self["use_auto_select"] = True
+
     # オプション定義（update付き）
     def update_settings(self, context):
+        # use_auto_select切替時に代表ボーンと設定を再抽出するためUI更新を行う為
         from .brt_rename import update_rename_settings_from_selection
         update_rename_settings_from_selection(context.scene)
         
@@ -62,6 +94,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
         if not self.use_auto_select:
             self["select_children_only"] = False
             self["filter_inconsistent"] = False
+
 
     use_auto_select: bpy.props.BoolProperty(
         name=_("線形チェーンを選択"),
@@ -74,14 +107,16 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
         name=_("末端方向のみ選択"),
         description=_("ONの場合、最初に選択されたボーンから末端までを対象とします"),
         default=False,
-        update=update_settings
+        # update=update_settings,
+        update=enable_auto_select       # 主オプションをON
     )
 
     filter_inconsistent: bpy.props.BoolProperty(
         name=_("一致しないボーンを除外"),
         description=_("明らかにネーミングルールが異なるボーンを共通抽出対象から除外します"),
         default=True,
-        update=update_settings
+        # update=update_settings,
+        update=enable_auto_select       # 主オプションをON
     )
 
     def execute(self, context):
@@ -122,6 +157,15 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
 
         # use_auto_select が ON の場合は選択処理も行う
         if self.use_auto_select:
+            brt_sub.select_linear_chain_inclusive(
+                bone_name=bones[0].name,
+                prefix_filter=prefix if self.filter_inconsistent else None,
+                allow_branches=False,
+                extend_by_common_group=False,
+                child_only=self.select_children_only  # ← ここで切り替え
+            )
+        '''
+        if self.use_auto_select:
             if self.select_children_only:
                 brt_sub.select_child_chain_only(        # 末端方向のみ
                     bones[0].name,
@@ -132,7 +176,8 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
                     bones[0].name,
                     prefix_filter=prefix if self.filter_inconsistent else None
                 )
-
+        '''
+                
         from .brt_rename import extract_rename_settings
 
         # 代表ボーン決定（先頭 or 選択ボーン）
