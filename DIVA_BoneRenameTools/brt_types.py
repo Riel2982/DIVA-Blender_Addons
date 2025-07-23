@@ -75,7 +75,7 @@ def get_classes():
 def register_properties():
     # プリファレンスの識別子セット編集折りたたみ機構
     bpy.types.Scene.brt_show_identifier_sets = bpy.props.BoolProperty(
-        name="識別セットの表示",
+        name="識別子セットの表示",
         description="識別子セット全体の編集UIを表示するかどうか",
         default=False  # デフォルトは閉じておく
     )
@@ -112,6 +112,15 @@ def register_properties():
         ],
         default="000"
     )
+    '''
+    bpy.types.Scene.brt_ボーンを追加 = bpy.props.IntProperty(
+        name=_("開始番号"),
+        description=_("連番の開始値の設定"),
+        default=1,
+        min=1,
+        max=20
+    )
+    '''
 
     # bpy.types.Scene.brt_show_symmetric_tools = bpy.props.BoolProperty(name="Other Reneme Tools", description="その他のボーンリネーム操作", default=True)    
 

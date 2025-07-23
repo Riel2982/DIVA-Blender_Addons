@@ -38,7 +38,12 @@ def panel_invert_ui(layout, context, scene):
         row = box3.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         row.prop(scene, "brt_assign_identifier", text="")  # チェックボックス
         row.label(text=_("左右識別子を付与する")) # 非連動
-        row.prop(props, "bone_rule", text="") # 判別ペアのドロップダウン（選択中のセットに応じた項目）
+        # row.prop(props, "bone_rule", text="") # 判別ペアのドロップダウン（選択中のセットに応じた項目）
+
+        if scene.brt_assign_identifier:     # ONならドロップダウン表示
+            row.prop(props, "bone_rule", text="")       # 判別ペアのドロップダウン（選択中のセットに応じた項目）
+        else:
+            row.label(text=_(""), icon="BLANK1")        # レイアウト維持用のダミー
 
         row = box3.row()
         row.prop(scene, "brt_bone_x_mirror", text="")  # チェックボックス

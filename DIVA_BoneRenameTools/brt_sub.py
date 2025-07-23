@@ -112,3 +112,59 @@ def select_linear_chain_inclusive(bone_name, prefix_filter=None):
         select(b)
 
     set_active(get_name(bone))
+
+#　親方向はたどらず子方向のみを選ぶ処理(Reneme用)
+def select_child_chain_only(bone_name, prefix_filter=None):
+    obj = bpy.context.object
+    if not obj or obj.type != 'ARMATURE':
+        return
+
+    mode = bpy.context.mode
+    if mode == 'POSE':
+        bones = obj.pose.bones
+        get_name = lambda b: b.name
+        get_children = lambda b: b.children
+        set_active = lambda name: setattr(obj.data, "bones.active", obj.data.bones.get(name))
+        is_valid = lambda b: b.bone
+        select = lambda b: (
+            setattr(b.bone, "select", True),
+            setattr(b.bone, "select_head", True),
+            setattr(b.bone, "select_tail", True)
+        )
+        clear = lambda: bpy.ops.pose.select_all(action='DESELECT')
+    elif mode == 'EDIT_ARMATURE':
+        bones = obj.data.edit_bones
+        get_name = lambda b: b.name
+        get_children = lambda b: b.children
+        set_active = lambda name: setattr(obj.data.edit_bones[name], "select", True)
+        is_valid = lambda b: True
+        select = lambda b: setattr(b, "select", True)
+        clear = lambda: [setattr(b, "select", False) for b in bones]
+    else:
+        return
+
+    bone = bones.get(bone_name)
+    if not bone or not is_valid(bone):
+        return
+
+    # 全選択解除
+    clear()
+
+    # 子方向に一本道をたどる（親はたどらない）
+    chain = []
+    current = bone
+    while current:
+        cname = clean_name(get_name(current))
+        if prefix_filter and not cname.startswith(prefix_filter):
+            break
+        chain.append(current)
+
+        children = get_children(current)
+        if len(children) == 1:
+            current = children[0]
+        else:
+            break
+
+    for b in chain:
+        select(b)
+    set_active(get_name(bone))
