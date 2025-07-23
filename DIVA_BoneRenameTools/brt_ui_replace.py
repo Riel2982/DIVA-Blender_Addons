@@ -32,9 +32,9 @@ def panel_replace_ui(layout, scene):
 
         row = box2.row()
         row.prop(scene, "brt_remove_number_suffix", text="")  # チェックボックス
-        row.label(text=_("重複識別子を削除")) # 非連動
+        row.label(text=_("Remove duplicate suffix")) # 非連動
 
-        box2.operator("brt.replace_bone_name", text=_("指定名でボーン名変更"), icon="GREASEPENCIL") # 実行ボタン
+        box2.operator("brt.replace_bone_name", text=_("Rename Bones by Specified Name"), icon="GREASEPENCIL") # 実行ボタン
 
 
 
@@ -42,6 +42,7 @@ class BRT_OT_ReplaceBoneName(bpy.types.Operator):
     """ボーン名の一部を一括置換"""
     bl_idname = "brt.replace_bone_name"
     bl_label = "Replace Bone Name"
+    bl_description = _("Replace the selected bone name substring in bulk")
 
     def execute(self, context):
         from .brt_replace import replace_bone_names_by_rule
@@ -57,7 +58,7 @@ class BRT_OT_ReplaceBoneName(bpy.types.Operator):
         elif partial:
             self.report({'WARNING'}, message)
         else:
-            self.report({'INFO'}, _("ボーン名の置換を完了しました"))
+            self.report({'INFO'}, _("Bone name replacement completed"))
         return {'FINISHED'}
 
 
@@ -65,12 +66,12 @@ class BRT_OT_ReplaceBoneName(bpy.types.Operator):
 class BRT_OT_ExtractSourceName(bpy.types.Operator):
     """選択ボーンから置換元名を抽出"""
     bl_idname = "brt.extract_source_name"
-    bl_label = "抽出:置換元"
+    bl_label = "Extract: Source Name"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = _("選択ボーンから置換元名を抽出")
+    bl_description = _("Extract source name from selected bones")
     use_auto_select: bpy.props.BoolProperty(
-        name=_("線形チェーンを選択"),
-        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
+        name=_("Select Linear Chain"),      # 線形チェーン選択
+        description=_("If enabled, automatically selects a linear parent-child chain from selected bone"),
         default=True
     )
 
@@ -79,7 +80,7 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
+            self.report({'WARNING'}, _("No armature is selected"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -88,11 +89,11 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             bones = [b for b in obj.data.edit_bones if b.select]
         else:
-            self.report({'WARNING'}, _("対応しているのは Pose または Edit モードです"))
+            self.report({'WARNING'}, _("Only Pose or Edit mode is supported"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, _("ボーンが選択されていません"))
+            self.report({'WARNING'}, _("No bones are selected"))
             return {'CANCELLED'}
 
         # ネーミング規則に基づいて共通部分を抽出
@@ -104,9 +105,9 @@ class BRT_OT_ExtractSourceName(bpy.types.Operator):
 
         if prefix:
             context.scene.brt_rename_source_name = prefix
-            self.report({'INFO'}, f"抽出結果: {prefix}")
+            self.report({'INFO'}, _("Detected prefix: {prefix}").format(prefix=prefix))
         else:
-            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
+            self.report({'WARNING'}, _("Could not detect common prefix"))
 
         # 自動選択が ON の場合はチェーンを選択
         if self.use_auto_select:

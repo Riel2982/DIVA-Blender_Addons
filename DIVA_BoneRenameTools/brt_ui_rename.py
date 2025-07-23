@@ -12,21 +12,23 @@ def panel_rename_ui(layout, scene):
 
     if scene.brt_show_renumber_tools:
         row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-        row.prop(scene, "brt_rename_prefix", text=_("共通部分")) # テキストボックス
+        row.prop(scene, "brt_rename_prefix", text=_("Base Name")) # テキストボックス
         row.operator("brt.detect_common_prefix", text="", icon='BONE_DATA') # スポイトツール
 
         row = box1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-        row.prop(scene, "brt_rename_start_number", text=_("連番開始番号"))
-        row.prop(scene, "brt_rename_rule", text=_("法則")) # ドロップダウン
-        row.prop(scene, "brt_rename_suffix", text=_("末尾")) # ドロップダウン
+        row.prop(scene, "brt_rename_start_number", text=_("Start Number"))
+        row.prop(scene, "brt_rename_rule", text=_("Rule")) # ドロップダウン
+        row.prop(scene, "brt_rename_suffix", text=_("Suffix")) # ドロップダウン
 
         row = box1.row()
         row.prop(scene, "brt_end_bone_plus", text=(""))       # 末端にボーンを追加するチェックボックス
-        row.label(text=_("末端にボーンを追加する"))
+        row.label(text=_("Add bones at chain end"))
         if scene.brt_end_bone_plus:     # ONなら表示
-            row.prop(scene, "brt_add_bones", text=_("追加ボーン数"))     # 追加ボーン数選択
+            row.prop(scene, "brt_add_bones", text=_("Number of bones to add"))     # 追加ボーン数選択
         
-        box1.operator("brt.rename_selected_bones", text=_("連番リネーム実行"), icon="PRESET") # 実行ボタン
+        # box1.operator("brt.rename_selected_bones", text=_("連番リネーム実行"), icon="PRESET") # 実行ボタン
+        op = box1.operator("brt.rename_selected_bones", text=_("Execute Sequential Rename"), icon="PRESET")
+        op.add_bones = scene.brt_add_bones if scene.brt_end_bone_plus else 0
 
 
 class BRT_OT_RenameSelectedBones(bpy.types.Operator):
@@ -35,6 +37,14 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
     bl_label = "Rename Selected Bones"
     bl_options = {'REGISTER', 'UNDO'}
     bl_description = _("Renames the selected bone rows based on the specified settings")
+
+    add_bones: bpy.props.IntProperty(
+        name=_("Number of bones to add"),
+        default=0,
+        min=0,
+        max=10
+    )
+
 
     def execute(self, context):
         from .brt_rename import rename_selected_bones, find_terminal_bones, extend_and_subdivide_bone
@@ -46,13 +56,19 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
         obj = context.object
         bones = obj.data.edit_bones
 
+        # 既存の追加ボーン（タグ付き）を削除
+        for b in list(obj.data.edit_bones):
+            if b.get("brt_added"):
+                obj.data.edit_bones.remove(b)
+
         selected_before_split = [b for b in bones if b.select]
 
-        if context.scene.brt_end_bone_plus and context.scene.brt_add_bones > 0:
+        # ✅ add_bones は self. から取る → パネル変更が反映される
+        if self.add_bones > 0:
             existing_names = set(b.name for b in bones)
             terminals = find_terminal_bones(selected_before_split)
             for bone in terminals:
-                extend_and_subdivide_bone(bone, context.scene.brt_add_bones)
+                extend_and_subdivide_bone(bone, self.add_bones)
             added_bones = [b for b in bones if b.name not in existing_names]
         else:
             added_bones = []
@@ -75,9 +91,9 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
 class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
     """選択ボーン名の共通部分を抽出 または 線形チェーン選択"""
     bl_idname = "brt.detect_common_prefix"
-    bl_label = _("共通部分を検出")
+    bl_label = "Detect Common Prefix"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = _("選択ボーン名の共通部分を抽出し、設定を自動反映します")
+    bl_description = _("Detect common prefix among selected bone names and apply settings automatically")
 
     # 従属オプションがONの時主オプションをONにする
     def enable_auto_select(self, context):
@@ -97,23 +113,23 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
 
 
     use_auto_select: bpy.props.BoolProperty(
-        name=_("線形チェーンを選択"),
-        description=_("ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します"),
+        name=_("Select Linear Chain"),      # 線形チェーン選択
+        description=_("If enabled, automatically selects linear parent-child chain from selected bone"),
         default=True,
         update=update_settings
     )
 
     select_children_only: bpy.props.BoolProperty(
-        name=_("末端方向のみ選択"),
-        description=_("ONの場合、最初に選択されたボーンから末端までを対象とします"),
+        name=_("Select Only Toward Terminal"),      # 末端方向のみ選択
+        description=_("If enabled, targets only the terminal direction from the initially selected bone"),
         default=False,
         # update=update_settings,
         update=enable_auto_select       # 主オプションをON
     )
 
     filter_inconsistent: bpy.props.BoolProperty(
-        name=_("一致しないボーンを除外"),
-        description=_("明らかにネーミングルールが異なるボーンを共通抽出対象から除外します"),
+        name=_("Filter Out Inconsistent Bones"),       # 一致しないボーンを除外
+        description=_("Filters out bones with clearly different naming patterns from extraction"),
         default=True,
         # update=update_settings,
         update=enable_auto_select       # 主オプションをON
@@ -124,7 +140,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
+            self.report({'WARNING'}, _("No armature is selected"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -135,11 +151,11 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
             bones = [b for b in obj.data.edit_bones if b.select]
             clear_selection = lambda: [setattr(b, "select", False) for b in bones]
         else:
-            self.report({'WARNING'}, _("対応しているのは Pose モードまたは Edit モードです"))
+            self.report({'WARNING'}, _("Only Pose or Edit mode is supported"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, _("ボーンが選択されていません"))
+            self.report({'WARNING'}, _("No bones are selected"))
             return {'CANCELLED'}
 
         # 共通プレフィックス名を抽出
@@ -151,9 +167,9 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
 
         if prefix:
             context.scene.brt_rename_prefix = prefix
-            self.report({'INFO'}, f"共通部分を設定: {prefix}")
+            self.report({'INFO'}, _("Common prefix set: {prefix}").format(prefix=prefix))
         else:
-            self.report({'WARNING'}, _("共通部分が検出できませんでした"))
+            self.report({'WARNING'}, _("Could not detect common prefix"))
 
         # use_auto_select が ON の場合は選択処理も行う
         if self.use_auto_select:

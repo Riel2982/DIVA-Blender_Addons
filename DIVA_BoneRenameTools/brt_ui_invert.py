@@ -31,14 +31,14 @@ def panel_invert_ui(layout, context, scene):
         # ボーン識別文字（ドロップダウン）
         row = box3.row()
         split = row.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
-        split.label(text=_("ボーン識別子:"))
+        split.label(text=_("Bone Identifier:"))
         right = split.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
         right.operator("brt.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
         row = box3.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
         row.prop(scene, "brt_assign_identifier", text="")  # チェックボックス
-        row.label(text=_("左右識別子を付与")) # 非連動
+        row.label(text=_("Assign Left/Right Identifiers")) # 非連動
         # row.prop(props, "bone_rule", text="") # 判別ペアのドロップダウン（選択中のセットに応じた項目）※ 常時表示版
 
         if scene.brt_assign_identifier:     # ONならドロップダウン表示
@@ -48,11 +48,11 @@ def panel_invert_ui(layout, context, scene):
 
         row = box3.row()
         row.prop(scene, "brt_duplicate_and_rename", text="")  # チェックボックス
-        row.label(text=_("複製してリネーム")) # 非連動
+        row.label(text=_("Duplicate and Rename")) # 非連動
 
         if scene.brt_duplicate_and_rename:     # ONなら表示
             row.prop(scene, "brt_bone_x_mirror", text="")       # 複製時のみ選択ボーンをミラーする
-            row.label(text=_("選択ボーンをXミラー")) 
+            row.label(text=_("Mirror Selected Bones on X-axis")) 
                 
             if scene.brt_bone_x_mirror:     # ONならドロップダウン表示
                 row.prop(scene, "brt_mirror_mode", text="")       # 判別ペアのドロップダウン（選択中のセットに応じた項目）
@@ -71,15 +71,15 @@ def panel_invert_ui(layout, context, scene):
         if scene.brt_bone_x_mirror:     # ONならドロップダウン表示
             row.prop(scene, "brt_mirror_mode", text="")       # 判別ペアのドロップダウン（選択中のセットに応じた項目）
         '''
-            
-        box3.operator("brt.invert_selected_bones", text=_("選択ボーン反転リネーム"), icon="GROUP_BONE") # 実行ボタン
+        # 選択ボーンの反転リネーム（Invert Left/Right Bone Names）
+        box3.operator("brt.invert_selected_bones", text=_("Invert Left/Right Bone Names"), icon="GROUP_BONE") # 実行ボタン
 
 class BRT_OT_InvertSelectedBones(bpy.types.Operator):
     """選択ボーンの左右反転リネーム"""
     bl_idname = "brt.invert_selected_bones"
     bl_label = "Invert Selected Bones"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = _("選択ボーンの左右反転リネーム")
+    bl_description = _("Invert left/right in selected bone names")
 
     def execute(self, context):
         from .brt_invert import apply_mirrored_rename
@@ -97,16 +97,16 @@ class BRT_OT_InvertSelectedBones(bpy.types.Operator):
             rule_index=int(props.bone_rule)
         )
 
-        self.report({'INFO'}, f"{renamed}本のボーン名を変更しました")
+        self.report({'INFO'}, _("Renamed {count} bones").format(count=renamed))
         return {'FINISHED'}
 
 
 class BRT_OT_SelectLinearChain(bpy.types.Operator):
     """選択中ボーンから線形チェーン（分岐のない親子構造）を選択"""
     bl_idname = "brt.select_linear_chain"
-    bl_label = "線形チェーン選択"
+    bl_label = "Select Linear Chain"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = _("選択中ボーンから線形チェーンを選択")
+    bl_description = _("Select a linear chain from the currently selected bone")
 
     # filter_inconsistentがONの時はallow_branchesがOFF
     def update_filter_inconsistent(self, context):
@@ -119,22 +119,22 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
             self["filter_inconsistent"] = False
 
     filter_inconsistent: bpy.props.BoolProperty(
-        name=_("一致しないボーンを除外"),
-        description=_("ネーミング規則が共通しないボーンを除外します"),
+        name=_("Filter Out Inconsistent Bones"),        # 一致しないボーンを除外
+        description=_("Exclude bones that do not share naming rules"),
         default=True,
         update=update_filter_inconsistent       # filter_inconsistentをOFFにする
     )
 
     allow_branches: bpy.props.BoolProperty(
-        name=_("分岐も含める"),
-        description=_("分岐先も選択対象に含めます"),
+        name=_("Include Branches"),     # 分岐を含める
+        description=_("Include branch destinations as the selection target"),
         default=False,
         update=update_allow_branches        #　allow_branchesをOFFにする
     )
 
     extend_by_common_group: bpy.props.BoolProperty(
-        name=_("拡張選択"),
-        description=_("数字部分を除いた共通グループ名に一致するボーンを追加選択します"),
+        name=_("Extended Selection"),       # 拡張選択
+        description=_("Select additional bones that match a common group name, ignoring embedded numbers"),
         default=False
     )
 
@@ -143,7 +143,7 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
-            self.report({'WARNING'}, _("アーマチュアが選択されていません"))
+            self.report({'WARNING'}, _("No armature is selected"))
             return {'CANCELLED'}
 
         mode = context.mode
@@ -152,11 +152,11 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             bones = [b for b in obj.data.edit_bones if b.select]
         else:
-            self.report({'WARNING'}, _("対応モードは Pose または Edit です"))
+            self.report({'WARNING'}, _("Supported modes are Pose and Edit"))
             return {'CANCELLED'}
 
         if not bones:
-            self.report({'WARNING'}, _("起点となるボーンが選択されていません"))
+            self.report({'WARNING'}, _("No origin bone selected"))
             return {'CANCELLED'}
 
         # 共通プレフィックスの抽出（オプションで制御）
@@ -210,7 +210,7 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
         for name in selected_bones:
             print(f" - {name}")        
 
-        self.report({'INFO'}, _("線形チェーンを選択しました"))
+        self.report({'INFO'}, _("Linear chain selected"))
         return {'FINISHED'}
 
 
@@ -219,8 +219,8 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
 #  DIVAアドオン設定画面（プリファレンス）を開く
 class BRT_OT_OpenPreferences(bpy.types.Operator):
     bl_idname = "brt.open_preferences"
-    bl_label = "DIVA 設定を開く"
-    bl_description = _("プリファレンスのアドオン設定画面を開きます")
+    bl_label = "Open DIVA preferences"
+    bl_description = _("Open the addon settings in Preferences")
 
     def execute(self, context):
         bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く

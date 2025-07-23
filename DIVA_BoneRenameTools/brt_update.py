@@ -13,28 +13,28 @@ from bpy.app.translations import pgettext as _
 # --- アドオン更新UI -------------------------------------
 def draw_update_ui(layout, scene):
     box = layout.box()
-    # box.label(text=_("アップデート"), icon='FILE_REFRESH')
+    # box.label(text=_("Update"), icon='FILE_REFRESH')
 
     row = box.row()  # ← 横一列に並べる
-    op1 = row.operator("brt.open_url", text=_("更新を確認"), icon="CHECKMARK") 
+    op1 = row.operator("brt.open_url", text=_("Check for Updates"), icon="CHECKMARK") 
     op1.url = "https://github.com/Riel2982/DIVA-Blender_Addons/releases"
 
-    row.operator("brt.execute_update", text=_("インストール"), icon="IMPORT") 
-    row.operator("brt.open_addon_folder", text=_("アドオンフォルダを開く"), icon="FILE_FOLDER") 
+    row.operator("brt.execute_update", text=_("Install"), icon="IMPORT") 
+    row.operator("brt.open_addon_folder", text=_("Open Addon Folder"), icon="FILE_FOLDER") 
 
     # ダウンロード先パスのラベル＋操作群をまとめて一行に並べる
     row = box.row()
-    row.prop(scene, "brt_download_folder", text="ZIP保存先フォルダパス")  # テキスト入力欄（ラベルなし）
+    row.prop(scene, "brt_download_folder", text=_("Path to ZIP download folder"))  # テキスト入力欄（ラベルなし）
 
     # 成功時だけ表示する INFOラベル
     wm = bpy.context.window_manager
     if getattr(wm, "brt_update_completed", False):
-        box.label(text=_("更新が完了しました。Blenderを再起動してください"), icon="INFO")
+        box.label(text=_("Update completed. Please restart Blender"), icon="INFO")
 
     # 非実行時・失敗時に表示する 更新ファイルリスト
     else:
         row = box.row()
-        row.label(text=_("更新ファイル一覧: "), icon='PRESET')
+        row.label(text=_("Update file list: "), icon='PRESET')
         row.operator("brt.sort_candidates_name", text="", icon="SORTALPHA")     # 名前順
         row.operator("brt.sort_candidates_date", text="", icon="SORTTIME")      # 日付順
         row.operator("brt.confirm_download_folder", text="", icon="FILE_REFRESH")  # リスト更新
@@ -56,9 +56,9 @@ class BRT_UpdateCandidateItem(bpy.types.PropertyGroup):
 class BRT_UL_UpdateCandidateList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         # 行を分割して領域比率を調整
-        split = layout.split(factor=0.75, align=True)
-        split.label(text=item.name)   # 左側（75%）：ファイル名
-        split.label(text=item.date)   # 右側（25%）：日時
+        split = layout.split(factor=0.70, align=True)
+        split.label(text=item.name)   # 左側（70%）：ファイル名
+        split.label(text=item.date)   # 右側（30%）：日時
 
 # 設定ファイル関連の関数 -------------------------------------
 def get_addon_folder():
@@ -89,7 +89,7 @@ def load_download_folder():
 class BRT_OT_OpenURL(bpy.types.Operator):
     """更新を確認"""
     bl_idname = "brt.open_url"
-    bl_label = _("Check for Updates")
+    bl_label = "Check for Updates"
     bl_description = _("Opens the GitHub release page to check for update files")
 
     url: bpy.props.StringProperty()
@@ -107,19 +107,19 @@ class BRT_OT_OpenURL(bpy.types.Operator):
 class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     """更新ファイルをインストール"""
     bl_idname = "brt.execute_update"
-    bl_label = _("Install Update File")
+    bl_label = "Install Update File"
     bl_description = _("Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update")
     # bl_options = {'UNDO'}
 
     filepath: bpy.props.StringProperty(
-        name=_("Select ZIP File"),
+        name="Select ZIP File",
         description=_("Choose a ZIP file starting with DIVA_BoneRenameTools"),
         #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
     )
 
     # ユーザーにフォルダ選択してもらうためのプロパティ（手動選択時のみ使用）
     dirpath: bpy.props.StringProperty(
-        name=("Select Addon Folder"),
+        name="Select Addon Folder",
         description=_("Choose the folder where the addon is installed"),
         subtype='DIR_PATH'
     )
@@ -151,7 +151,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
 
             # それでも filepath が空なら → ダイアログで選択させるべき
             if not self.filepath:
-                self.report({'INFO'}, _("ZIPファイルが選択されていません。ファイルを指定してください"))
+                self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))
                 context.window_manager.fileselect_add(self)
                 return {'RUNNING_MODAL'}
 
@@ -159,7 +159,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
         filename = os.path.basename(self.filepath)
         pattern = re.compile(r"^DIVA_BoneRenameTools.*\.zip$")
         if not pattern.match(filename):
-            self.report({'WARNING'}, _("DIVA_BoneRenameTools で始まるZIPファイル以外は処理できません"))
+            self.report({'WARNING'}, _("Only ZIP files starting with DIVA_BoneRenameTools can be processed"))
             context.window_manager.brt_update_completed = False
             return {'CANCELLED'}
 
@@ -176,14 +176,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             source_folder = os.path.join(extract_path, "DIVA_BoneRenameTools")
             source_init = os.path.join(source_folder, "__init__.py")
             if not os.path.isdir(source_folder) or not os.path.isfile(source_init):
-                self.report({'WARNING'}, _("ZIP内に DIVA_BoneRenameTools フォルダまたは __init__.py が見つかりません"))
+                self.report({'WARNING'}, _("Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file"))
                 shutil.rmtree(extract_path)
                 context.window_manager.brt_update_completed = False
                 return {'CANCELLED'}
 
             source_name = self.read_bl_info_name(source_init)
             if not source_name:
-                self.report({'WARNING'}, _("ZIP内の bl_info.name を取得できません"))
+                self.report({'WARNING'}, _("Could not retrieve bl_info.name from the ZIP file"))
                 shutil.rmtree(extract_path)
                 context.window_manager.brt_update_completed = False
                 return {'CANCELLED'}
@@ -205,13 +205,13 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             else:
                 if not self.dirpath:
                     # ユーザーに状況を説明してからDIR選択させる
-                    self.report({'INFO'}, _("インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください"))
+                    self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))
                     context.window_manager.fileselect_add(self)  # DIR選択を促す
                     return {'RUNNING_MODAL'}
 
                 # DIR選択後：キャンセルされた場合は中止＋後始末
                 if not self.dirpath:
-                    self.report({'INFO'}, _("インストールはキャンセルされました"))
+                    self.report({'INFO'}, _("Installation was cancelled"))
                     shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
@@ -219,14 +219,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
                 # 選ばれたフォルダに __init__.py があるか確認
                 manual_init = os.path.join(self.dirpath, "__init__.py")
                 if not os.path.isfile(manual_init):
-                    self.report({'WARNING'}, _("選択されたフォルダに __init__.py が見つかりません"))
+                    self.report({'WARNING'}, _("__init__.py not found in the selected folder"))
                     shutil.rmtree(extract_path)
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
                 manual_name = self.read_bl_info_name(manual_init)
                 if manual_name != source_name:
-                    self.report({'WARNING'}, _("bl_info.name が一致しないため、更新できません"))
+                    self.report({'WARNING'}, _("Update failed because bl_info.name does not match"))
                     shutil.rmtree(extract_path)
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
@@ -245,12 +245,12 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             # 一時フォルダの削除
             shutil.rmtree(extract_path)
             # 更新完了ポップアップ表示
-            self.report({'INFO'}, _("更新が完了しました。Blenderを再起動してください"))
+            self.report({'INFO'}, _("Update completed. Please restart Blender"))
             context.window_manager.brt_update_completed = True
             return context.window_manager.invoke_popup(self, width=400)
 
         except Exception as e:  # 例外発生時のエラー通知とクリーンアップ
-            self.report({'ERROR'}, _("更新に失敗しました: {error}").format(error=str(e)))
+            self.report({'ERROR'}, _("Update failed: {error}").format(error=str(e)))
             shutil.rmtree(extract_path, ignore_errors=True)
             context.window_manager.brt_update_completed = False
             return {'CANCELLED'}
@@ -258,14 +258,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     # 更新完了時のポップアップ表示内容
     def draw(self, context):
         layout = self.layout
-        # layout.label(text=_("ZIPファイルを選択してください"), icon='INFO')
-        layout.label(text=_("更新後はBlenderを再起動してください"), icon='INFO')
+        # layout.label(text=_("Please select a ZIP file"), icon='INFO')
+        layout.label(text=_("Please restart Blender after the update"), icon='INFO')
 
         
 class BRT_OT_OpenAddonFolder(bpy.types.Operator):
     """現在のアドオンフォルダを開く"""
     bl_idname = "brt.open_addon_folder"
-    bl_label = _("Open Addon Folder")
+    bl_label = "Open Addon Folder"
     bl_description = _("Opens the folder where this addon is installed")
 
     def execute(self, context):
@@ -283,7 +283,7 @@ class BRT_OT_OpenAddonFolder(bpy.types.Operator):
 class BRT_OT_ConfirmDownloadFolder(bpy.types.Operator):
     """更新ファイルリスト更新"""
     bl_idname = "brt.confirm_download_folder"
-    bl_label = _("Confirm Download Folder")
+    bl_label = "Confirm Download Folder"
     bl_description = _("Scan the folder and list update candidate files")
 
     def execute(self, context):
@@ -292,12 +292,12 @@ class BRT_OT_ConfirmDownloadFolder(bpy.types.Operator):
         folder = scene.brt_download_folder
 
         if not os.path.isdir(folder):
-            self.report({'WARNING'}, "有効なフォルダではありません")
+            self.report({'WARNING'}, "The specified folder is not valid")
             return {'CANCELLED'}
 
         # 設定ファイルに保存
         save_download_folder(folder)
-        self.report({'INFO'}, _("DLフォルダ設定が保存されました"))
+        self.report({'INFO'}, _("Download folder setting has been saved"))
 
         # 候補リスト初期化
         scene.brt_update_candidates.clear()
@@ -318,8 +318,8 @@ class BRT_OT_ConfirmDownloadFolder(bpy.types.Operator):
 class BRT_OT_SortCandidatesByName(bpy.types.Operator):
     """ZIPファイル名ソート(A–Z / Z–A)"""
     bl_idname = "brt.sort_candidates_name"
-    bl_label = _("Sort by File Name")
-    bl_description = _("Sort update files by file name. Click again to toggle order.")
+    bl_label = "Sort by File Name"
+    bl_description = _("Sort update files by file name. Click again to toggle order")
 
     def execute(self, context):
         scene = context.scene
@@ -337,8 +337,8 @@ class BRT_OT_SortCandidatesByName(bpy.types.Operator):
 class BRT_OT_SortCandidatesByDate(bpy.types.Operator):
     """日時順ソート(newest ↔ oldest)"""
     bl_idname = "brt.sort_candidates_date"
-    bl_label = _("Sort by Update Date")
-    bl_description = _("Sort update files by update/download date. Click again to toggle order.")
+    bl_label = "Sort by Update Date"
+    bl_description = _("Sort update files by update/download date. Click again to toggle order")
 
     def execute(self, context):
         scene = context.scene
@@ -368,8 +368,8 @@ def get_classes():
 def register_properties():
     # ダウンロードフォルダの初期値を設定ファイルから読み込む
     bpy.types.Scene.brt_download_folder = bpy.props.StringProperty(
-        name=_("ダウンロードフォルダ"),
-        description=_("更新用ZIPが保存されているフォルダを指定してください"),
+        name="Download Folder",
+        description=_("Specify the folder where the update ZIP is stored"),
         subtype='DIR_PATH',
         default=load_download_folder()
     )
@@ -379,13 +379,13 @@ def register_properties():
         type=BRT_UpdateCandidateItem
     )
     bpy.types.Scene.brt_selected_candidate_index = bpy.props.IntProperty(
-        name=_("候補リスト選択インデックス"),
+        name="Selected index in candidate list",        # 候補リスト選択インデックス
         default=-1
     )
 
     # 更新完了フラグ（INFOラベル表示の制御に使用）
     bpy.types.WindowManager.brt_update_completed = bpy.props.BoolProperty(
-        name=_("更新完了フラグ"),
+        name="Update completed flag",      # 更新完了フラグ
         default=False
     )
     
@@ -416,3 +416,29 @@ def initialize_candidate_list():
     folder = scene.brt_download_folder# 有効なパスかチェック
     if folder and os.path.isdir(folder):
         bpy.ops.brt.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
+
+
+if False:
+    # アドオン起動直後に呼ばれる初期処理    
+    def initialize_candidate_list_delayed():
+        # 更新完了フラグをリセット（前回の更新完了表示が残っていたら消す）
+        wm = bpy.context.window_manager
+        wm.brt_update_completed = False
+
+        # 「有効なDLフォルダが設定されている場合のみ更新リストを自動生成する」  
+        scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
+        if not hasattr(scene, "brt_download_folder"):
+            print("[DLチェック] DLフォルダプロパティ未登録")
+            return None  # DLフォルダプロパティがない → 以降の処理はスキップ
+
+        folder = scene.brt_download_folder  # 有効なパスかチェック
+        print("[DLチェック] フォルダパス:", folder)
+
+        if folder and os.path.isdir(folder):
+            print("[DLチェック] フォルダが存在します。更新オペレータを実行します")
+            bpy.ops.brt.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
+        else:
+            print("[DLチェック] フォルダが無効です")
+
+
+        return None  # 一度だけで終了
