@@ -28,4 +28,4 @@ You can easily access it from the "DIVA" tab in the N Panel.
 **Original script by Saltlapse.**  
 This addon is based on a script published by Saltlapse on GitHub ([GitHub Repository](https://github.com/Saltlapse/Blender-Mod-Scripts)).  
 While adapting it into an addon, I **kept the original script's structure mostly intact** while adding some features.  
-Special thanks to Saltlapse for allowing this! ✨  
+Special thanks to Saltlapse for allowing this!   
