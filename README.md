@@ -22,9 +22,7 @@ DIVAのモデル編集に活用するBlenderアドオン集。
   - 頂点グループ名（ウエイト）の左右識別子も一緒に反転リネームされます。
 
 - **Splite Mirror Weight**
-  - 更新終了しました。
-  - オリジナルを左右反転したオブジェクト（メッシュ）を作成する。
-  - ウエイトも左右反転に対応。
+  - 更新終了しました。後継ツールは**Mesh Weight Reflector**です。
   
 
 各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki)を確認してください。 
