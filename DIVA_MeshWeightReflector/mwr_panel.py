@@ -1,23 +1,28 @@
+# mwr_panel.py
+
 import bpy
-from .smw_main import (
-    get_selected_rules,
-    detect_original_side,
+
+from bpy.app.translations import pgettext as _
+
+from .mwr_main import (
     disable_mirror_modifier,
     duplicate_and_apply_mirror,
-    has_vertices_on_positive_x,
-    has_vertices_on_negative_x,
-    delete_x_side_mesh,
-    rename_symmetric_weight_groups
+    get_pattern_map_from_prefs, 
+    process_origin_overlap,
 )
-from .smw_types import get_bone_pattern_items
+from .mwr_sub import (
+    process_symmetrize,
+)
+from .mwr_json import get_bone_pattern_items, get_selected_rules
 
 # Nパネル設定
-class DIVA_PT_SplitMirrorWeightPanel(bpy.types.Panel):
-    bl_label = "Split Mirror Weight"
-    bl_idname = "DIVA_PT_split_mirror_weight"
+class DIVA_PT_MeshWeightReflectorPanel(bpy.types.Panel):
+    bl_label = "Mesh Weight Reflector"
+    bl_idname = "DIVA_PT_mesh_weight_reflect"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "DIVA"
+    bl_options = {'DEFAULT_CLOSED'} 
 
     # セクションの左側にアイコンを追加
     def draw_header(self, context):
@@ -25,134 +30,204 @@ class DIVA_PT_SplitMirrorWeightPanel(bpy.types.Panel):
         layout.label(icon='MOD_MIRROR') # 左右反転風
 
     def draw(self, context):
-
-        # デバック用
-        # print("NパネルSMW draw 実行確認") 
-
         layout = self.layout
-        props = context.scene.diva_split_mirror_weight
+        props = context.scene.diva_mesh_weight_reflect
 
         box = layout.box()  # 枠付きセクションを作成
 
         # ボーン識別文字（ドロップダウン）
-        row1 = box.row()
-        split1 = row1.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
-        split1.label(text="ボーン識別子:")
-        right1 = split1.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-        right1.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
-        right1.operator("smw.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
+        row = box.row()
+        split = row.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウンとボタン
+        split.label(text=_("Bone Identifier:"))
+        right = split.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
+        right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
+        right.operator("mwr.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
-        # オリジナル側
-        row2 = box.row()
-        split2 = row2.split(factor=0.20, align=True)  # ← ラベル側20%、残りにドロップダウン
-        split2.label(text="オリジナル側:")
-        right2 = split2.row(align=True)
-        right2.prop(props, "delete_side", text="")  # ドロップダウン（ラベル非表示）
-  
         # ミラー自動判別（チェックボタン）
-        row3 = box.row()
-        row3.prop(props, "mirror_auto_detect", text="")  # チェックボックス
-        row3.label(text="ミラー自動判別")  # ラベル
+        row = box.row()
+        row.prop(props, "duplicate_and_mirror", text="")  # チェックボックス
+        row.label(text=_("Duplicate and Mirror"))  # ラベル
 
-        # ほぼ片側だが原点からはみ出しているメッシュ対応（チェックボタン）
-        row4 = box.row()
-        row4.prop(props, "allow_origin_overlap", text="") # チェックボックス
-        row4.label(text="原点越えに対応")  # ラベル
+        # 対称化モード（チェックボックス）
+        row = box.row()
+        row.prop(props, "symmetrize_mode", text="")
+        row.label(text=_("Symmetrize Mode"))  # ラベル（トグルと並列表示）
+
+        # 対称化モード有効時のみ、追加オプション表示
+        if props.symmetrize_mode:
+            # マージON/OFFトグル
+            row.prop(props, "merge_center_vertices", text="")
+            row.label(text=_("Merge Center"))
+
+            # マージ閾値（マージする場合のみ）
+            if props.merge_center_vertices:
+                row.prop(props, "merge_threshold", text=_("Merge Distance"))
+            # マージ閾値（マージしない時のレイアウトダミー）
+            if not props.merge_center_vertices:
+                row.label(text="")
 
         # ミラー実行ボタン
-        # box.separator()
-        box.operator("diva.split_mirror_weight", icon="MOD_MIRROR")
+        # box.operator("diva.mesh_weight_reflect", text=_("Reflect Mesh Weights"), icon="MOD_MIRROR")
+
+        button_label = "Reflect Mesh Weights"  # デフォルト
+        if props.symmetrize_mode:
+            button_label = "Symmetrize Mesh Weights"
+
+        box.operator("diva.mesh_weight_reflect", text=button_label, icon="MOD_MIRROR")
+
 
 # アドオン処理
-class DIVA_OT_SplitMirrorWeight(bpy.types.Operator):
-    bl_idname = "diva.split_mirror_weight"
-    bl_label = "ミラー実行"
+class DIVA_OT_MeshWeightReflector(bpy.types.Operator):
+    """ 選択されたメッシュオブジェクトの鏡像反転版を作成します """
+    bl_idname = "diva.mesh_weight_reflect"
+    bl_label = "Reflect Mesh Weights"
+    bl_description = _("Creates a mirrored version of the selected mesh object")
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         obj = bpy.context.object
-        properties = bpy.context.scene.diva_split_mirror_weight
+        props = context.scene.diva_mesh_weight_reflect
 
         # 3Dビューで選択されているか確認する
         if not obj or obj not in context.selected_objects:
-            self.report({'ERROR'}, "オブジェクトが選択されていません（シーンコレクション選択のみでは不可）")
+            self.report({'ERROR'}, _("No object is selected in the 3D View"))
             return {'CANCELLED'}
-
-        # ミラー自動判別がONの場合、自動判定を実行
-        if properties.mirror_auto_detect:
-            detected_side = detect_original_side(obj)
-            if detected_side:
-                properties.delete_side = detected_side  # 判定した側をオリジナルとして設定
+        '''        
+        obj = context.active_object
+        if obj.type != 'MESH':
+            self.report({'ERROR'}, _("The active object is not a mesh"))
+            return {'CANCELLED'}
+        '''
+            
+        # 安全策①: 編集モードならオブジェクトモードに切り替える（メッシュ限定）
+        if obj.mode == 'EDIT':
+            if obj.type == 'MESH':
+                bpy.ops.object.mode_set(mode='OBJECT')
             else:
-                self.report({'ERROR'}, "ミラー方向を自動判別できません。手動でオリジナル側を選択してください。")
+                self.report({'ERROR'}, _("The editing object {name} is not a mesh. Please switch to Object Mode").format(name=obj.name))
                 return {'CANCELLED'}
 
-        delete_positive_x = (properties.delete_side == 'RIGHT')
-
-        # 識別子セットに対応
-        selected_label = properties.bone_pattern
-        selected_rules = get_selected_rules(selected_label)
-        if not selected_rules:
-            self.report({'ERROR'}, "識別ルールが見つかりません。")
+        # 安全策②: アーマチュアなど他の編集モードでは強制終了
+        if obj.mode != 'OBJECT':
+            self.report({'ERROR'}, _("The current mode is {mode}. Please run in Object Mode").format(mode=obj.mode))
             return {'CANCELLED'}
 
-        # allow_origin_overlap の条件に基づいて特殊処理を実行（原点越え対応がオンなら分岐して終了）
-        if properties.allow_origin_overlap:
-            from .smw_sub import process_origin_overlap
-            process_origin_overlap(obj, properties.delete_side, selected_rules)
-            self.report({'INFO'}, f"原点越えミラー処理完了: {obj.name}")
+        # 安全策③: オブジェクトモードでもメッシュが選ばれていない場合
+        if obj.type != 'MESH':
+            self.report({'ERROR'}, _("The selected object {name} is not a mesh. Please select a mesh object").format(name=obj.name))
+            return {'CANCELLED'}
+
+
+        # 識別子セットに対応（識別子マップを取得）
+        pattern_label = props.bone_pattern
+        pattern_map = get_selected_rules(pattern_label)
+        if not pattern_map:
+            self.report({'ERROR'}, _("Identifier rule {label} not found").format(label=pattern_label))
+            return {'CANCELLED'}
+
+        # flipマップ付きの構造を取得
+        pattern_struct = get_pattern_map_from_prefs(context, pattern_label, None)
+        flip_map = pattern_struct["flip"]
+
+        # ✅ 対称化モードチェック
+        if props.symmetrize_mode:
+            # 新オペレーターに切り替え実行
+            bpy.ops.mwr.symmetrize_mesh_weights('INVOKE_DEFAULT')  # 対称化モードオペレーター
             return {'FINISHED'}
 
-        # 通常の左右分離によるミラー処理
-        if obj and obj.type == 'MESH' and obj.parent and obj.parent.type == 'ARMATURE':
-            armature = obj.parent
+        # ミラー処理実行（対称化モードではないとき）
+        mirrored_obj = process_origin_overlap(
+            obj,
+            pattern_map,
+            props.duplicate_and_mirror,
+            flip_map,
+            merge_center_vertices=False  # ← 絶対に False
+        )
 
-            disable_mirror_modifier(obj)  
-            mirrored_obj = duplicate_and_apply_mirror(obj, properties.delete_side)  # **リネーム処理を適用**
-
-            # メッシュの有無をチェック（関数定義が必要）
-            if delete_positive_x and not has_vertices_on_positive_x(mirrored_obj):
-                self.report({'ERROR'}, "右側（+X）メッシュが存在しません。処理を中止しました。")
-                return {'CANCELLED'}
-            elif not delete_positive_x and not has_vertices_on_negative_x(mirrored_obj):
-                self.report({'ERROR'}, "左側（-X）にメッシュが存在しません。処理を中止しました。")
-                return {'CANCELLED'}
-
-            delete_x_side_mesh(mirrored_obj, delete_positive_x)  
-
-            """ # allow_origin_overlap の分岐の前に移動
-            # 識別子セットに対応
-            selected_label = properties.bone_pattern
-            selected_rules = get_selected_rules(selected_label)
-            if not selected_rules:
-                self.report({'ERROR'}, "識別ルールが見つかりません。")
-                return {'CANCELLED'}
-            """
-
-            rename_symmetric_weight_groups(mirrored_obj, selected_rules, properties.delete_side)
-
-            self.report({'INFO'}, f"ミラー適用 & ウェイト転送完了: {mirrored_obj.name}")
+        self.report({'INFO'}, _("Mirrored version generated: {name}").format(name=mirrored_obj.name))
         return {'FINISHED'}
 
 
+class MWR_OT_MeshWeightSymmetry(bpy.types.Operator):
+    """ 左右対称版を作成 """
+    bl_idname = "mwr.symmetrize_mesh_weights"
+    bl_label = "Symmetrize Mesh Weights"
+    bl_description = _("Symmetrizes the selected mesh object")
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        props = context.scene.diva_mesh_weight_reflect
+        obj = context.active_object
+
+        # 3Dビューで選択されているか確認する
+        if not obj or obj not in context.selected_objects:
+            self.report({'ERROR'}, _("No object is selected in the 3D View"))
+            return {'CANCELLED'}
+        '''        
+        obj = context.active_object
+        if obj.type != 'MESH':
+            self.report({'ERROR'}, _("The active object is not a mesh"))
+            return {'CANCELLED'}
+        '''
+            
+        # 安全策①: 編集モードならオブジェクトモードに切り替える（メッシュ限定）
+        if obj.mode == 'EDIT':
+            if obj.type == 'MESH':
+                bpy.ops.object.mode_set(mode='OBJECT')
+            else:
+                self.report({'ERROR'}, _("The editing object {name} is not a mesh. Please switch to Object Mode").format(name=obj.name))
+                return {'CANCELLED'}
+
+        # 安全策②: アーマチュアなど他の編集モードでは強制終了
+        if obj.mode != 'OBJECT':
+            self.report({'ERROR'}, _("The current mode is {mode}. Please run in Object Mode").format(mode=obj.mode))
+            return {'CANCELLED'}
+
+        # 安全策③: オブジェクトモードでもメッシュが選ばれていない場合
+        if obj.type != 'MESH':
+            self.report({'ERROR'}, _("The selected object {name} is not a mesh. Please select a mesh object").format(name=obj.name))
+            return {'CANCELLED'}
+
+
+        # bone_pattern、duplicate_and_mirror は props から取得可能
+        pattern_label = props.bone_pattern
+        flip_map = get_pattern_map_from_prefs(context, pattern_label, None)["flip"]
+        
+
+        # 実際の対称化処理ロジック
+        symmetrical_obj = process_symmetrize(
+            obj,
+            pattern_label,
+            props.duplicate_and_mirror,
+            flip_map,
+            merge_center_vertices=props.merge_center_vertices,
+            merge_threshold=props.merge_threshold
+        )
+
+        self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=symmetrical_obj.name))
+        return {'FINISHED'}
+
 
 #  DIVAアドオン設定画面（プリファレンス）を開く
-class SMW_OT_OpenPreferences(bpy.types.Operator):
-    bl_idname = "smw.open_preferences"
-    bl_label = "DIVA 設定を開く"
+class MWR_OT_OpenPreferences(bpy.types.Operator):
+    bl_idname = "mwr.open_preferences"
+    bl_label = "Open DIVA preferences"
+    bl_description = _("Open the addon settings in Preferences")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     def execute(self, context):
         bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く
         context.preferences.active_section = 'ADDONS'
         context.window_manager.addon_search = "diva"
         # アドオン指定でプリファレンスを開きたい場合はアドオンフォルダ名を設定
-        # context.window_manager.addon_search = "DIVA_SplitMirrorWeight"
+        # context.window_manager.addon_search = "DIVA_MeshWeightReflector"
         return {'FINISHED'}
 
 
 def get_classes():
     return [   
-        DIVA_PT_SplitMirrorWeightPanel,
-        SMW_OT_OpenPreferences,
-        DIVA_OT_SplitMirrorWeight,
+        DIVA_PT_MeshWeightReflectorPanel,
+        MWR_OT_OpenPreferences,
+        DIVA_OT_MeshWeightReflector,
+        MWR_OT_MeshWeightSymmetry
     ]

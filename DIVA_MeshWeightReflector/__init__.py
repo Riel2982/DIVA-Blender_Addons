@@ -1,30 +1,39 @@
 bl_info = {
-    "name": "DIVA - Split Mirror Weight",
+    "name": "DIVA - Mesh Weight Reflector",
     "author": "Riel",
-    "version": (0, 1, 5),
+    "version": (0, 0, 2),
     "blender": (3, 0, 0),
     "location": "Nパネル > DIVA",
     "description": "Automatically separates mirrored meshes and applies symmetrical weight copying to vertex groups.",
-    "warning": "多言語対応中",
+    # "warning": "テスト中",
     "support": "COMMUNITY",
-    "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Split-Mirror-Weight",
+    "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Mesh-Weight-Reflector",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons",
     "category": "Object",
 }
 
 import bpy
-from . import smw_translation
-from . import smw_types
-from . import smw_preferences
-from . import smw_panel
-from .smw_preferences import load_bone_patterns_to_preferences
+from . import (
+    mwr_translation,
+    mwr_panel,
+    mwr_preferences,
+    mwr_types,
+    mwr_update,
+)
+from .mwr_preferences import load_bone_patterns_to_preferences
 
 # すべてのクラスをまとめる
-modules = [smw_types, smw_panel, smw_preferences]
+modules = [
+    mwr_types, 
+    mwr_panel, 
+    mwr_preferences, 
+    mwr_translation, 
+    mwr_update,
+    ]
 
 # register() 内で動的にクラスを取得
 def register():
-    smw_translation.register(__name__)
+    mwr_translation.register()
     for mod in modules:
         if hasattr(mod, "get_classes"):
             for cls in mod.get_classes():
@@ -32,6 +41,12 @@ def register():
 
         if hasattr(mod, "register_properties"):
             mod.register_properties()
+
+        def delayed_initialize():
+            if hasattr(mod, "initialize_candidate_list"):
+                mod.initialize_candidate_list()
+            return None  # 一度だけでOK
+        bpy.app.timers.register(delayed_initialize)
 
     addon = bpy.context.preferences.addons.get(__name__)
     if addon:
@@ -46,4 +61,5 @@ def unregister():
 
         if hasattr(mod, "unregister_properties"):
             mod.unregister_properties()
-    smw_translation.unregister(__name__)
+
+    mwr_translation.unregister()

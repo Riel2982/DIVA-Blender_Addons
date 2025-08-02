@@ -1,54 +1,15 @@
-import os
-import json
+# mwr_main.py
+
 import bpy
-import bmesh
-from .smw_preferences import get_json_path, load_bone_patterns_to_preferences
-
-
-# ラベルに対応するルールセットを取得
-def get_selected_rules(label):
-    addon = bpy.context.preferences.addons.get("DIVA_SplitMirrorWeight")
-    if not addon:
-        return []
-
-    prefs = addon.preferences
-    for p in prefs.bone_patterns:
-        if p.label.strip() == label:
-            return [
-                {
-                    "right": r.right,
-                    "left": r.left,
-                    "use_regex": getattr(r, "use_regex", False)
-                }
-                for r in p.rules
-            ]
-    return []
-
-
-# 指定したX方向に頂点があるか調べる
-def has_vertices_on_positive_x(obj, threshold=0.001):
-    """+X側に頂点が存在するか"""
-    return any((obj.matrix_world @ v.co).x > threshold for v in obj.data.vertices)
-
-def has_vertices_on_negative_x(obj, threshold=0.001):
-    """-X側に頂点が存在するか"""
-    return any((obj.matrix_world @ v.co).x < -threshold for v in obj.data.vertices)
-
-def detect_original_side(obj, threshold=0.001):
-    """オブジェクトのオリジナル側を自動判定"""
-    if not obj or obj.type != 'MESH':
-        return None
-
-    has_left = has_vertices_on_negative_x(obj, threshold)
-    has_right = has_vertices_on_positive_x(obj, threshold)
-
-    if has_left and not has_right:
-        return 'LEFT'
-    elif has_right and not has_left:
-        return 'RIGHT'
-    else:
-        return None  # 両側にメッシュがあるため曖昧（手動選択必須）
-
+from typing import Optional
+from .mwr_json import (
+    get_json_path,
+    load_json_data,
+    save_json_data,
+    DEFAULT_BONE_PATTERN,
+    get_bone_pattern_items,
+    get_rule_items,
+)
 
 
 # ミラーモディファイアをオフにする処理
@@ -59,8 +20,9 @@ def disable_mirror_modifier(obj):
             mod.show_viewport = False
             mod.show_render = False
 
+
 # オブジェクト複製＆ミラー適用
-def duplicate_and_apply_mirror(obj, delete_side):
+def duplicate_and_apply_mirror(obj):
     """オリジナルオブジェクトを複製し、複製にミラーモディファイアを適用"""
     bpy.ops.object.select_all(action='DESELECT')  
     obj.select_set(True)
@@ -68,10 +30,7 @@ def duplicate_and_apply_mirror(obj, delete_side):
     mirrored_obj = bpy.context.selected_objects[0]  
 
     # **複製オブジェクトの名前をカスタムリネーム**
-    if delete_side == 'RIGHT':
-        mirrored_obj.name = f"{obj.name}_R"
-    else:
-        mirrored_obj.name = f"{obj.name}_L"
+    mirrored_obj.name = f"{obj.name}_Mirror"  # ← 一貫した命名に統一
 
     # ミラーを追加＆適用
     bpy.context.view_layer.objects.active = mirrored_obj
@@ -79,53 +38,147 @@ def duplicate_and_apply_mirror(obj, delete_side):
     mirror_mod = mirrored_obj.modifiers[-1]
     mirror_mod.use_axis[0] = True  
 
+    # ✅ 頂点マージを無効化
+    mirror_mod.use_mirror_merge = False
+    mirror_mod.merge_threshold = 0.0
+
     bpy.ops.object.modifier_apply(modifier=mirror_mod.name)
     return mirrored_obj
 
-# X軸側メッシュ削除
-def delete_x_side_mesh(obj, delete_positive_x=True):
-    """選択された側のメッシュを削除"""
+
+
+# 頂点削除処理（インデックスベース）
+def delete_vertices_by_index(obj, index_list):
+    """
+    指定された頂点インデックス群に基づいて、対象オブジェクトの頂点を削除する。
+    完全にインデックス情報のみで判定し、座標（X軸など）や識別名には一切依存しない。
+    選択操作は Edit モード内で Blender の標準オペレータを利用して安全に実行される。
+    """
     mesh = obj.data
-    bm = bmesh.new()
-    bm.from_mesh(mesh)
 
-    for vert in bm.verts:
-        if (delete_positive_x and vert.co.x > 0) or (not delete_positive_x and vert.co.x < 0):
-            bm.verts.remove(vert)
+    # Step 1: Editモードで選択解除（安全初期化）
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
-    bm.to_mesh(mesh)
-    bm.free()
+    # Step 2: 対象インデックスだけ選択状態にする
+    for idx in index_list:
+        mesh.vertices[idx].select = True
 
-# 頂点グループリネーム処理
-import re
+    # Step 3: 選択頂点を削除
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.delete(type='VERT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
-def rename_symmetric_weight_groups(obj, rules, delete_side):
-    """削除する側を考慮し、頂点グループを適切にリネーム（削除→改名を分離）"""
-   
-    for rule in rules:
-        right = rule["right"]
-        left = rule["left"]
 
-        # --- Step 1: 削除処理（delete_side に対応する方を消す） ---
-        pattern = right if delete_side == 'RIGHT' else left
-        for vg in list(obj.vertex_groups):
-            name = vg.name
-            if pattern in name:
-                print(f"[DIVA] 削除: {name}")
-                obj.vertex_groups.remove(vg)
+# 指定されたパターン名に基づいて置換辞書を返す
+def get_pattern_map_from_prefs(context, pattern_label: str, rule_index: Optional[int]) -> dict:
+    prefs = context.preferences.addons["DIVA_MeshWeightReflector"].preferences
+    for p in prefs.bone_patterns:
+        if p.label == pattern_label:
 
-        # --- Step 2: リネーム処理（反対側の名前を変換する） ---
-        source = left if delete_side == 'RIGHT' else right
-        target = right if delete_side == 'RIGHT' else left
+            # 🔧 assign_identifier=False → 全ルールからflipマップ構成
+            if rule_index is None:
+                flip_dict = {}
+                for r in p.rules:
+                    if r.left and r.right:
+                        flip_dict[r.left] = r.right
+                        flip_dict[r.right] = r.left
+                return {
+                    "left": "",   # 未使用でもキーとして必要
+                    "right": "",
+                    "flip": flip_dict
+                }
 
-        for vg in list(obj.vertex_groups):
-            name = vg.name
-            if source in name:
-                new_name = name.replace(source, target)
-                if new_name != name:
-                    # 衝突がある場合は先に削除
-                    if obj.vertex_groups.get(new_name):
-                        print(f"[DIVA] 衝突先削除: {new_name}")
-                        obj.vertex_groups.remove(obj.vertex_groups.get(new_name))
-                    print(f"[DIVA] リネーム: {name} → {new_name}")
-                    vg.name = new_name
+
+            elif rule_index < len(p.rules):
+                r = p.rules[rule_index]
+
+                # ★ flip辞書は全ルールから構成する（付与は指定の left/right のみ）
+                full_flip = {}
+                for rr in p.rules:
+                    if rr.left and rr.right:
+                        full_flip[rr.left] = rr.right
+                        full_flip[rr.right] = rr.left
+
+                return {
+                    "left": r.left,       # 付与にはこのleftを使う
+                    "right": r.right,     # 付与にはこのrightを使う
+                    "flip": full_flip     # 反転には全識別子を使う
+                }
+
+            '''
+            # 🔧 assign_identifier=True → 単一ルールだけ使う
+            elif rule_index < len(p.rules):
+                r = p.rules[rule_index]
+                return {
+                    "left": r.left,
+                    "right": r.right,
+                    "flip": {r.left: r.right, r.right: r.left}
+                }
+            '''
+
+    return {}
+
+# 双方向識別子変換
+def apply_name_flip(name, flip_map):
+    for left, right in flip_map.items():
+        if right in name:
+            return name.replace(right, left)
+        elif left in name:
+            return name.replace(left, right)
+    return name  # flip対象なし
+
+
+
+# 原点越えミラー処理：複製・削除・グループ整備の統合フロー
+def process_origin_overlap(obj, pattern_map, duplicate_and_mirror, flip_map, merge_center_vertices=False):
+    marge_center_vertices = False
+    """
+    原点越え対象メッシュを反転し、頂点グループ名をルールに基づいて整備する。
+    一時状態は _MirrorL/_MirrorR の接尾辞で表し、flip_map により左右名称を反転。
+    """
+
+    # Step 1: 元頂点インデックスを記録
+    disable_mirror_modifier(obj)
+    original_indices = [v.index for v in obj.data.vertices]
+
+    # Step 2: Mirror処理（複製あり／なし）
+    if duplicate_and_mirror:
+        mirrored_obj = duplicate_and_apply_mirror(obj)
+    else:
+        bpy.context.view_layer.objects.active = obj
+        bpy.ops.object.modifier_add(type='MIRROR')
+        mirror_mod = obj.modifiers[-1]
+        mirror_mod.use_axis[0] = True
+        # ✅ 頂点マージを無効化
+        mirror_mod.use_mirror_merge = False
+        mirror_mod.merge_threshold = 0.0
+        bpy.ops.object.modifier_apply(modifier=mirror_mod.name)
+        mirrored_obj = obj
+
+    # Step 3: 元側頂点を削除（インデックス指定）
+    delete_vertices_by_index(mirrored_obj, original_indices)
+
+    # Step 4: 一時接尾辞 "_MirrorL"/"_MirrorR" を付与（識別子に基づく）
+    for vg in mirrored_obj.vertex_groups:
+        for rule in pattern_map:
+            if rule["left"] in vg.name:
+                vg.name += "_MirrorL"
+                break
+            elif rule["right"] in vg.name:
+                vg.name += "_MirrorR"
+                break
+
+    # Step 5: flip_map に従い左右識別子を反転し、一時接尾辞を除去
+    for vg in mirrored_obj.vertex_groups:
+        if vg.name.endswith("_MirrorL"):
+            base = vg.name[:-len("_MirrorL")]
+            vg.name = apply_name_flip(base, flip_map)
+        elif vg.name.endswith("_MirrorR"):
+            base = vg.name[:-len("_MirrorR")]
+            vg.name = apply_name_flip(base, flip_map)
+
+    # Step 6: 完了ログ出力
+    print(f"[ReflectMeshWeights] 完了: {mirrored_obj.name}")
+    return mirrored_obj

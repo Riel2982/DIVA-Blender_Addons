@@ -1,76 +1,82 @@
-# smw_types.py
+# mwr_types.py
 
 import bpy
 from bpy.app.translations import pgettext as _
-
-# ボーン識別子セットの取得
-def get_bone_pattern_items(self, context):
-    prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
-    items = []
-
-    for i, pattern in enumerate(prefs.bone_patterns):
-        label = pattern.label.strip()
-
-        # 識別子としてそのまま使える名前に（ascii前提）
-        identifier = label
-        name = label  # 表示用にもそのまま使う（日本語でない前提）
-
-        items.append((identifier, name, ""))
-
-    return items
-
-
+from .mwr_json import get_bone_pattern_items, get_rule_items
 
 # プロパティグループ
-class DIVA_SplitMirrorWeightProps(bpy.types.PropertyGroup):
+class DIVA_MeshWeightReflectorProps(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
-        name=_("識別子セット"),
-        items=get_bone_pattern_items # JSONから読み込み
+        name="Identifier set",      # 識別子セット
+        items=get_bone_pattern_items, # JSONから読み込み
+    )
+    duplicate_and_mirror: bpy.props.BoolProperty(
+        name="duplicate and mirror",        # 複製してミラーする
+        description=_("Duplicate and mirror selected mesh"),
+        default=True,
     )
 
-    delete_side: bpy.props.EnumProperty(
-        name=_("オリジナル側"),
-        description=_("コピー元を選択（右 or 左）"),
-        items=[
-            ('RIGHT', _("左→右に複製"), _("Blenderの+X側を削除")),
-            ('LEFT', _("右→左に複製"), _("Blenderの-X側を削除")),
-        ],
-        default='RIGHT'
+    symmetrize_mode: bpy.props.BoolProperty(   # 対称化モード
+        name="symmetrize mode",
+        description=_("Enable alternative symmetrize mode"),
+        default=False,
     )
 
-    mirror_auto_detect: bpy.props.BoolProperty(
-        name=_("ミラー自動判別"),
-        description=_("ミラーの方向を自動判別するかどうか"),
-        default=False
+    merge_center_vertices: bpy.props.BoolProperty(
+        name="merge center",
+        description=_("Merge vertices near X=0 when mirroring"),
+        default=False,
     )
 
-    allow_origin_overlap: bpy.props.BoolProperty(
-        name=_("原点越えに対応"),
-        description=_("原点からわずかにはみ出した片側メッシュでも反転する（ミラー自動判別と併用不可）"),
-        default=False
+    merge_threshold: bpy.props.FloatProperty(
+        name="merge threshold",
+        description=_("X-axis threshold used for merge detection"),
+        default=0.001,
+        min=0.0,
+        max=0.1,
+        precision=4,     # 0.0001まで表示される,
+        step=0.095,  # ドラッグ時のスライダー変化幅調整
     )
+
+
 
 # 識別子ルールのデータ（左右ペア）
-class SMW_BoneRuleItem(bpy.types.PropertyGroup):
-    right: bpy.props.StringProperty(name="右")
-    left: bpy.props.StringProperty(name="左")
-    use_regex: bpy.props.BoolProperty(default=False, options={'HIDDEN'})  # ← 正規表現で置き換えるか（False＝使わない）/ 現時点ではUI側にこの設定は非表示
+class MWR_BoneRuleItem(bpy.types.PropertyGroup):
+    right: bpy.props.StringProperty(name="Right")
+    left: bpy.props.StringProperty(name="Left")
+    use_regex: bpy.props.BoolProperty(        # チェックボックス型
+        name="Regular expression ON/OFF",
+        description=_("Whether to use regular expressions"),
+        default=False,      # ← 正規表現で置き換えるか（False＝使わない）
+        # options={'HIDDEN'}  # UI非表示のまま
+    )
 
 # 識別子セット（ラベルとルールリスト）
-class SMW_BonePatternItem(bpy.types.PropertyGroup):
-    label: bpy.props.StringProperty(name="セット名")
-    rules: bpy.props.CollectionProperty(type=SMW_BoneRuleItem)
+class MWR_BonePatternItem(bpy.types.PropertyGroup):
+    label: bpy.props.StringProperty(name="Set Name")
+    rules: bpy.props.CollectionProperty(type=MWR_BoneRuleItem)
 
 def get_classes():
     return [
-        SMW_BoneRuleItem,
-        SMW_BonePatternItem,
-        DIVA_SplitMirrorWeightProps, 
+        MWR_BoneRuleItem,
+        MWR_BonePatternItem,
+        DIVA_MeshWeightReflectorProps, 
     ]
 
 
 def register_properties():
-    bpy.types.Scene.diva_split_mirror_weight = bpy.props.PointerProperty(type=DIVA_SplitMirrorWeightProps)
+    # プリファレンスの識別子セット編集折りたたみ機構
+    bpy.types.WindowManager.mwr_show_identifier_sets = bpy.props.BoolProperty(      # SceneからWindowManagerに変更して履歴に載せない・変更扱いにしない
+        name="Show Identifier Sets",
+        description=_("Display UI to edit identifier sets"),# 編集履歴に乗る名目
+        default=False  # デフォルトは閉じておく
+    )
+    
+    bpy.types.Scene.diva_mesh_weight_reflect = bpy.props.PointerProperty(type=DIVA_MeshWeightReflectorProps)
 
 def unregister_properties():
-    del bpy.types.Scene.diva_split_mirror_weight
+    if hasattr(bpy.types.WindowManager, "mwr_show_identifier_sets"):
+        del bpy.types.WindowManager.mwr_show_identifier_sets
+
+    if hasattr(bpy.types.Scene, "diva_mesh_weight_reflect"):
+        del bpy.types.Scene.diva_mesh_weight_reflect
