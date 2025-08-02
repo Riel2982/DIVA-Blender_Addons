@@ -83,6 +83,29 @@ class BRT_OT_InvertSelectedBones(bpy.types.Operator):
 
     def execute(self, context):
         from .brt_invert import apply_mirrored_rename
+
+        # 安全ガード
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'WARNING'}, _("No armature is selected"))
+            return {'CANCELLED'}
+
+        mode = context.mode
+        if mode not in {'POSE', 'EDIT_ARMATURE'}:
+            self.report({'WARNING'}, _("Supported modes are Pose and Edit"))
+            return {'CANCELLED'}
+
+        # 選択ボーンの取得
+        if mode == 'POSE':
+            bones = [b for b in obj.pose.bones if b.bone.select]
+        else:  # EDIT_ARMATURE
+            bones = [b for b in obj.data.edit_bones if b.select]
+
+        if not bones:
+            self.report({'WARNING'}, _("No bones selected"))
+            return {'CANCELLED'}
+
+
         props = context.scene.brt_invert_selected_bones
 
         renamed = apply_mirrored_rename(
@@ -96,6 +119,7 @@ class BRT_OT_InvertSelectedBones(bpy.types.Operator):
             rule_enum="000",   # 任意の設定値
             rule_index=int(props.bone_rule)
         )
+        
 
         self.report({'INFO'}, _("Renamed {count} bones").format(count=renamed))
         return {'FINISHED'}
@@ -221,6 +245,7 @@ class BRT_OT_OpenPreferences(bpy.types.Operator):
     bl_idname = "brt.open_preferences"
     bl_label = "Open DIVA preferences"
     bl_description = _("Open the addon settings in Preferences")
+    bl_options = {'INTERNAL'}  # ← Undo履歴に残さない
 
     def execute(self, context):
         bpy.ops.screen.userpref_show("INVOKE_DEFAULT")  # Preferences ウィンドウを開く

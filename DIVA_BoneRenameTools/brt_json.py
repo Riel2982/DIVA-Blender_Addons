@@ -1,8 +1,13 @@
 # brt_json.py
+import bpy
 import os
 import json
 import shutil
 import datetime
+import importlib
+import traceback
+from datetime import datetime
+import re
 
 # デフォルト識別子の定義
 def DEFAULT_BONE_PATTERN():
@@ -73,6 +78,22 @@ def load_bone_patterns_to_preferences(prefs):
         try:
             shutil.move(path, backup_path)
             print(f"[DIVA] ⚠ 破損JSONをバックアップ: {backup_path}")
+
+            # 5件までに制限
+            dir_path = os.path.dirname(backup_path)
+            base_name = os.path.basename(path).replace(".json", "")
+            pattern = re.compile(rf"{re.escape(base_name)}\.invalid_\d{{8}}_\d{{6}}\.json")
+            backups = [f for f in os.listdir(dir_path) if pattern.match(f)]
+            backups.sort()  # 古い順になる
+
+            while len(backups) > 5: # 5件まで
+                oldest = backups.pop(0)
+                try:
+                    os.remove(os.path.join(dir_path, oldest))
+                    print(f"[DIVA] 🗑 古いバックアップ削除: {oldest}")
+                except Exception as rm_err:
+                    print(f"[DIVA] ⚠ 削除失敗: {rm_err}")
+
         except Exception as move_err:
             print(f"[DIVA] ⚠ バックアップに失敗しました: {move_err}")
 
@@ -128,3 +149,118 @@ def load_json_data():
 def save_json_data(data):
     with open(get_json_path(), "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+
+# JSON同期用
+# 同期アドオン検出
+def get_diva_sync_targets():
+    exclude = "DIVA_BoneRenameTools"
+    enabled_addons = bpy.context.preferences.addons.keys() 
+    
+    # 既存のロジックに `if name != exclude:` を挿む感じ
+    targets = []
+    for name in enabled_addons:
+        if not name.startswith("DIVA_"): # DIVA_で条件付
+            continue
+
+        if name == exclude: #   自身は除外する
+            continue
+
+        try:
+            mod = importlib.import_module(name)
+        except Exception:
+            continue  # インポート失敗＝候補から除外
+
+        bl_info = getattr(mod, "bl_info", {})
+
+        if "Riel" not in bl_info.get("author", ""): # bl_info Author: Riel
+            continue
+
+        root_dir = os.path.dirname(mod.__file__)
+        json_path = os.path.join(root_dir, "bone_patterns.json") # ファイル名: bone_patterns.json
+        if not os.path.exists(json_path):
+            continue
+
+        if hasattr(mod, "load_bone_patterns_to_preferences"):
+                targets.append((name, mod))
+
+    return targets
+
+def copy_json_to_targets(source_path, targets):
+    for name, mod in targets:
+        root_dir = os.path.dirname(mod.__file__)
+        target_path = os.path.join(root_dir, "bone_patterns.json")
+
+        if not os.path.exists(target_path):
+            continue  # スキップ対象
+
+        # バックアップ
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = target_path.replace(".json", f"_{timestamp}.bak.json")
+        shutil.copy2(target_path, backup_path)
+        print(f"[BACKUP] {name}: {backup_path} にバックアップ")
+
+        # 🔁 バックアップファイルを3件に制限
+        base_name = os.path.basename(target_path).replace(".json", "")
+        pattern = re.compile(rf"{re.escape(base_name)}_\d{{8}}_\d{{6}}\.bak\.json")
+        backups = [
+            f for f in os.listdir(root_dir)
+            if pattern.match(f)
+        ]
+        backups.sort()  # 古い順
+
+        while len(backups) > 3: # 3件まで
+            oldest = backups.pop(0)
+            try:
+                os.remove(os.path.join(root_dir, oldest))
+                print(f"[CLEANUP] {name}: 古いバックアップ削除 → {oldest}")
+            except Exception as rm_err:
+                print(f"[ERROR] {name}: バックアップ削除失敗 → {rm_err}")
+
+        # 上書きコピー
+        shutil.copy2(source_path, target_path)
+        print(f"[COPY] {name}: {target_path} にコピー完了")
+
+def sync_bone_patterns():
+    synced = []  # ← 成功したアドオン名をここに記録
+
+    try:
+        # 編集元から保存
+        brt_prefs = bpy.context.preferences.addons["DIVA_BoneRenameTools"].preferences
+        mod_brt = importlib.import_module("DIVA_BoneRenameTools.brt_json")
+        if hasattr(mod_brt, "save_json_data"):
+            data = [
+                {
+                    "label": p.label,
+                    "rules": [
+                        {"right": r.right, "left": r.left, "use_regex": r.use_regex}
+                        for r in p.rules
+                    ],
+                }
+                for p in brt_prefs.bone_patterns
+            ]
+            mod_brt.save_json_data(data)
+            print("[SYNC] bone_patterns 保存完了")
+
+            source_path = mod_brt.get_json_path()  # 編集元のJSONパス
+            targets = get_diva_sync_targets()
+            copy_json_to_targets(source_path, targets)
+
+        # 対象DIVAアドオンへ反映
+        for name, mod in get_diva_sync_targets():
+            try:
+                prefs_target = bpy.context.preferences.addons[name].preferences
+                mod.load_bone_patterns_to_preferences(prefs_target)
+                print(f"[SYNC] {name} → 同期成功")
+                synced.append(name)
+            except Exception as inner:
+                print(f"[SYNC] {name} → 同期失敗: {inner}")
+
+    except Exception as e:
+        import traceback
+        print("[SYNC] エラー発生:")
+        print(traceback.format_exc())
+        raise e  # 呼び出し元にエラーを渡す
+
+    return synced  # ← 成功アドオン名を返す

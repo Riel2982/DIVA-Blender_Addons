@@ -114,14 +114,14 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
     filepath: bpy.props.StringProperty(
         name="Select ZIP File",
         description=_("Choose a ZIP file starting with DIVA_BoneRenameTools"),
-        #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
+        #　filter_glob='*.zip'      # ZIP制限（4.2以降ファイルパスが取得できない原因）
     )
 
     # ユーザーにフォルダ選択してもらうためのプロパティ（手動選択時のみ使用）
     dirpath: bpy.props.StringProperty(
         name="Select Addon Folder",
         description=_("Choose the folder where the addon is installed"),
-        subtype='DIR_PATH'
+        subtype='DIR_PATH'      # 何故かこっちでファイルパスが取得できる？
     )
 
     # 共通処理(更新対象の照合関数)
@@ -203,6 +203,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
 
             # 自動判定失敗 → ユーザーにフォルダを選ばせる
             else:
+                '''
                 if not self.dirpath:
                     # ユーザーに状況を説明してからDIR選択させる
                     self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))
@@ -215,12 +216,13 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
                     shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
-
+                '''
+                    
                 # 選ばれたフォルダに __init__.py があるか確認
                 manual_init = os.path.join(self.dirpath, "__init__.py")
                 if not os.path.isfile(manual_init):
                     self.report({'WARNING'}, _("__init__.py not found in the selected folder"))
-                    shutil.rmtree(extract_path)
+                    # shutil.rmtree(extract_path)
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
@@ -250,7 +252,7 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
             return context.window_manager.invoke_popup(self, width=400)
 
         except Exception as e:  # 例外発生時のエラー通知とクリーンアップ
-            self.report({'ERROR'}, _("Update failed: {error}").format(error=str(e)))
+            self.report({'WARNING'}, _("Update failed: {error}").format(error=str(e)))
             shutil.rmtree(extract_path, ignore_errors=True)
             context.window_manager.brt_update_completed = False
             return {'CANCELLED'}

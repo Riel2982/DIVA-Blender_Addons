@@ -4,6 +4,9 @@ import bpy
 import re
 from os.path import commonprefix
 
+from bpy.app.translations import pgettext as _
+
+
 def strip_number_suffix(name: str) -> str:
     """'.001' のような複製識別子を除去する"""
     return re.sub(r"\.\d{3}$", "", name)
@@ -12,7 +15,7 @@ def replace_bone_names_by_rule(context, source, target):
     """選択中のボーン名から source を target に置き換え（部分一致）"""
     obj = context.object
     if not obj or obj.type != 'ARMATURE':
-        return False, False, "アーマチュアを選択してください"
+        return False, False, _("Please select an armature")
 
     # モード別に選択されたボーンのみを取得
     if context.mode == 'POSE':
@@ -20,7 +23,7 @@ def replace_bone_names_by_rule(context, source, target):
     elif context.mode == 'EDIT_ARMATURE':
         selected_bones = [b for b in obj.data.edit_bones if b.select]
     else:
-        return False, False, "対応モードは Pose または Edit モードです"
+        return False, False, _("Supported modes are Pose and Edit")
 
     matched = 0
     total_selected = len(selected_bones)
@@ -35,9 +38,9 @@ def replace_bone_names_by_rule(context, source, target):
             matched += 1
 
     if matched == 0:
-        return False, False, "選択したボーン名と置換前の名前の設定を確認してください"
+        return False, False, _("Please check the settings of the selected bone name and the name before replacement")    # 選択したボーン名と置換前の名前の設定を確認してください
     elif matched < total_selected:
-        return True, True, "一部置き換えできませんでした。ボーン名を確認してください"
+        return True, True, _("Some bones could not be replaced. Please check the bone name")    # 一部のボーンが置き換えできませんでした。ボーン名を確認してください
     else:
         return True, False, ""
 

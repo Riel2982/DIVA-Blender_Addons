@@ -43,31 +43,31 @@ def get_rule_items(self, context):
 # プロパティグループ
 class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):
     bone_pattern: bpy.props.EnumProperty(
-        name=_("識別子セット"),
+        name="Identifier set",      # 識別子セット
         items=get_bone_pattern_items # JSONから読み込み
     )
 
     bone_rule: bpy.props.EnumProperty(
-        name=_("識別子ペア"),
-        description=_("現在のセット内のルールを選択"),
+        name="Identifier pair",       # 識別子ペア
+        description=_("Select a rule in the current set"),
         items=lambda self, context: get_rule_items(self, context)
     )
 
 
 # 識別子ルールのデータ（左右ペア）
 class BRT_BoneRuleItem(bpy.types.PropertyGroup):
-    right: bpy.props.StringProperty(name=_("右"))
-    left: bpy.props.StringProperty(name=_("左"))
+    right: bpy.props.StringProperty(name="Right")
+    left: bpy.props.StringProperty(name="Left")
     use_regex: bpy.props.BoolProperty(        # チェックボックス型
-        name=_("正規表現のON/OFF"),
-        description=_("正規表現を使用するかどうか"),
+        name="Regular expression ON/OFF",
+        description=_("Whether to use regular expressions"),
         default=False,      # ← 正規表現で置き換えるか（False＝使わない）
         # options={'HIDDEN'}  # UI非表示のまま
     )
 
 # 識別子セット（ラベルとルールリスト）
 class BRT_BonePatternItem(bpy.types.PropertyGroup):
-    label: bpy.props.StringProperty(name=_("セット名"))
+    label: bpy.props.StringProperty(name="Set Name")
     rules: bpy.props.CollectionProperty(type=BRT_BoneRuleItem)
 
 
@@ -81,64 +81,64 @@ def get_classes():
 def register_properties():
     # プリファレンスの識別子セット編集折りたたみ機構
     bpy.types.WindowManager.brt_show_identifier_sets = bpy.props.BoolProperty(      # SceneからWindowManagerに変更して履歴に載せない・変更扱いにしない
-        name=_("識別子セットの表示"),
-        description=_("識別子セット全体の編集UIを表示するかどうか"),# 編集履歴に乗る名目
+        name="Show Identifier Sets",
+        description=_("Display UI to edit identifier sets"),# 編集履歴に乗る名目
         default=False  # デフォルトは閉じておく
     )
 
     bpy.types.Scene.brt_rename_prefix = bpy.props.StringProperty(
-        name=_("共通部分"),
-        description=_("ボーン名の共通部分を入力"),
+        name="Base Name",
+        description=_("Enter the common part of the bone name"),
         default=""
     )
     bpy.types.Scene.brt_rename_start_number = bpy.props.IntProperty(
-        name=_("開始番号"),
-        description=_("連番の開始値の設定"),
+        name="Starting Number",
+        description=_("Setting the start value for serial numbers"),
         default=0,
         min=0,
         max=20
     )
     bpy.types.Scene.brt_rename_suffix = bpy.props.EnumProperty(
-        name=_("末尾"),
-        description=_("ボーン名の末尾を選択"),
+        name="Suffix",
+        description=_("Choose the suffix for bone names"),
         items=[
-            ("_wj", "_wj", _("ボーン名の末尾に `_wj` を追加")),
-            ("wj", "wj", _("ボーン名の末尾に `wj` を追加")),
-            ("_wj_ex", "_wj_ex", _("ボーン名の末尾に `_wj_ex` を追加")),
-            ("wj_ex", "wj_ex", _("ボーン名の末尾に `wj_ex` を追加"))
+            ("_wj", "_wj", _("Append `_wj` to the bone name")),
+            ("wj", "wj", _("Append `wj` to the bone name")),
+            ("_wj_ex", "_wj_ex", _("Append `_wj_ex` to the bone name")),
+            ("wj_ex", "wj_ex", _("Append `wj_ex` to the bone name"))
         ],
         default="_wj"
     )
     bpy.types.Scene.brt_rename_rule = bpy.props.EnumProperty(
-        name=_("連番法則"),
-        description=_("ボーンの連番ルールを選択"),
+        name="Numbering Rule",      # 連番法則
+        description=_("Select numbering pattern for bones"),
         items=[
-            ("000", _("000 (3桁)"), _("3桁の番号を付加")),
-            ("00", _("00 (2桁)"), _("2桁の番号を付加"))
+            ("000", _("000 (3 digits)"), _("Add a 3-digit number")),
+            ("00", _("00 (2 digits)"), _("Add a 2-digit number"))
         ],
         default="000"
     )
 
     bpy.types.Scene.brt_end_bone_plus = bpy.props.BoolProperty(
-        name="End-Bone +",
-        description=_("選択したボーン枝の末端にボーンを追加する"),
+        name="End Bones plus",
+        description=_("Add bones to the end of selected bone branches"),
         default=False
     )
 
     bpy.types.Scene.brt_add_bones = bpy.props.IntProperty(
-        name=_("追加ボーン数"),
-        description=_("末端に追加するボーンの数を選択"),
+        name="Number of Bones to Add",      # 追加ボーン数
+        description=_("Choose how many bones to add at the end"),
         default=1,
         min=1,
         max=20
     )
 
     bpy.types.Scene.brt_mirror_mode = bpy.props.EnumProperty(
-        name=_("Xミラー方式選択"),
-        description=_("Xミラー時のロール補正方式を選択"),
+        name="X-Mirror Mode",
+        description=_("Choose roll correction method for X-mirroring"),
         items=[
-            ('SYMMETRY', _("Blender"), _("対称化モード：roll *= -1 のみ")),
-            ('DIVA', _("DIVA用"), _("roll を反転後 +180 → Blender仕様に正規化")),
+            ('DIVA', _("DIVA Mode"), _("Symmetrizes bones in DIVA character models")), # Invert roll, then add 180° and normalize to Blender format(roll を反転後 +180 → Blender仕様に正規化)
+            ('SYMMETRY', _("Blender Mode"), _("Like Blender’s symmetry, but also supports custom left/right identifiers")), # Symmetry mode: roll *= -1 only(対称化モード：roll *= -1 のみ)
             # ('NONE', _("補正なし"), _("ロール補正をしない")),
             # ('TEXT', _("+180"), _("+180 → Blender仕様に正規化")),
         ],
@@ -146,62 +146,62 @@ def register_properties():
     )
 
     bpy.types.Scene.brt_rename_source_name = bpy.props.StringProperty(
-        name=_("変更前ボーン名"),
-        description=_("元のボーン名を入力"),
+        name="Original Bone Name",
+        description=_("Enter the original bone name"),
         default=""
     )
 
     bpy.types.Scene.brt_rename_target_name = bpy.props.StringProperty(
-        name=_("変更後ボーン名"),
-        description=_("新しいボーン名を入力"),
+        name="New Bone Name",
+        description=_("Enter the new bone name"),
         default=""
     )
 
     bpy.types.Scene.brt_remove_number_suffix = bpy.props.BoolProperty(
-        name=_("番号サフィックスを削除"),
-        description=_(".001 などの複製識別子を削除します"),
+        name="Remove Number Suffix",
+        description=_("Remove duplicate identifiers"),
         default=False
     )
 
     bpy.types.Scene.brt_show_renumber_tools = bpy.props.BoolProperty(
-        name="show_renumber_tools",
-        description=_("ボーンの共通接頭辞とルールに基づいた連番リネーム操作を表示"),
+        name=_("show_renumber_tools"),
+        description=_("Renames the selected bone rows based on the specified settings"),    # _("Show renaming tools based on bone prefixes and numbering rules")
         default=True
     )
 
     bpy.types.Scene.brt_show_replace_tools = bpy.props.BoolProperty(
-        name="show_replace_tools",
-        description=_("ボーン名の部分文字列置換や.001などの識別子削除を行うツールを表示"),
+        name=_("show_replace_tools"),
+        description=_("Replace the selected bone name substring in bulk"),   # _("Show tools for substring replacement and removing duplicate identifiers")
         default=True
     )
 
     bpy.types.Scene.brt_show_invert_tools = bpy.props.BoolProperty(
-        name="show_invert_tools",
-        description=_("L/RやLeft/Rightなどを対象に選択ボーンの名称を反転するツールを表示"),
+        name=_("show_invert_tools"),
+        description=_("Invert left/right in selected bone names"),    # _("Show tools to invert Left/Right identifiers for selected bones")
         default=True
     )
 
     bpy.types.Scene.brt_show_group_tools = bpy.props.BoolProperty(
-        name="show_group_tools",
-        description="左右対応名の一括リネーム（グループ名含む）や、元に戻す操作を表示",
+        name=_("show_group_tools"),
+        description=_("Batch renaming for symmetric bone names and revert option"),    # _("Show batch renaming for symmetric bone names and revert option")
         default=False
     )
 
     bpy.types.Scene.brt_bone_x_mirror = bpy.props.BoolProperty(
         name="bone_x_mirror",
-        description=_("選択したボーンをグローバルX軸でミラー反転させる"),
+        description=_("Mirror selected bones along global X axis"),
         default=True
     )
 
     bpy.types.Scene.brt_duplicate_and_rename = bpy.props.BoolProperty(
-        name="duplicate_and_rename",
-        description=_("選択したボーンを複製してリネームする"),
+        name="duplicate_and_rename",        # 複製してリネームする
+        description=_("Duplicate and rename selected bones"),
         default=False
     )
 
     bpy.types.Scene.brt_assign_identifier = bpy.props.BoolProperty(
         name="assign_identifier",
-        description=_("左右識別子を付与する"),
+        description=_("Assign left/right identifiers"),
         default=False
     )
 

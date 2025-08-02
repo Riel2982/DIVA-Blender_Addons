@@ -47,13 +47,32 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
 
 
     def execute(self, context):
-        from .brt_rename import rename_selected_bones, find_terminal_bones, extend_and_subdivide_bone
-        print("分割付きリネーム開始")
+        from .brt_rename import rename_selected_bones, find_terminal_bones, extend_and_subdivide_bone, check_terminal_bone_connections
+        # print("分割付きリネーム開始")
+
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'WARNING'}, _("No armature is selected"))
+            return {'CANCELLED'}
+
+        mode = context.mode
+        if mode not in {'POSE', 'EDIT_ARMATURE'}:
+            self.report({'WARNING'}, _("Supported modes are Pose and Edit"))
+            return {'CANCELLED'}
 
         if bpy.context.mode != 'EDIT_ARMATURE':
             bpy.ops.object.mode_set(mode='EDIT')
 
-        obj = context.object
+        # 選択ボーン確認
+        if mode == 'POSE':
+            selected_bones = [b for b in obj.pose.bones if b.bone.select]
+        else:  # EDIT_ARMATURE
+            selected_bones = [b for b in obj.data.edit_bones if b.select]
+
+        if not selected_bones:
+            self.report({'WARNING'}, _("No bones selected"))
+            return {'CANCELLED'}
+
         bones = obj.data.edit_bones
 
         # 既存の追加ボーン（タグ付き）を削除
@@ -67,6 +86,19 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
         if self.add_bones > 0:
             existing_names = set(b.name for b in bones)
             terminals = find_terminal_bones(selected_before_split)
+
+            unsafe, warn_only = check_terminal_bone_connections(terminals)
+
+            if unsafe:
+                for name in unsafe:  # 直接接続子ボーンあり
+                    self.report({'WARNING'}, _("{label} is a terminal bone connected to another bone. Operation has been cancelled").format(label=name))
+                    return {'CANCELLED'}
+
+            if warn_only:
+                for name in warn_only:   # ローカル接続子ボーンあり
+                    self.report({'WARNING'}, _("{label} has children but is not physically connected").format(label=name))
+
+            # ボーン追加処理
             for bone in terminals:
                 extend_and_subdivide_bone(bone, self.add_bones)
             added_bones = [b for b in bones if b.name not in existing_names]

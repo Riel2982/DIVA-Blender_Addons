@@ -160,5 +160,33 @@ def extend_and_subdivide_bone(bone, segment_count):
     bone.select = True
     bpy.ops.armature.subdivide(number_cuts=segment_count)
 
+    # 分割後の新しいボーンにタグを付けて返す
+    new_bones = [b for b in bone.id_data.edit_bones if b.name not in existing_names]
+    for b in new_bones:
+        b["brt_added"] = True  # ← 追加タグ
+
     # 新規ボーンを検出して返す
     return [b for b in bone.id_data.edit_bones if b.name not in existing_names]
+
+# 末端ボーンの接続状態を判定する
+def check_terminal_bone_connections(terminals):
+    """  
+    Returns:
+        unsafe (List[str])   → 完全接続されており処理すべきでないボーン名
+        warn_only (List[str]) → 接続はないが親として振る舞っているボーン名（警告対象）
+    """
+    bones = bpy.context.object.data.edit_bones
+    unsafe = []
+    warn_only = []
+
+    for bone in terminals:
+        for child in bones:
+            if child.parent == bone:
+                dist = (child.head - bone.tail).length
+                if dist < 0.0001:
+                    unsafe.append(bone.name)
+                else:
+                    warn_only.append(bone.name)
+                break  # 子が1つでも接続されていれば判定対象
+
+    return unsafe, warn_only

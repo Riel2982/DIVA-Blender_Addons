@@ -12,6 +12,7 @@ class DIVA_PT_BoneRenamePanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "DIVA"
+    bl_options = {'DEFAULT_CLOSED'} 
 
     # セクションの左側にアイコンを追加
     def draw_header(self, context):

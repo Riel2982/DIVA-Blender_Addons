@@ -42,23 +42,63 @@ class BRT_OT_ReplaceBoneName(bpy.types.Operator):
     """ボーン名の一部を一括置換"""
     bl_idname = "brt.replace_bone_name"
     bl_label = "Replace Bone Name"
+    bl_options = {'REGISTER', 'UNDO'}
     bl_description = _("Replace the selected bone name substring in bulk")
 
     def execute(self, context):
         from .brt_replace import replace_bone_names_by_rule
 
+        obj = context.object
+        if not obj or obj.type != 'ARMATURE':
+            self.report({'WARNING'}, _("No armature is selected"))
+            return {'CANCELLED'}
+
+        mode = context.mode
+        if mode not in {'POSE', 'EDIT_ARMATURE'}:
+            self.report({'WARNING'}, _("Supported modes are Pose and Edit"))
+            return {'CANCELLED'}
+
+        # 選択ボーン確認
+        if mode == 'POSE':
+            selected_bones = [b for b in obj.pose.bones if b.bone.select]
+        else:  # EDIT_ARMATURE
+            selected_bones = [b for b in obj.data.edit_bones if b.select]
+
+        if not selected_bones:
+            self.report({'WARNING'}, _("No bones selected"))
+            return {'CANCELLED'}
+
         src = context.scene.brt_rename_source_name
         tgt = context.scene.brt_rename_target_name
 
+        # 空文字列チェック（オプション）
+        if not src and tgt:
+            self.report({'WARNING'}, _("Please check the settings of the selected bone name and the name before replacement")) # 両方未入力
+            return {'CANCELLED'}
+
+        if not src:
+            self.report({'WARNING'}, _("Please check the settings of the name before replacement")) # 置き換え前の名前が未入力
+            return {'CANCELLED'}
+       
+        show_completed_message = True
+
+        if not tgt:
+            self.report({'WARNING'}, _("The replacement bone name was not entered. Please check"))  # 置換後のボーン名が入力されていない場合
+            show_completed_message = False  # 完了メッセージは出さない
+
+
         success, partial, message = replace_bone_names_by_rule(context, src, tgt)
 
-        if not success:
-            self.report({'WARNING'}, message)
+        # Operator 側
+        if not success: # 不明
+            self.report({'WARNING'}, _("Bone name replacement no completed"))
             return {'CANCELLED'}
         elif partial:
-            self.report({'WARNING'}, message)
-        else:
+            self.report({'WARNING'}, _("Some bones could not be replaced. Please check the bone name"))
+        
+        if show_completed_message: 
             self.report({'INFO'}, _("Bone name replacement completed"))
+        
         return {'FINISHED'}
 
 
