@@ -1,5 +1,7 @@
 import bpy
+from bpy.app.translations import pgettext as _
 from bpy.types import AddonPreferences, PropertyGroup
+from .smw_types import SMW_BonePatternItem, SMW_BoneRuleItem
 from bpy.props import StringProperty, CollectionProperty
 from bpy.types import Operator, UILayout
 import os
@@ -9,14 +11,16 @@ import datetime
 
 
 # デフォルト識別子の定義
-DEFAULT_BONE_PATTERN = {
-    "label": "DIVA(Default)",
-    "rules": [
-        {"right": "_r_", "left": "_l_", "use_regex": False},
-        {"right": "_r0", "left": "_l0", "use_regex": False},
-        {"right": "_r1", "left": "_l1", "use_regex": False},
-    ],
-}
+DEFAULT_BONE_PATTERN = [
+    {
+        "label": "DIVA(Default)",
+        "rules": [
+            {"right": "_r_", "left": "_l_", "use_regex": False},
+            {"right": "_r0", "left": "_l0", "use_regex": False},
+            {"right": "_r1", "left": "_l1", "use_regex": False},
+        ],
+    }
+]
 
 
 # JSONファイルの保存先（アドオンフォルダの中などに）
@@ -84,17 +88,7 @@ def load_bone_patterns_to_preferences(prefs):
             json.dump(DEFAULT_BONE_PATTERN, f, ensure_ascii=False, indent=2)
         apply_default()
 
-# オプションひとつずつのデータ
-# 識別子ルールのデータ（左右ペア）
-class SMW_BoneRuleItem(bpy.types.PropertyGroup):
-    right: bpy.props.StringProperty(name="右")
-    left: bpy.props.StringProperty(name="左")
-    use_regex: bpy.props.BoolProperty(default=False, options={'HIDDEN'})  # ← 正規表現で置き換えるか（False＝使わない）/ 現時点ではUI側にこの設定は非表示
 
-# 識別子セット（ラベルとルールリスト）
-class SMW_BonePatternItem(bpy.types.PropertyGroup):
-    label: bpy.props.StringProperty(name="セット名")
-    rules: bpy.props.CollectionProperty(type=SMW_BoneRuleItem)
 
 # アドオンプリファレンス本体（表示と編集UI）
 class SMW_AddonPreferences(bpy.types.AddonPreferences):
@@ -124,21 +118,21 @@ class SMW_AddonPreferences(bpy.types.AddonPreferences):
 
             # セット名
             row = box.row(align=True)
-            row.prop(pattern, "label", text="セット名")
+            row.prop(pattern, "label", text=_("セット名"))
             row.separator(factor=4.5) # ペア欄と右端を揃える
 
             # 識別ペアの表示
             for j, rule in enumerate(pattern.rules):
                 row = box.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-                row.prop(rule, "right", text="右")
-                row.prop(rule, "left", text="左")
+                row.prop(rule, "right", text=_("右"))
+                row.prop(rule, "left", text=_("左"))
 
                 del_op = row.operator("smw.delete_bone_rule", text="", icon="X")  # ペア削除ボタン
                 del_op.pattern_index = i
                 del_op.rule_index = j
 
             # 識別子ペア追加ボタンをセット内に設置
-            box.operator("smw.add_bone_rule", text="ペアを追加", icon="ADD").index = i
+            box.operator("smw.add_bone_rule", text=_("ペアを追加"), icon="ADD").index = i
 
             # 右側：セット削除ボタン（枠の外）
             col_right = row_outer.column() # ぴったりボタン同士をくっつけたい場合は(align=True)
@@ -150,14 +144,16 @@ class SMW_AddonPreferences(bpy.types.AddonPreferences):
         layout.operator("smw.add_bone_pattern", icon="COLLECTION_NEW") # 識別端子セットの追加
 
         row1 = layout.row() # ぴったりボタン同士をくっつけたい場合は(align=True)
-        row1.operator("smw.append_default_bone_set", text="デフォルトセットを復元", icon="COPY_ID")
-        row1.operator("smw.reset_bone_patterns", text="リセット", icon="FILE_REFRESH")
-        row1.operator("smw.save_bone_patterns", text="保存", icon="DISC")
+        row1.operator("smw.append_default_bone_set", text=_("デフォルトセットを復元"), icon="COPY_ID")
+        row1.operator("smw.reset_bone_patterns", text=_("リセット"), icon="FILE_REFRESH")
+        row1.operator("smw.save_bone_patterns", text=_("保存"), icon="DISC")
 
 # プリファレンスの編集UI
 class SMW_OT_AddBonePattern(bpy.types.Operator):
+    """識別子セットを追加"""
     bl_idname = "smw.add_bone_pattern"
-    bl_label = "識別子セットを追加"
+    bl_label = _("Add Identifier Set")
+    bl_description = _("Add a new identifier set to the preferences")
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
@@ -170,8 +166,10 @@ class SMW_OT_AddBonePattern(bpy.types.Operator):
         return {'FINISHED'}
 
 class SMW_OT_AddBoneRule(bpy.types.Operator):
+    """識別子ルールを追加"""
     bl_idname = "smw.add_bone_rule"
-    bl_label = "識別子ルールを追加"
+    bl_label = _("Add Identifier Rule")
+    bl_description = _("Add a left-right identifier rule to the selected set")
 
     index: bpy.props.IntProperty()  # 追加対象の bone_patterns インデックス
 
@@ -187,8 +185,10 @@ class SMW_OT_AddBoneRule(bpy.types.Operator):
 
 # 識別子セットの移動ボタン
 class SMW_OT_MoveBonePatternUp(bpy.types.Operator):
+    """↑ 上に移動"""
     bl_idname = "smw.move_bone_pattern_up"
-    bl_label = "↑ 上に移動"
+    bl_label = _("Move Indentifier Set Up")
+    bl_description = _("Move the identifier set up one position")
 
     index: bpy.props.IntProperty()
 
@@ -201,8 +201,10 @@ class SMW_OT_MoveBonePatternUp(bpy.types.Operator):
         return {'FINISHED'}
 
 class SMW_OT_MoveBonePatternDown(bpy.types.Operator):
+    """↓ 下に移動"""
     bl_idname = "smw.move_bone_pattern_down"
-    bl_label = "↓ 下に移動"
+    bl_label = _("Move Indentifier Set Down")
+    bl_description = _("Move the identifier set down one position")
 
     index: bpy.props.IntProperty()
 
@@ -215,8 +217,10 @@ class SMW_OT_MoveBonePatternDown(bpy.types.Operator):
         return {'FINISHED'}
 
 class SMW_OT_SaveBonePatterns(bpy.types.Operator):
+    """識別子セットを保存"""
     bl_idname = "smw.save_bone_patterns"
-    bl_label = "識別子セットを保存"
+    bl_label = _("Save Identifier Sets")
+    bl_description = _("Save all identifier sets to a JSON file")
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
@@ -227,22 +231,22 @@ class SMW_OT_SaveBonePatterns(bpy.types.Operator):
 
             # 日本語や全角文字の検出
             if any(ord(c) > 127 for c in label):
-                self.report({'WARNING'}, f"「{label}」には使用できない文字が含まれています。セット名には半角の英数字と記号だけを使ってください。")
+                self.report({'WARNING'}, _("{label}には使用できない文字が含まれています。セット名には半角の英数字と記号だけを使ってください").format(label=pattern.label))
                 return {'CANCELLED'}
 
             if not label:
-                self.report({'WARNING'}, "識別子セットの名前を入力してください")
+                self.report({'WARNING'}, _("識別子セットの名前を入力してください"))
                 return {'CANCELLED'}
 
             complete_pairs = [r for r in p.rules if r.right.strip() and r.left.strip()]
             incomplete_pairs = [r for r in p.rules if (r.right.strip() and not r.left.strip()) or (not r.right.strip() and r.left.strip())]
 
             if not complete_pairs:
-                self.report({'WARNING'}, f"「{p.label}」には有効な識別子ペアがひとつもありません（両側が入力されたペアが必要です）")
+                self.report({'WARNING'}, _("{label}には有効な識別子ペアがひとつもありません（両側が入力されたペアが必要です）").format(label=pattern.label))
                 return {'CANCELLED'}
 
             if incomplete_pairs:
-                self.report({'WARNING'}, f"「{p.label}」に片側だけ空白の識別子ペアがあります（両方入力してください）")
+                self.report({'WARNING'}, _("{label}に片側だけ空白の識別子ペアがあります（両方入力してください）").format(label=pattern.label))
                 return {'CANCELLED'}
             
         # 保存後に再読込（Nパネルに反映させるため）
@@ -256,64 +260,73 @@ class SMW_OT_SaveBonePatterns(bpy.types.Operator):
             data.append({"label": pattern.label, "rules": rules})
         with open(get_json_path(), "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        self.report({'INFO'}, "保存しました！")
+        self.report({'INFO'}, _("保存しました！"))
 
         load_bone_patterns_to_preferences(prefs)
 
         return {'FINISHED'}
     
 class SMW_OT_ResetBonePatterns(bpy.types.Operator):
+    """JSONファイルを読み直して識別子セットを元に戻します"""
     bl_idname = "smw.reset_bone_patterns"
-    bl_label = "編集をリセット"
-    bl_description = "JSONファイルを読み直して識別子セットを元に戻します"
+    bl_label = _("Reload Identifier Sets")
+    bl_description = _("Reload the identifier sets from the saved JSON file")
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
         load_bone_patterns_to_preferences(prefs)
-        self.report({'INFO'}, "識別子セットを元に戻しました")
+        self.report({'INFO'}, _("識別子セットを元に戻しました"))
         return {'FINISHED'}
 
 class SMW_OT_AppendDefaultSet(bpy.types.Operator):
+    """コード定義のデフォルトセットを先頭に追加します"""
     bl_idname = "smw.append_default_bone_set"
-    bl_label = "デフォルトセットを復元"
-    bl_description = "コード定義のデフォルトセットを先頭に追加します"
+    bl_label = _("Append Default Set")
+    bl_description = _("Insert the default set of identifiers at the top")
 
     def execute(self, context):
-        prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
-        prefs.bone_patterns.add()
-        for i in reversed(range(len(prefs.bone_patterns) - 1)):
-            prefs.bone_patterns.move(i, i + 1)
+        prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
+        pattern = prefs.bone_patterns.add()     # セットを追加
 
-        pattern = prefs.bone_patterns[0]
-        pattern.label = DEFAULT_BONE_PATTERN["label"]
+        pattern_data = DEFAULT_BONE_PATTERN[0]  #デフォルトセットの先頭の辞書を取得
+        pattern.label = pattern_data["label"]
         pattern.rules.clear()
-        for r in DEFAULT_BONE_PATTERN["rules"]:
+        for r in pattern_data["rules"]: 
             rule = pattern.rules.add()
             rule.right = r["right"]
             rule.left = r["left"]
             rule.use_regex = r.get("use_regex", False) # 正規表現置き換えは不使用
 
-        self.report({'INFO'}, "デフォルトセットを追加しました")
+        index = len(prefs.bone_patterns) - 1
+        prefs.bone_patterns.move(index, 0)   # セットを先頭へ移動
+
+        self.report({'INFO'}, _("デフォルトセットを追加しました"))
         return {'FINISHED'}
     
 
 class SMW_OT_DeleteBonePattern(bpy.types.Operator):
+    """識別子セットの削除"""
     bl_idname = "smw.delete_bone_pattern"
-    bl_label = "セットを削除"
+    bl_label = _("Delete Identifier Set")
+    bl_description = _("Delete the selected identifier set")
+
     index: bpy.props.IntProperty()
 
     def execute(self, context):
         prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
         if len(prefs.bone_patterns) <= 1:
-            self.report({'WARNING'}, "最低でも1つの識別子セットを設定してください")
+            self.report({'WARNING'}, _("最低でも1つの識別子セットを設定してください"))
             return {'CANCELLED'}
         prefs.bone_patterns.remove(self.index)
         return {'FINISHED'}
 
 
 class SMW_OT_DeleteBoneRule(bpy.types.Operator):
+    """識別子ペアの削除"""
     bl_idname = "smw.delete_bone_rule"
-    bl_label = "ペアを削除"
+    bl_label = _("Delete Identifier Pair")
+    bl_description = _("Remove the selected identifier pair from the set")
+
     pattern_index: bpy.props.IntProperty()
     rule_index: bpy.props.IntProperty()
 
@@ -321,7 +334,7 @@ class SMW_OT_DeleteBoneRule(bpy.types.Operator):
         prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
         rules = prefs.bone_patterns[self.pattern_index].rules
         if len(rules) <= 1:
-            self.report({'WARNING'}, "最低でも1つの識別子ペアを設定してください")
+            self.report({'WARNING'}, _("最低でも1つの識別子ペアを設定してください"))
             return {'CANCELLED'}
         rules.remove(self.rule_index)
         return {'FINISHED'}
@@ -329,3 +342,16 @@ class SMW_OT_DeleteBoneRule(bpy.types.Operator):
 
 
 
+def get_classes():
+    return [
+        SMW_AddonPreferences,
+        SMW_OT_AddBonePattern,
+        SMW_OT_AddBoneRule,
+        SMW_OT_DeleteBonePattern,
+        SMW_OT_DeleteBoneRule,
+        SMW_OT_MoveBonePatternUp,
+        SMW_OT_MoveBonePatternDown,
+        SMW_OT_ResetBonePatterns,
+        SMW_OT_SaveBonePatterns,
+        SMW_OT_AppendDefaultSet,
+    ]

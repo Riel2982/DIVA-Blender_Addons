@@ -2,36 +2,7 @@ import os
 import json
 import bpy
 import bmesh
-from .smw_preferences import get_json_path
-
-# ボーン識別子の読み込み（JSON）
-def load_bone_patterns_to_preferences(prefs):
-    path = get_json_path()
-    prefs.bone_patterns.clear()
-
-    if not os.path.exists(path):
-        return
-
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        unnamed_count = 1
-        for entry in data:
-            label = entry.get("label", "").strip()
-            if not label:
-                label = f"未定義セット{unnamed_count}"
-                unnamed_count += 1
-
-            pattern = prefs.bone_patterns.add()
-            pattern.label = label
-
-            for rule_data in entry.get("rules", []):
-                rule = pattern.rules.add()
-                rule.right = rule_data.get("right", "")
-                rule.left = rule_data.get("left", "")
-    except Exception as e:
-        print(f"[DIVA] ⚠ JSON読み込みエラー: {e}")
+from .smw_preferences import get_json_path, load_bone_patterns_to_preferences
 
 
 # ラベルに対応するルールセットを取得

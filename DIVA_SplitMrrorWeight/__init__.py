@@ -1,11 +1,11 @@
 bl_info = {
     "name": "DIVA - Split Mirror Weight",
     "author": "Riel",
-    "version": (0, 1, 4),
+    "version": (0, 1, 5),
     "blender": (3, 0, 0),
     "location": "Nパネル > DIVA",
     "description": "Automatically separates mirrored meshes and applies symmetrical weight copying to vertex groups.",
-    "warning": "X軸を超えたメッシュがある時のミラーは非対応",
+    "warning": "多言語対応中",
     "support": "COMMUNITY",
     "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-Split-Mirror-Weight",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons",
@@ -13,79 +13,37 @@ bl_info = {
 }
 
 import bpy
+from . import smw_translation
+from . import smw_types
+from . import smw_preferences
+from . import smw_panel
+from .smw_preferences import load_bone_patterns_to_preferences
 
-from .smw_panel import (
-    DIVA_PT_SplitMirrorWeightPanel,
-    SMW_OT_OpenPreferences,
-    DIVA_OT_SplitMirrorWeight,
-    DIVA_SplitMirrorWeightProps,
-)
+# すべてのクラスをまとめる
+modules = [smw_types, smw_panel, smw_preferences]
 
-from .smw_preferences import (
-    SMW_AddonPreferences,
-    SMW_OT_AddBonePattern,
-    SMW_OT_AddBoneRule,
-    SMW_OT_DeleteBonePattern,
-    SMW_OT_DeleteBoneRule,
-    SMW_OT_MoveBonePatternUp,
-    SMW_OT_MoveBonePatternDown,
-    SMW_OT_ResetBonePatterns,
-    SMW_OT_SaveBonePatterns,
-    SMW_OT_AppendDefaultSet,
-    load_bone_patterns_to_preferences,
-	SMW_BoneRuleItem,
-	SMW_BonePatternItem,
-)
-
+# register() 内で動的にクラスを取得
 def register():
-    for cls in (
-        SMW_BoneRuleItem,
-        SMW_BonePatternItem,
-        SMW_AddonPreferences,
-        SMW_OT_AddBonePattern,
-        SMW_OT_AddBoneRule,
-        SMW_OT_DeleteBonePattern,
-        SMW_OT_DeleteBoneRule,
-        SMW_OT_MoveBonePatternUp,
-        SMW_OT_MoveBonePatternDown,
-        SMW_OT_ResetBonePatterns,
-        SMW_OT_SaveBonePatterns,
-        SMW_OT_AppendDefaultSet,
-        DIVA_SplitMirrorWeightProps,        
-        DIVA_PT_SplitMirrorWeightPanel,
-        SMW_OT_OpenPreferences,
-        DIVA_OT_SplitMirrorWeight,
-    ):
-        bpy.utils.register_class(cls)
+    smw_translation.register(__name__)
+    for mod in modules:
+        if hasattr(mod, "get_classes"):
+            for cls in mod.get_classes():
+                bpy.utils.register_class(cls)
 
-    bpy.types.Scene.diva_split_mirror_weight = bpy.props.PointerProperty(type=DIVA_SplitMirrorWeightProps)
+        if hasattr(mod, "register_properties"):
+            mod.register_properties()
 
     addon = bpy.context.preferences.addons.get(__name__)
     if addon:
         load_bone_patterns_to_preferences(addon.preferences)
 
+
 def unregister():
-    del bpy.types.Scene.diva_split_mirror_weight
+    for mod in reversed(modules):
+        if hasattr(mod, "get_classes"):
+            for cls in reversed(mod.get_classes()):
+                bpy.utils.unregister_class(cls)
 
-    for cls in reversed((
-        SMW_BoneRuleItem,
-        SMW_BonePatternItem,
-        SMW_AddonPreferences,
-        SMW_OT_AddBonePattern,
-        SMW_OT_AddBoneRule,
-        SMW_OT_DeleteBonePattern,
-        SMW_OT_DeleteBoneRule,
-        SMW_OT_MoveBonePatternUp,
-        SMW_OT_MoveBonePatternDown,
-        SMW_OT_ResetBonePatterns,
-        SMW_OT_SaveBonePatterns,
-        SMW_OT_AppendDefaultSet,
-        DIVA_SplitMirrorWeightProps,
-        DIVA_PT_SplitMirrorWeightPanel,
-        SMW_OT_OpenPreferences,
-        DIVA_OT_SplitMirrorWeight,
-    )):
-        bpy.utils.unregister_class(cls)
-
-if __name__ == "__main__":
-    register()
+        if hasattr(mod, "unregister_properties"):
+            mod.unregister_properties()
+    smw_translation.unregister(__name__)

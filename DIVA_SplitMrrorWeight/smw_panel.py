@@ -9,8 +9,7 @@ from .smw_main import (
     delete_x_side_mesh,
     rename_symmetric_weight_groups
 )
-from .smw_preferences import get_json_path  # ← もし保存に関するユーティリティ関数などがあれば
-
+from .smw_types import get_bone_pattern_items
 
 # Nパネル設定
 class DIVA_PT_SplitMirrorWeightPanel(bpy.types.Panel):
@@ -68,6 +67,7 @@ class DIVA_PT_SplitMirrorWeightPanel(bpy.types.Panel):
 class DIVA_OT_SplitMirrorWeight(bpy.types.Operator):
     bl_idname = "diva.split_mirror_weight"
     bl_label = "ミラー実行"
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         obj = bpy.context.object
@@ -135,50 +135,6 @@ class DIVA_OT_SplitMirrorWeight(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# ボーン識別子セットの取得
-def get_bone_pattern_items(self, context):
-    prefs = context.preferences.addons["DIVA_SplitMirrorWeight"].preferences
-    items = []
-
-    for i, pattern in enumerate(prefs.bone_patterns):
-        label = pattern.label.strip()
-
-        # 識別子としてそのまま使える名前に（ascii前提）
-        identifier = label
-        name = label  # 表示用にもそのまま使う（日本語でない前提）
-
-        items.append((identifier, name, ""))
-
-    return items
-
-# プロパティグループ
-class DIVA_SplitMirrorWeightProps(bpy.types.PropertyGroup):
-    bone_pattern: bpy.props.EnumProperty(
-        name="識別子セット",
-        items=get_bone_pattern_items # JSONから読み込み
-    )
-
-    delete_side: bpy.props.EnumProperty(
-        name="オリジナル側",
-        description="コピー元を選択（右 or 左）",
-        items=[
-            ('RIGHT', "左→右に複製", "Blenderの+X側を削除"),
-            ('LEFT', "右→左に複製", "Blenderの-X側を削除"),
-        ],
-        default='RIGHT'
-    )
-
-    mirror_auto_detect: bpy.props.BoolProperty(
-        name="ミラー自動判別",
-        description="ミラーの方向を自動判別するかどうか",
-        default=False
-    )
-
-    allow_origin_overlap: bpy.props.BoolProperty(
-        name="原点越えに対応",
-        description="原点からわずかにはみ出した片側メッシュでも反転する（ミラー自動判別と併用不可）",
-        default=False
-    )
 
 #  DIVAアドオン設定画面（プリファレンス）を開く
 class SMW_OT_OpenPreferences(bpy.types.Operator):
@@ -193,3 +149,10 @@ class SMW_OT_OpenPreferences(bpy.types.Operator):
         # context.window_manager.addon_search = "DIVA_SplitMirrorWeight"
         return {'FINISHED'}
 
+
+def get_classes():
+    return [   
+        DIVA_PT_SplitMirrorWeightPanel,
+        SMW_OT_OpenPreferences,
+        DIVA_OT_SplitMirrorWeight,
+    ]
