@@ -26,3 +26,28 @@ DIVAのモデル編集に活用するBlenderアドオン集。
   
 
 各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki)を確認してください。 
+
+
+# DIVA-Blender_Addons(English)  
+A collection of Blender addons designed to support editing DIVA models.  
+The code was generated using **AI tools including Microsoft Copilot and ChatGPT**, with manual adjustments applied as needed.  
+Verified on **Blender 3.6**.
+
+
+- **Bone Position Rotation Scale**  
+  - Retrieves bone data (position, rotation, scale, and parent relationships) from Blender's armature system.  
+  - Packaged as a Blender add-on based on code published by Saltlapse ([GitHub repository](https://github.com/Saltlapse/Blender-Mod-Scripts)).
+
+- **Bone Rename Tools**  
+  - Renames bones to follow DIVA-specific naming conventions.  
+  - Also includes functions to duplicate, mirror, and add bones during renaming.
+
+- **Bone Transfer Tools**  
+  - Simplifies the process of transferring bones between armatures.
+
+- **Mesh Weight Reflector**  
+  - Generates a mirror-image mesh with reflected vertex weights.  
+
+
+Please refer to the [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki) for details about each addon.
+ 
