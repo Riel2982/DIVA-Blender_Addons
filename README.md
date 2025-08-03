@@ -8,10 +8,9 @@ DIVAのモデル編集に活用するBlenderアドオン集。
   - Saltlapse氏が公開しているコード（[GitHubリポジトリ](https://github.com/Saltlapse/Blender-Mod-Scripts)）のBlenderアドオン化。  
 
 - **Bone Rename Tools**
-  - 選択したボーン列の連番をDIVAの規則に合わせて割り振り直すツール。
-  - 選択したボーンの名前の一部を置き換える機能もあり。
-  - DIVA独自の左右ボーン名規則をBlender標準機能で対応できるようにリネームすることも可能。
-  - DIVAの左右識別子を検出して**.R** **.L**形式を付与することでBlenderのボーンX対称操作に対応可能。元に戻すことも可能。
+  - DIVA独自のボーン規則名に合わせてリネームを行う関連ツール。
+  - リネームと同時にボーンを複製・反転・追加する機能もあり。
+
 
 - **Bone Transfer Tools**
   - ボーンを簡単に移植するためのツール。  
