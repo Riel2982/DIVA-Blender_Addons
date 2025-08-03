@@ -1,6 +1,6 @@
 # DIVA-Blender_Addons
 DIVAのモデル編集に活用するBlenderアドオン集。  
-コードは **Microsoft Copilot** を使用して生成され、一部調整が加えられています。    
+コードは **Microsoft Copilot** および**ChatGPT**を使用して生成され、一部調整が加えられています。    
 **Blender 3.6** にて検証済み。
 
 - **Bone Position Rotation Scale**
