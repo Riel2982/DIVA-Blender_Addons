@@ -15,13 +15,12 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 - **Bone Transfer Tools**
   - ボーンを簡単に移植するためのツール。  
   - 移植するボーンに合わせてMESHモード・BONEモード・MULTIモードの三つのモードを切り替えて実行できます。
+  - 現在開発中です。
 
 - **Mesh Weight Reflector**
   - メッシュの鏡像反転版を作成するツール。
   - 頂点グループ名（ウエイト）の左右識別子も一緒に反転リネームされます。
 
-- **Splite Mirror Weight**
-  - 更新終了しました。後継ツールは**Mesh Weight Reflector**です。
   
 
 各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki)を確認してください。 
@@ -43,6 +42,7 @@ Verified on **Blender 3.6**.
 
 - **Bone Transfer Tools**  
   - Simplifies the process of transferring bones between armatures.
+  - Currently under development.
 
 - **Mesh Weight Reflector**  
   - Generates a mirror-image mesh with reflected vertex weights.  
