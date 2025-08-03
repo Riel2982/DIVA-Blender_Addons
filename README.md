@@ -26,6 +26,8 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 各アドオンの詳細については [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki)を確認してください。 
 
 
+---
+
 # DIVA-Blender_Addons(English)  
 A collection of Blender addons designed to support editing DIVA models.  
 The code was generated using **AI tools including Microsoft Copilot and ChatGPT**, with manual adjustments applied as needed.  
