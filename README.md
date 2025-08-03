@@ -4,7 +4,7 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 **Blender 3.6** にて検証済み。
 
 - **Bone Position Rotation Scale**
-  - Blenderのアーマチュアからボーンデータ（位置・回転・スケール・親ボーン情報）を取得し、ファイルに保存するためのツール。
+  - Blenderのアーマチュアからボーンデータ（位置・回転・スケール・親ボーン情報）を取得するツール。
   - Saltlapse氏が公開しているコード（[GitHubリポジトリ](https://github.com/Saltlapse/Blender-Mod-Scripts)）のBlenderアドオン化。  
 
 - **Bone Rename Tools**
