@@ -42,7 +42,7 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
         name=_("Number of bones to add"),
         default=0,
         min=0,
-        max=10
+        max=20
     )
 
 
@@ -73,12 +73,18 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
             self.report({'WARNING'}, _("No bones selected"))
             return {'CANCELLED'}
 
+        # ✅ プレフィックスが空なら中止
+        if not context.scene.brt_rename_prefix.strip():
+            self.report({'WARNING'}, _("Please enter a Base Name"))
+            return {'CANCELLED'}
+
         bones = obj.data.edit_bones
 
-        # 既存の追加ボーン（タグ付き）を削除
-        for b in list(obj.data.edit_bones):
-            if b.get("brt_added"):
-                obj.data.edit_bones.remove(b)
+        # ✅ 選択された末端ボーンの子で "brt_added" タグ付きのものだけ削除
+        terminal_set = set(find_terminal_bones(selected_bones))
+        for b in list(bones):
+            if b.get("brt_added") and b.parent in terminal_set:
+                bones.remove(b)
 
         selected_before_split = [b for b in bones if b.select]
 

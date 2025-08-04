@@ -2,33 +2,33 @@ import bpy
 
 translation_dict = {
     "ja_JP": {
-        # brt_panel.py:44
+        # brt_panel.py:45
         ("*", "共通部分"): "共通部分",
-        # brt_panel.py:48
-        ("*", "連番開始番号"): "連番開始番号",
         # brt_panel.py:49
-        ("*", "法則"): "法則",
+        ("*", "連番開始番号"): "連番開始番号",
         # brt_panel.py:50
+        ("*", "法則"): "法則",
+        # brt_panel.py:51
         ("*", "末尾"): "末尾",
-        # brt_panel.py:52, brt_ui_rename.py:29
+        # brt_panel.py:53, brt_ui_rename.py:29
         ("*", "連番リネーム実行"): "連番リネーム実行",
-        # brt_panel.py:102
+        # brt_panel.py:103
         ("*", "重複識別子を削除"): "重複識別子を削除",
-        # brt_panel.py:104
+        # brt_panel.py:105
         ("*", "指定名でボーン名変更"): "指定名でボーン名変更",
-        # brt_panel.py:141
+        # brt_panel.py:142
         ("*", "ボーン識別子:"): "ボーン識別子:",
-        # brt_panel.py:160
+        # brt_panel.py:161
         ("*", "左右識別子を付与する"): "左右識別子を付与する",
-        # brt_panel.py:165
+        # brt_panel.py:166
         ("*", "選択ボーンをグローバルXミラーする"): "選択ボーンをグローバルXミラーする",
-        # brt_panel.py:169
+        # brt_panel.py:170
         ("*", "複製してリネームする"): "複製してリネームする",
-        # brt_panel.py:171
+        # brt_panel.py:172
         ("*", "選択ボーン反転リネーム"): "選択ボーン反転リネーム",
-        # brt_panel.py:182
-        ("*", "全対称化付与"): "全対称化付与",
         # brt_panel.py:183
+        ("*", "全対称化付与"): "全対称化付与",
+        # brt_panel.py:184
         ("*", "全対称化削除"): "全対称化削除",
         # brt_preferences.py:133
         ("*", "Editing Identifier Sets"): "識別子セット編集",
@@ -176,24 +176,30 @@ translation_dict = {
         ("*", "Enter the new bone name"): "新しいボーン名を入力",
         # brt_types.py:162
         ("*", "Remove duplicate identifiers"): ".001 などの複製識別子を削除します",
-        # brt_types.py:167  # ⛳ 新規翻訳
+        # brt_types.py:167
         ("*", "show_renumber_tools"): "Rename Selected Bones",
         # brt_types.py:168, brt_ui_rename.py:39
         ("*", "Renames the selected bone rows based on the specified settings"): "選択されたボーン列の名前を指定の設定に基づいて連番リネームします",
         # brt_types.py:168
         ("*", "Show renaming tools based on bone prefixes and numbering rules"): "ボーンの共通接頭辞とルールに基づいた連番リネーム操作を表示",
-        # brt_types.py:173  # ⛳ 新規翻訳
+        # brt_types.py:173
         ("*", "show_replace_tools"): "Replace Bone Name",
+        # brt_types.py:174, brt_ui_replace.py:46
+        ("*", "Replace the selected bone name substring in bulk"): "ボーン名の一部を一括置換",
         # brt_types.py:174
         ("*", "Show tools for substring replacement and removing duplicate identifiers"): "ボーン名の部分文字列置換や.001などの識別子削除を行うツールを表示",
-        # brt_types.py:179  # ⛳ 新規翻訳
+        # brt_types.py:179
         ("*", "show_invert_tools"): "Invert Selested Bones",
+        # brt_types.py:180, brt_ui_invert.py:82
+        ("*", "Invert left/right in selected bone names"): "選択ボーンの左右反転リネーム",
         # brt_types.py:180
         ("*", "Show tools to invert Left/Right identifiers for selected bones"): "選択ボーンの左右識別子を反転するツールを表示",
-        # brt_types.py:185  # ⛳ 新規翻訳
+        # brt_types.py:185
         ("*", "show_group_tools"): "Other Rename Tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
+        # brt_types.py:186  # ⛳ 新規翻訳
+        ("*", "Show batch renaming for symmetric bone names and revert option"): "対称骨名のバッチの名前を表示し、オプションを元に戻す",
         # brt_types.py:192
         ("*", "Mirror selected bones along global X axis"): "選択したボーンをグローバルX軸でミラー反転させる",
         # brt_types.py:198
@@ -214,15 +220,13 @@ translation_dict = {
         ("*", "選択ボーンをXミラー"): "選択ボーンをXミラー",
         # brt_ui_invert.py:75
         ("*", "Invert Left/Right Bone Names"): "選択ボーン反転リネーム",
-        # brt_ui_invert.py:82
-        ("*", "Invert left/right in selected bone names"): "選択ボーンの左右反転リネーム",
         # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:73, brt_ui_replace.py:68
         ("*", "No bones selected"): "ボーンを選択してください",
         # brt_ui_invert.py:124
         ("*", "Renamed {count} bones"): "{count}本のボーン名を変更しました",
         # brt_ui_invert.py:133
         ("*", "Select a linear chain from the currently selected bone"): "選択中ボーンから線形チェーンを選択",
-        # brt_ui_invert.py:146, brt_ui_rename.py:163
+        # brt_ui_invert.py:146, brt_ui_rename.py:169
         ("*", "Filter Out Inconsistent Bones"): "一致しないボーンを除外",
         # brt_ui_invert.py:147
         ("*", "Exclude bones that do not share naming rules"): "ネーミング規則が共通しないボーンを除外します",
@@ -234,7 +238,7 @@ translation_dict = {
         ("*", "Extended Selection"): "拡張選択",
         # brt_ui_invert.py:161
         ("*", "Select additional bones that match a common group name, ignoring embedded numbers"): "数字部分を除いた共通グループ名に一致するボーンを追加選択します",
-        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:175, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
+        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:181, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
         ("*", "No armature is selected"): "アーマチュアが選択されていません",
         # brt_ui_invert.py:183
         ("*", "No origin bone selected"): "起点となるボーンが選択されていません",
@@ -272,36 +276,36 @@ translation_dict = {
         ("*", "Number of bones to add"): "追加ボーン数",
         # brt_ui_rename.py:30
         ("*", "Execute Sequential Rename"): "連番リネーム実行",
-        # brt_ui_rename.py:94
+        # brt_ui_rename.py:78  # ⛳ 新規翻訳
+        ("*", "Please enter a Base Name"): "ベース名を入力してください",
+        # brt_ui_rename.py:100
         ("*", "{label} is a terminal bone connected to another bone. Operation has been cancelled"): "{label} に直接接続された末端ボーンがあります",
-        # brt_ui_rename.py:99
+        # brt_ui_rename.py:105
         ("*", "{label} has children but is not physically connected"): "{label} ローカル接続ボーンがあります",
-        # brt_ui_rename.py:128
+        # brt_ui_rename.py:134
         ("*", "Detect common prefix among selected bone names and apply settings automatically"): "選択ボーン名の共通部分を抽出し、設定を自動反映します",
-        # brt_ui_rename.py:148, brt_ui_replace.py:113
+        # brt_ui_rename.py:154, brt_ui_replace.py:113
         ("*", "Select Linear Chain"): "線形チェーンを選択",
-        # brt_ui_rename.py:149
-        ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
         # brt_ui_rename.py:155
+        ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
+        # brt_ui_rename.py:161
         ("*", "Select Only Toward Terminal"): "末端方向のみ選択",
-        # brt_ui_rename.py:156
+        # brt_ui_rename.py:162
         ("*", "If enabled, targets only the terminal direction from the initially selected bone"): "ONの場合、最初に選択されたボーンから末端までを対象とします",
-        # brt_ui_rename.py:164
+        # brt_ui_rename.py:170
         ("*", "Filters out bones with clearly different naming patterns from extraction"): "明らかにネーミングルールが異なるボーンを共通抽出対象から除外します",
-        # brt_ui_rename.py:186, brt_ui_replace.py:132
+        # brt_ui_rename.py:192, brt_ui_replace.py:132
         ("*", "Only Pose or Edit mode is supported"): "対応しているのは Pose モードまたは Edit モードです",
-        # brt_ui_rename.py:190, brt_ui_replace.py:136
+        # brt_ui_rename.py:196, brt_ui_replace.py:136
         ("*", "No bones are selected"): "ボーンが選択されていません",
-        # brt_ui_rename.py:202
+        # brt_ui_rename.py:208
         ("*", "Common prefix set: {prefix}"): "ベース名を設定: {prefix}",
-        # brt_ui_rename.py:204, brt_ui_replace.py:150
+        # brt_ui_rename.py:210, brt_ui_replace.py:150
         ("*", "Could not detect common prefix"): "ベース名が検出できませんでした",
         # brt_ui_replace.py:35
         ("*", "Remove duplicate suffix"): "重複識別子を削除",
         # brt_ui_replace.py:37
         ("*", "Rename Bones by Specified Name"): "指定名でボーン名変更",
-        # brt_ui_replace.py:46
-        ("*", "Replace the selected bone name substring in bulk"): "ボーン名の一部を一括置換",
         # brt_ui_replace.py:80
         ("*", "Please check the settings of the name before replacement"): "オリジナルボーン名が設定されていません",
         # brt_ui_replace.py:86
@@ -374,33 +378,33 @@ translation_dict = {
         ("*", "Specify the folder where the update ZIP is stored"): "更新用ZIPが保存されているフォルダを指定してください",
     },
     "en_US": {
-        # brt_panel.py:44
+        # brt_panel.py:45
         ("*", "共通部分"): "Base name",
-        # brt_panel.py:48
-        ("*", "連番開始番号"): "Serial number start number",
         # brt_panel.py:49
-        ("*", "法則"): "law",
+        ("*", "連番開始番号"): "Serial number start number",
         # brt_panel.py:50
+        ("*", "法則"): "law",
+        # brt_panel.py:51
         ("*", "末尾"): "end",
-        # brt_panel.py:52, brt_ui_rename.py:29
+        # brt_panel.py:53, brt_ui_rename.py:29
         ("*", "連番リネーム実行"): "Running serial number renames",
-        # brt_panel.py:102
+        # brt_panel.py:103
         ("*", "重複識別子を削除"): "Remove duplicate identifiers",
-        # brt_panel.py:104
+        # brt_panel.py:105
         ("*", "指定名でボーン名変更"): "Change bone name with specified name",
-        # brt_panel.py:141
+        # brt_panel.py:142
         ("*", "ボーン識別子:"): "Bone Identifier:",
-        # brt_panel.py:160
+        # brt_panel.py:161
         ("*", "左右識別子を付与する"): "Give left and right identifiers",
-        # brt_panel.py:165
+        # brt_panel.py:166
         ("*", "選択ボーンをグローバルXミラーする"): "Global X-mirror of selection bones",
-        # brt_panel.py:169
+        # brt_panel.py:170
         ("*", "複製してリネームする"): "Duplicate and rename",
-        # brt_panel.py:171
+        # brt_panel.py:172
         ("*", "選択ボーン反転リネーム"): "Select bone inverted rename",
-        # brt_panel.py:182
-        ("*", "全対称化付与"): "All symmetricalization",
         # brt_panel.py:183
+        ("*", "全対称化付与"): "All symmetricalization",
+        # brt_panel.py:184
         ("*", "全対称化削除"): "All symmetric removal",
         # brt_preferences.py:133
         ("*", "Editing Identifier Sets"): "Editing Identifier Sets",
@@ -548,24 +552,30 @@ translation_dict = {
         ("*", "Enter the new bone name"): "Enter the new bone name",
         # brt_types.py:162
         ("*", "Remove duplicate identifiers"): "Remove duplicate identifiers",
-        # brt_types.py:167  # ⛳ 新規翻訳
-        ("*", "show_renumber_tools"): "Rename Selested Bones",
+        # brt_types.py:167
+        ("*", "show_renumber_tools"): "show_renumber_tools",
         # brt_types.py:168, brt_ui_rename.py:39
         ("*", "Renames the selected bone rows based on the specified settings"): "Renames the selected bone rows based on the specified settings",
         # brt_types.py:168
         ("*", "Show renaming tools based on bone prefixes and numbering rules"): "Show renaming tools based on bone prefixes and numbering rules",
-        # brt_types.py:173  # ⛳ 新規翻訳
-        ("*", "show_replace_tools"): "Replace Bone Name",
+        # brt_types.py:173
+        ("*", "show_replace_tools"): "show_replace_tools",
+        # brt_types.py:174, brt_ui_replace.py:46
+        ("*", "Replace the selected bone name substring in bulk"): "Replace the selected bone name substring in bulk",
         # brt_types.py:174
         ("*", "Show tools for substring replacement and removing duplicate identifiers"): "Show tools for substring replacement and removing duplicate identifiers",
-        # brt_types.py:179  # ⛳ 新規翻訳
-        ("*", "show_invert_tools"): "Invert Selected Bones",
+        # brt_types.py:179
+        ("*", "show_invert_tools"): "show_invert_tools",
+        # brt_types.py:180, brt_ui_invert.py:82
+        ("*", "Invert left/right in selected bone names"): "Invert left/right in selected bone names",
         # brt_types.py:180
         ("*", "Show tools to invert Left/Right identifiers for selected bones"): "Show tools to invert Left/Right identifiers for selected bones",
-        # brt_types.py:185  # ⛳ 新規翻訳
-        ("*", "show_group_tools"): "Other Rename Tools",
+        # brt_types.py:185
+        ("*", "show_group_tools"): "show_group_tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "Batch renaming for symmetric bone names and revert option",
+        # brt_types.py:186  # ⛳ 新規翻訳
+        ("*", "Show batch renaming for symmetric bone names and revert option"): "Show batch renaming for symmetric bone names and revert option",
         # brt_types.py:192
         ("*", "Mirror selected bones along global X axis"): "Mirror selected bones along global X axis",
         # brt_types.py:198
@@ -586,15 +596,13 @@ translation_dict = {
         ("*", "選択ボーンをXミラー"): "X-mirror of selection bones",
         # brt_ui_invert.py:75
         ("*", "Invert Left/Right Bone Names"): "Invert Left/Right Bone Names",
-        # brt_ui_invert.py:82
-        ("*", "Invert left/right in selected bone names"): "Invert left/right in selected bone names",
         # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:73, brt_ui_replace.py:68
         ("*", "No bones selected"): "No bones selected",
         # brt_ui_invert.py:124
         ("*", "Renamed {count} bones"): "Renamed {count} bones",
         # brt_ui_invert.py:133
         ("*", "Select a linear chain from the currently selected bone"): "Select a linear chain from the currently selected bone",
-        # brt_ui_invert.py:146, brt_ui_rename.py:163
+        # brt_ui_invert.py:146, brt_ui_rename.py:169
         ("*", "Filter Out Inconsistent Bones"): "Filter Out Inconsistent Bones",
         # brt_ui_invert.py:147
         ("*", "Exclude bones that do not share naming rules"): "Exclude bones that do not share naming rules",
@@ -606,7 +614,7 @@ translation_dict = {
         ("*", "Extended Selection"): "Extended Selection",
         # brt_ui_invert.py:161
         ("*", "Select additional bones that match a common group name, ignoring embedded numbers"): "Select additional bones that match a common group name, ignoring embedded numbers",
-        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:175, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
+        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:181, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
         ("*", "No armature is selected"): "No armature is selected",
         # brt_ui_invert.py:183
         ("*", "No origin bone selected"): "No origin bone selected",
@@ -644,36 +652,36 @@ translation_dict = {
         ("*", "Number of bones to add"): "Number of bones to add",
         # brt_ui_rename.py:30
         ("*", "Execute Sequential Rename"): "Execute Sequential Rename",
-        # brt_ui_rename.py:94
+        # brt_ui_rename.py:78  # ⛳ 新規翻訳
+        ("*", "Please enter a Base Name"): "Please enter a Base Name",
+        # brt_ui_rename.py:100
         ("*", "{label} is a terminal bone connected to another bone. Operation has been cancelled"): "{label} is a terminal bone connected to another bone. Operation has been cancelled",
-        # brt_ui_rename.py:99
+        # brt_ui_rename.py:105
         ("*", "{label} has children but is not physically connected"): "{label} has children but is not physically connected",
-        # brt_ui_rename.py:128
+        # brt_ui_rename.py:134
         ("*", "Detect common prefix among selected bone names and apply settings automatically"): "Detect common prefix among selected bone names and apply settings automatically",
-        # brt_ui_rename.py:148, brt_ui_replace.py:113
+        # brt_ui_rename.py:154, brt_ui_replace.py:113
         ("*", "Select Linear Chain"): "Select Linear Chain",
-        # brt_ui_rename.py:149
-        ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "If enabled, automatically selects linear parent-child chain from selected bone",
         # brt_ui_rename.py:155
+        ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "If enabled, automatically selects linear parent-child chain from selected bone",
+        # brt_ui_rename.py:161
         ("*", "Select Only Toward Terminal"): "Select Only Toward Terminal",
-        # brt_ui_rename.py:156
+        # brt_ui_rename.py:162
         ("*", "If enabled, targets only the terminal direction from the initially selected bone"): "If enabled, targets only the terminal direction from the initially selected bone",
-        # brt_ui_rename.py:164
+        # brt_ui_rename.py:170
         ("*", "Filters out bones with clearly different naming patterns from extraction"): "Filters out bones with clearly different naming patterns from extraction",
-        # brt_ui_rename.py:186, brt_ui_replace.py:132
+        # brt_ui_rename.py:192, brt_ui_replace.py:132
         ("*", "Only Pose or Edit mode is supported"): "Only Pose or Edit mode is supported",
-        # brt_ui_rename.py:190, brt_ui_replace.py:136
+        # brt_ui_rename.py:196, brt_ui_replace.py:136
         ("*", "No bones are selected"): "No bones are selected",
-        # brt_ui_rename.py:202
+        # brt_ui_rename.py:208
         ("*", "Common prefix set: {prefix}"): "Common prefix set: {prefix}",
-        # brt_ui_rename.py:204, brt_ui_replace.py:150
+        # brt_ui_rename.py:210, brt_ui_replace.py:150
         ("*", "Could not detect common prefix"): "Could not detect common prefix",
         # brt_ui_replace.py:35
         ("*", "Remove duplicate suffix"): "Remove duplicate suffix",
         # brt_ui_replace.py:37
         ("*", "Rename Bones by Specified Name"): "Rename Bones by Specified Name",
-        # brt_ui_replace.py:46
-        ("*", "Replace the selected bone name substring in bulk"): "Replace the selected bone name substring in bulk",
         # brt_ui_replace.py:80
         ("*", "Please check the settings of the name before replacement"): "Please check the settings of the name before replacement",
         # brt_ui_replace.py:86
