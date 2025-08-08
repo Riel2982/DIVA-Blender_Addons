@@ -139,7 +139,7 @@ translation_dict = {
         # mwr_update.py:27
         ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
         # mwr_update.py:37
-        ("*", "Update file list:"): "更新ファイル一覧: ",
+        ("*", "Update file list: "): "更新ファイル一覧: ",
         # mwr_update.py:93
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
         # mwr_update.py:111

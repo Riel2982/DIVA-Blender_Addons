@@ -4,13 +4,13 @@ import bpy
 
 from bpy.app.translations import pgettext as _
 
-from .mwr_main import (
+from .mwr_reflector import (
     disable_mirror_modifier,
     duplicate_and_apply_mirror,
     get_pattern_map_from_prefs, 
     process_origin_overlap,
 )
-from .mwr_sub import (
+from .mwr_symmetry import (
     process_symmetrize,
 )
 from .mwr_json import get_bone_pattern_items, get_selected_rules
