@@ -212,17 +212,17 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
             prefix_filter=prefix
         )
         '''
+        if False:
+            # ▶ コンソールに選択ボーン名を表示
+            print(f"\n▶ [LinearChain] 実行オプション:")
+            print(f" - filter_inconsistent: {self.filter_inconsistent}")
+            print(f" - allow_branches: {self.allow_branches}")
+            print(f" - extend_by_common_group: {self.extend_by_common_group}")
 
-        # ▶ コンソールに選択ボーン名を表示
-        print(f"\n▶ [LinearChain] 実行オプション:")
-        print(f" - filter_inconsistent: {self.filter_inconsistent}")
-        print(f" - allow_branches: {self.allow_branches}")
-        print(f" - extend_by_common_group: {self.extend_by_common_group}")
-
-        print(f"▶ 起点ボーン: {bones[0].name}")
-        print(f"▶ mode: {context.mode}")
-        print(f"▶ prefix_filter: {prefix}")
-        print(f"▶ target_group: {extract_common_group(clean_name(bones[0].name))}")
+            print(f"▶ 起点ボーン: {bones[0].name}")
+            print(f"▶ mode: {context.mode}")
+            print(f"▶ prefix_filter: {prefix}")
+            print(f"▶ target_group: {extract_common_group(clean_name(bones[0].name))}")
 
         selected_bones = []
         if mode == 'POSE':
@@ -230,9 +230,10 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             selected_bones = [b.name for b in obj.data.edit_bones if b.select]
 
-        print(f"\n▶ [LinearChain] 選択ボーン一覧（{len(selected_bones)}本）:")
-        for name in selected_bones:
-            print(f" - {name}")        
+        if False:
+            print(f"\n▶ [LinearChain] 選択ボーン一覧（{len(selected_bones)}本）:")
+            for name in selected_bones:
+                print(f" - {name}")        
 
         self.report({'INFO'}, _("Linear chain selected"))
         return {'FINISHED'}

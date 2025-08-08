@@ -6,6 +6,8 @@ from typing import Optional
 import mathutils
 import math
 
+from .brt_debug import DEBUG_MODE   # デバッグ用
+
 # ミラー処理の関数化
 def apply_mirror_transform(target, mirror_mode):
     if mirror_mode == 'SYMMETRY':    # ロール反転のみ
@@ -99,9 +101,10 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
     elif initial_mode == 'EDIT_ARMATURE':
         bones = [b for b in obj.data.edit_bones if b.select]
 
-    # デバック用
-    print(f"▶ apply_mirrored_rename: mode = {initial_mode}")
-    print(f"▶ 選択ボーン数: {len(bones)}")
+    if DEBUG_MODE:
+        # デバック用
+        print(f"▶ apply_mirrored_rename: mode = {initial_mode}")
+        print(f"▶ 選択ボーン数: {len(bones)}")
 
     if not bones:
         return 0
@@ -115,9 +118,10 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
     # プレフィックスを抽出（必要なら）
     prefix = detect_common_prefix(bones, suffix_enum, rule_enum) if assign_identifier else None
 
-    # デバック用
-    print(f"▶ mirror_map: {mirror_map}")
-    print(f"▶ prefix: {prefix}")
+    if DEBUG_MODE:
+        # デバック用
+        print(f"▶ mirror_map: {mirror_map}")
+        print(f"▶ prefix: {prefix}")
 
     renamed = 0
     bpy.ops.object.mode_set(mode='EDIT')  # ミラーや複製はEDITで実行
@@ -161,7 +165,8 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
             has_identifier = has_structured_identifier(name, ident_list)
             if has_identifier:
                 name = apply_name_flip(name, mirror_map["flip"])
-                print(f"▶ 名前反転: {target.name} → {name}")
+                if DEBUG_MODE:
+                    print(f"▶ 名前反転: {target.name} → {name}")
                 renamed += 1
 
             # 識別子の付与（反転後の target に対して）
@@ -174,7 +179,8 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
                 )
                 prefix_fallback = prefix or derive_local_prefix(name)
                 name = insert_identifier_by_structure(name, identifier, prefix_fallback)
-                print(f"▶ 識別子付与: {target.name} → {name}")
+                if DEBUG_MODE:
+                    print(f"▶ 識別子付与: {target.name} → {name}")
                 renamed += 1
 
             target.name = name
@@ -196,7 +202,8 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
         # STEP2: すでに識別子を持っていれば flip 処理のみ
         if has_structured_identifier(name, ident_list):
             new_name = apply_name_flip(name, mirror_map["flip"])
-            print(f"▶ 名前反転: {name} → {new_name}")
+            if DEBUG_MODE:
+                print(f"▶ 名前反転: {name} → {new_name}")
             renamed += 1
             target.name = new_name
 
@@ -210,7 +217,8 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
             )
             prefix_fallback = prefix or derive_local_prefix(name)
             new_name = insert_identifier_by_structure(name, identifier, prefix_fallback)
-            print(f"▶ 識別子付与: {name} → {new_name}")
+            if DEBUG_MODE:
+                print(f"▶ 識別子付与: {name} → {new_name}")
             renamed += 1
             target.name = new_name
 
@@ -237,8 +245,10 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
     else:
         bpy.ops.object.mode_set(mode=initial_mode)
 
-    # デバック用
-    print(f"▶ 処理完了: renamed = {renamed}")
+    if DEBUG_MODE:
+        # デバック用
+        print(f"▶ 処理完了: renamed = {renamed}")
+
     return renamed
 
 # 指定されたパターン名に基づいて置換辞書を返す

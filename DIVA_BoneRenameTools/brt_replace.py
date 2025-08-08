@@ -6,10 +6,25 @@ from os.path import commonprefix
 
 from bpy.app.translations import pgettext as _
 
+from .brt_debug import DEBUG_MODE   # デバッグ用
 
+# 重複識別子の削除
 def strip_number_suffix(name: str) -> str:
-    """'.001' のような複製識別子を除去する"""
-    return re.sub(r"\.\d{3}$", "", name)
+    return re.sub(r"\.\d{3,}$", "", name)
+
+# 最後の処理として末尾の .001 などを除去（安全に）
+def sanitize_duplicate_suffixes(bones):
+    existing = {b.name for b in bones}
+    for bone in bones:
+        cleaned = strip_number_suffix(bone.name)
+        # すでに同名が存在していない場合のみ再設定
+        if cleaned != bone.name and cleaned not in existing:
+            try:
+                bone.name = cleaned
+                existing.add(cleaned)
+            except Exception as e:
+                if DEBUG_MODE:
+                    print(f"⚠ Rename failed: {bone.name} → {cleaned} ({e})")
 
 def replace_bone_names_by_rule(context, source, target):
     """選択中のボーン名から source を target に置き換え（部分一致）"""
@@ -29,7 +44,8 @@ def replace_bone_names_by_rule(context, source, target):
     total_selected = len(selected_bones)
 
     for bone in selected_bones:
-        print(f"Checking: {bone.name} → contains '{source}'? {'YES' if source in bone.name else 'NO'}")
+        if DEBUG_MODE:
+            print(f"Checking: {bone.name} → contains '{source}'? {'YES' if source in bone.name else 'NO'}")
         if source in bone.name:
             new_name = bone.name.replace(source, target)
             if context.scene.brt_remove_number_suffix:
@@ -37,12 +53,17 @@ def replace_bone_names_by_rule(context, source, target):
             bone.name = new_name
             matched += 1
 
+    if context.scene.brt_remove_number_suffix:
+        sanitize_duplicate_suffixes(selected_bones)
+
     if matched == 0:
         return False, False, _("Please check the settings of the selected bone name and the name before replacement")    # 選択したボーン名と置換前の名前の設定を確認してください
     elif matched < total_selected:
         return True, True, _("Some bones could not be replaced. Please check the bone name")    # 一部のボーンが置き換えできませんでした。ボーン名を確認してください
     else:
         return True, False, ""
+
+
 
 def detect_common_prefix(bones, suffix_enum=None, rule_enum=None):
     """複数ボーン名の共通部分を抽出（簡易版）"""

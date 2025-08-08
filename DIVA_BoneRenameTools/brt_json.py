@@ -9,6 +9,8 @@ import traceback
 from datetime import datetime
 import re
 
+from .brt_debug import DEBUG_MODE   # デバッグ用
+
 # デフォルト識別子の定義
 def DEFAULT_BONE_PATTERN():
     return [
@@ -25,7 +27,8 @@ def DEFAULT_BONE_PATTERN():
 
 def get_json_path():
     path = os.path.join(os.path.dirname(__file__), "bone_patterns.json")
-    print("[DIVA] JSON path:", path)
+    if DEBUG_MODE:
+        print("[DIVA] JSON path:", path)
     return path
 
 # JSONファイルの読み込み
@@ -70,14 +73,16 @@ def load_bone_patterns_to_preferences(prefs):
                 rule.left = rule_data.get("left", "")
                 rule.use_regex = rule_data.get("use_regex", False)
     except Exception as e:
-        print(f"[DIVA] ⚠ JSON読み込みエラー: {e}")
+        if DEBUG_MODE:
+            print(f"[DIVA] ⚠ JSON読み込みエラー: {e}")
 
         # タイムスタンプ付きでバックアップ
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_path = path.replace(".json", f".invalid_{timestamp}.json")
         try:
             shutil.move(path, backup_path)
-            print(f"[DIVA] ⚠ 破損JSONをバックアップ: {backup_path}")
+            if DEBUG_MODE:
+                print(f"[DIVA] ⚠ 破損JSONをバックアップ: {backup_path}")
 
             # 5件までに制限
             dir_path = os.path.dirname(backup_path)
@@ -90,12 +95,15 @@ def load_bone_patterns_to_preferences(prefs):
                 oldest = backups.pop(0)
                 try:
                     os.remove(os.path.join(dir_path, oldest))
-                    print(f"[DIVA] 🗑 古いバックアップ削除: {oldest}")
+                    if DEBUG_MODE:
+                        print(f"[DIVA] 🗑 古いバックアップ削除: {oldest}")
                 except Exception as rm_err:
-                    print(f"[DIVA] ⚠ 削除失敗: {rm_err}")
+                    if DEBUG_MODE:
+                        print(f"[DIVA] ⚠ 削除失敗: {rm_err}")
 
         except Exception as move_err:
-            print(f"[DIVA] ⚠ バックアップに失敗しました: {move_err}")
+            if DEBUG_MODE:
+                print(f"[DIVA] ⚠ バックアップに失敗しました: {move_err}")
 
         # デフォルトで再生成
         with open(path, "w", encoding="utf-8") as f:
@@ -199,7 +207,8 @@ def copy_json_to_targets(source_path, targets):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_path = target_path.replace(".json", f"_{timestamp}.bak.json")
         shutil.copy2(target_path, backup_path)
-        print(f"[BACKUP] {name}: {backup_path} にバックアップ")
+        if DEBUG_MODE:
+            print(f"[BACKUP] {name}: {backup_path} にバックアップ")
 
         # 🔁 バックアップファイルを3件に制限
         base_name = os.path.basename(target_path).replace(".json", "")
@@ -214,13 +223,16 @@ def copy_json_to_targets(source_path, targets):
             oldest = backups.pop(0)
             try:
                 os.remove(os.path.join(root_dir, oldest))
-                print(f"[CLEANUP] {name}: 古いバックアップ削除 → {oldest}")
+                if DEBUG_MODE:
+                    print(f"[CLEANUP] {name}: 古いバックアップ削除 → {oldest}")
             except Exception as rm_err:
-                print(f"[ERROR] {name}: バックアップ削除失敗 → {rm_err}")
+                if DEBUG_MODE:
+                    print(f"[ERROR] {name}: バックアップ削除失敗 → {rm_err}")
 
         # 上書きコピー
         shutil.copy2(source_path, target_path)
-        print(f"[COPY] {name}: {target_path} にコピー完了")
+        if DEBUG_MODE:
+            print(f"[COPY] {name}: {target_path} にコピー完了")
 
 def sync_bone_patterns():
     synced = []  # ← 成功したアドオン名をここに記録
@@ -241,7 +253,8 @@ def sync_bone_patterns():
                 for p in brt_prefs.bone_patterns
             ]
             mod_brt.save_json_data(data)
-            print("[SYNC] bone_patterns 保存完了")
+            if DEBUG_MODE:
+                print("[SYNC] bone_patterns 保存完了")
 
             source_path = mod_brt.get_json_path()  # 編集元のJSONパス
             targets = get_diva_sync_targets()
@@ -252,15 +265,18 @@ def sync_bone_patterns():
             try:
                 prefs_target = bpy.context.preferences.addons[name].preferences
                 mod.load_bone_patterns_to_preferences(prefs_target)
-                print(f"[SYNC] {name} → 同期成功")
+                if DEBUG_MODE:
+                    print(f"[SYNC] {name} → 同期成功")
                 synced.append(name)
             except Exception as inner:
-                print(f"[SYNC] {name} → 同期失敗: {inner}")
+                if DEBUG_MODE:
+                    print(f"[SYNC] {name} → 同期失敗: {inner}")
 
     except Exception as e:
-        import traceback
-        print("[SYNC] エラー発生:")
-        print(traceback.format_exc())
+        if DEBUG_MODE:
+            import traceback
+            print("[SYNC] エラー発生:")
+            print(traceback.format_exc())
         raise e  # 呼び出し元にエラーを渡す
 
     return synced  # ← 成功アドオン名を返す

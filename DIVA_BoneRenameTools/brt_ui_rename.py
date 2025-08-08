@@ -48,7 +48,6 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
 
     def execute(self, context):
         from .brt_rename import rename_selected_bones, find_terminal_bones, extend_and_subdivide_bone, check_terminal_bone_connections
-        # print("分割付きリネーム開始")
 
         obj = context.object
         if not obj or obj.type != 'ARMATURE':
@@ -80,10 +79,15 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
 
         bones = obj.data.edit_bones
 
-        # ✅ 選択された末端ボーンの子で "brt_added" タグ付きのものだけ削除
-        terminal_set = set(find_terminal_bones(selected_bones))
+        # ✅ 毎回、brt_added のフラグをリセット
+        for b in bones:
+            if "brt_added" in b:
+                del b["brt_added"]
+
+        # 既存の追加ボーンのうち、親が現在の選択ボーンに含まれている"brt_added" タグ付きのものだけ削除
+        selected_set = set(selected_bones)
         for b in list(bones):
-            if b.get("brt_added") and b.parent in terminal_set:
+            if b.get("brt_added") and b.parent in selected_set:
                 bones.remove(b)
 
         selected_before_split = [b for b in bones if b.select]
@@ -123,7 +127,6 @@ class BRT_OT_RenameSelectedBones(bpy.types.Operator):
             context.scene.brt_rename_rule
         )
 
-        print("完了")
         return {'FINISHED'}
 
 class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
@@ -237,7 +240,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
         # 代表ボーン決定（先頭 or 選択ボーン）
         ref_bone = bones[0]
         if self.use_auto_select and not self.select_children_only:
-            from .brt_rename import get_linear_chain  # ✅ 正しいモジュールから import
+            from .brt_rename import get_linear_chain
             chain = get_linear_chain(ref_bone.name, prefix_filter=prefix)
             if chain:
                 ref_bone = chain[0]

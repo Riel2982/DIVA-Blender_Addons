@@ -190,10 +190,11 @@ def select_linear_chain_inclusive(
             if b_group != base_group:
                 continue
 
-            print("[StrictChain]" if filter_inconsistent else "[OpenChain]",
-                "基準ボーン名:", get_name(b),
-                "clean_name:", b_clean,
-                "extract_group:", b_group)
+            if False:
+                print("[StrictChain]" if filter_inconsistent else "[OpenChain]",
+                    "基準ボーン名:", get_name(b),
+                    "clean_name:", b_clean,
+                    "extract_group:", b_group)
 
             if filter_inconsistent:
                 extend_chain_strict(
@@ -248,10 +249,11 @@ def extend_chain_strict(
     base_clean = clean_name(base_name)
     base_group = extract_common_group(base_clean)
 
-    print("[StrictChain] 基準ボーン名       :", base_name)
-    print("[StrictChain] clean_name         :", base_clean)
-    print("[StrictChain] extract_group      :", base_group)
-    print("inconsistant & extend → ON")
+    if False:
+        print("[StrictChain] 基準ボーン名       :", base_name)
+        print("[StrictChain] clean_name         :", base_clean)
+        print("[StrictChain] extract_group      :", base_group)
+        print("inconsistant & extend → ON")
 
     visited = set()
 
@@ -300,9 +302,10 @@ def extend_chain_open(
     base_clean = clean_name(base_name)
     base_group = extract_common_group(base_clean)
 
-    print("[OpenChain] 基準ボーン名       :", base_name)
-    print("[OpenChain] clean_name         :", base_clean)
-    print("[OpenChain] extract_group      :", base_group)
+    if False:
+        print("[OpenChain] 基準ボーン名       :", base_name)
+        print("[OpenChain] clean_name         :", base_clean)
+        print("[OpenChain] extract_group      :", base_group)
 
     visited = set()
 

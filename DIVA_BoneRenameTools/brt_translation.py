@@ -199,7 +199,7 @@ translation_dict = {
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
         # brt_types.py:186  # ⛳ 新規翻訳
-        ("*", "Show batch renaming for symmetric bone names and revert option"): "対称骨名のバッチの名前を表示し、オプションを元に戻す",
+        ("*", "Show batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
         # brt_types.py:192
         ("*", "Mirror selected bones along global X axis"): "選択したボーンをグローバルX軸でミラー反転させる",
         # brt_types.py:198
@@ -331,7 +331,7 @@ translation_dict = {
         # brt_update.py:27
         ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
         # brt_update.py:37
-        ("*", "Update file list:"): "更新ファイル一覧: ",
+        ("*", "Update file list: "): "更新ファイル一覧: ",
         # brt_update.py:93
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
         # brt_update.py:111
