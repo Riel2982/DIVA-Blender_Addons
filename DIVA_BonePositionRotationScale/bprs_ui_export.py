@@ -11,6 +11,7 @@ from bpy.app.translations import pgettext as _
 from . import DivaBonePositionRotationScale
 from . bprs_export import get_timestamp, rename_existing_file, convert_bone_data_to_json
 
+from .bprs_debug import DEBUG_MODE   # デバッグ用
 
 # --- セクション 1: ボーンデータ出力 ------------------------------------------
 def draw_export_ui(layout, context, scene):
@@ -152,7 +153,8 @@ class BPRS_OT_ExportBoneData(bpy.types.Operator):
         # **上書き確認＆リネーム処理**
         renamed_file = rename_existing_file(filepath, scene.bprs_export_overwrite)
         if renamed_file:
-            print(_("Existing file renamed to: {name}").format(name=renamed_file))
+            if DEBUG_MODE:
+                print(_("Existing file renamed to: {name}").format(name=renamed_file))
 
         try:
             bone_data = DivaBonePositionRotationScale.get_bone_data()

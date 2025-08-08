@@ -121,7 +121,7 @@ translation_dict = {
         # bprs_update.py:66
         ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
         # bprs_update.py:76
-        ("*", "Update file list:"): "更新ファイル一覧: ",
+        ("*", "Update file list: "): "更新ファイル一覧: ",
         # bprs_update.py:132
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
         # bprs_update.py:150

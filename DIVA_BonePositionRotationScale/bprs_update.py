@@ -10,6 +10,8 @@ import datetime
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
 
+from .bprs_debug import DEBUG_MODE   # デバッグ用
+
 # アドオンプリファレンス本体（表示と編集UI）
 class BPRS_AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = "DIVA_BonePositionRotationScale"  # アドオンのフォルダ名（ハイフンや半角スペース、記号は使用不可）
@@ -111,9 +113,11 @@ def save_download_folder(path):
     try:        # w=存在しない場合は生成
         with open(get_settings_path(), "w", encoding="utf-8") as f:
             json.dump({"download_folder": path}, f)
-        print("✅ 設定ファイルを保存しました:", get_settings_path())
+        if DEBUG_MODE:
+            print("✅ 設定ファイルを保存しました:", get_settings_path())
     except Exception as e:
-        print("❌ 保存失敗:", str(e))
+        if DEBUG_MODE:
+            print("❌ 保存失敗:", str(e))
 
 def load_download_folder():
     try:
@@ -196,7 +200,7 @@ class BPRS_OT_ExecuteUpdate(bpy.types.Operator):
 
         # ZIPファイル名の確認（パターンに一致しなければ処理中止）
         filename = os.path.basename(self.filepath)
-        pattern = re.compile(r"^DIVA_BonePositionRotationScale.*\.zip$")
+        pattern = re.compile(r"^DIVA_BonePositionRotationScale.*\.zip$", re.IGNORECASE)
         if not pattern.match(filename):
             self.report({'WARNING'}, _("Only ZIP files starting with DIVA_BonePositionRotationScale can be processed"))       # DIVA_BonePositionRotationScale で始まるZIPファイル以外は処理できません
             context.window_manager.bprs_update_completed = False
@@ -342,7 +346,8 @@ class BPRS_OT_ConfirmDownloadFolder(bpy.types.Operator):
         scene.bprs_update_candidates.clear()
         files = os.listdir(folder)
         for fname in sorted(files, reverse=True):
-            if fname.startswith("DIVA_BonePositionRotationScale") and fname.endswith(".zip"):
+            # if fname.startswith("DIVA_BonePositionRotationScale") and fname.endswith(".zip"):
+            if re.match(r"^DIVA_BonePositionRotationScale.*\.zip$", fname, re.IGNORECASE):
                 full_path = os.path.join(folder, fname)
                 timestamp = os.path.getmtime(full_path)
                 import datetime
@@ -435,6 +440,14 @@ def register_properties():
     # 日時順ソートトグル式
     bpy.types.Scene.bprs_sort_date_desc = bpy.props.BoolProperty(default=True)
 
+    # 不要ファイル削除要フラグ
+    bpy.types.WindowManager.bprs_obsolete_cleanup_done = bpy.props.BoolProperty(
+        name="Obsolete cleanup done",
+        default=False
+    )
+
+
+
 def unregister_properties():
     del bpy.types.Scene.bprs_download_folder
     del bpy.types.Scene.bprs_update_candidates
@@ -442,6 +455,94 @@ def unregister_properties():
     del bpy.types.WindowManager.bprs_update_completed
     del bpy.types.Scene.bprs_sort_name_desc
     del bpy.types.Scene.bprs_sort_date_desc
+    del bpy.types.WindowManager.bprs_obsolete_cleanup_done
+
+
+# 不要ファイル実行制御フラグ（一括管理）
+ENABLE_OBSOLETE_FILE_REMOVAL = False
+
+# フラグに応じて不要ファイル削除を実行
+def remove_obsolete_files_on_startup():
+    # 更新後に削除する不要ファイル一覧（相対パス）
+    OBSOLETE_FILES = [
+        # "bprs_main.py",
+        # "bprs_sub.py",     # コメントアウトで一時的に除外も可能
+        # "bprs_import.py",
+        # "bprs_ui_import.py",
+        # "example/unused_script.py",  # フォルダに入っている場合はフォルダ名/ファイル名
+    ]
+
+    if not ENABLE_OBSOLETE_FILE_REMOVAL:
+        return  # ファイルを削除しない
+
+    wm = bpy.context.window_manager
+    if getattr(wm, "bprs_obsolete_cleanup_done", False):
+        return  # すでに削除済みならスキップ
+
+    addon_folder = os.path.dirname(os.path.abspath(__file__))
+    deleted_files = []  # 削除成功ファイル一覧
+
+    for rel_path in OBSOLETE_FILES:
+        abs_path = os.path.join(addon_folder, rel_path)
+        if os.path.isfile(abs_path):
+            try:
+                os.remove(abs_path)
+                deleted_files.append(rel_path)
+                if DEBUG_MODE:
+                    print(f"🗑️ 起動時に削除: {abs_path}")
+            except Exception as e:
+                if DEBUG_MODE:
+                    print(f"❌ 起動時削除失敗: {abs_path} → {str(e)}")
+        else:
+            if DEBUG_MODE:
+                print(f"⚠️ 起動時削除対象なし: {abs_path}")
+
+    if DEBUG_MODE and deleted_files:
+        print("🗑️ 起動時に削除されたファイル一覧:")
+        for f in deleted_files:
+            print(f"  - {f}")
+
+    wm.bprs_obsolete_cleanup_done = True  # フラグを立てて再実行防止
+
+
+
+# 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
+def confirm_download_folder():
+    scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
+    if not hasattr(scene, "bprs_download_folder"):
+        return  # プロパティ未登録 → スキップ
+    
+    folder = scene.bprs_download_folder  # 有効なパスかチェック
+    if folder and os.path.isdir(folder):
+        bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
+
+        if DEBUG_MODE:
+            print("[BPRS] DLフォルダ確認を実行しました")
+
+
+
+# BLENDファイル読み込み後に不要ファイル削除とDLフォルダ確認を実行
+@persistent
+def bprs_on_blend_load(dummy):
+    # 不要なファイルの削除
+    remove_obsolete_files_on_startup()
+
+    # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
+    confirm_download_folder()
+
+    if False:
+        # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
+        scene = bpy.context.scene
+        if not hasattr(scene, "bprs_download_folder"):
+            return  # プロパティ未登録 → スキップ
+
+        folder = scene.bprs_download_folder
+        if folder and os.path.isdir(folder):
+            bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')
+
+        if DEBUG_MODE:
+            print("[BPRS] BLENDファイル読み込み時に不要ファイル削除とDLフォルダ確認を実行しました")
+
 
 
 # アドオン起動直後に呼ばれる初期処理
@@ -450,18 +551,27 @@ def initialize_candidate_list():
     wm = bpy.context.window_manager
     wm.bprs_update_completed = False
 
-    # 「有効なDLフォルダが設定されている場合のみ更新リストを自動生成する」  
-    scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
-    if not hasattr(scene, "bprs_download_folder"):
-        return  # DLフォルダプロパティがない → 以降の処理はスキップ
+    # 起動時に不要ファイル削除
+    remove_obsolete_files_on_startup()
     
-    folder = scene.bprs_download_folder# 有効なパスかチェック
-    if folder and os.path.isdir(folder):
-        bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
+    # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
+    confirm_download_folder()
 
-def check_dl_folder(scene):
-    folder = scene.bprs_download_folder if hasattr(scene, "bprs_download_folder") else None
-    if folder and os.path.isdir(folder):
-        bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')
-        bpy.app.handlers.depsgraph_update_post.remove(check_dl_folder)
+    if False:
+        # 「有効なDLフォルダが設定されている場合のみ更新リストを自動生成する」  
+        scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
+        if not hasattr(scene, "bprs_download_folder"):
+            return  # DLフォルダプロパティがない → 以降の処理はスキップ
+        
+        folder = scene.bprs_download_folder# 有効なパスかチェック
+        if folder and os.path.isdir(folder):
+            bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
+
+if False:
+    def check_dl_folder(scene):
+        folder = scene.bprs_download_folder if hasattr(scene, "bprs_download_folder") else None
+        if folder and os.path.isdir(folder):
+            bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')
+            bpy.app.handlers.depsgraph_update_post.remove(check_dl_folder)
+
 

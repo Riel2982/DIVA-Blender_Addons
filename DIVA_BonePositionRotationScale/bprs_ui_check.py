@@ -6,6 +6,8 @@ from bpy.app.translations import pgettext as _
 from . import DivaBonePositionRotationScale
 from . bprs_check import parse_bone_data_string, get_bone_data_map, collect_correction_data, set_checked_armature_as_active
 
+from .bprs_debug import DEBUG_MODE   # デバッグ用
+
 # --- セクション 3: ボーンデータ確認 ------------------------------------------
 def draw_check_ui(layout, context, scene):
     box = layout.box()  # 枠付きセクションを作る
@@ -252,10 +254,11 @@ if False:
         if not info_lines:
             return
         
-        # デバッグ用
-        print("=== DEBUG: info_lines ===")
-        for i, line in enumerate(info_lines):
-            print(f"[{i}] {repr(line)}")
+        if DEBUG_MODE:
+            # デバッグ用
+            print("=== DEBUG: info_lines ===")
+            for i, line in enumerate(info_lines):
+                print(f"[{i}] {repr(line)}")
 
         bone = arm.data.bones.get(bone_name)
         bone_length = bone.length if bone else 0.0
@@ -277,7 +280,8 @@ if False:
         for line in info_lines[1:]:  # ParentName～Scaleをラベルごと抽出
             parts = line.lstrip().split(": ", 1)
 
-            print(f"DEBUG SPLIT: {repr(parts)} from line: {repr(line)}")        # デバッグ用
+            if DEBUG_MODE:
+                print(f"DEBUG SPLIT: {repr(parts)} from line: {repr(line)}")        # デバッグ用
             
             if len(parts) == 2:
                 label, value = parts
