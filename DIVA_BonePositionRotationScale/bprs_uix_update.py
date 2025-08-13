@@ -46,10 +46,12 @@ def draw_update_ui(layout, scene):
     row.operator("bprs.open_addon_folder", text=_("Open Addon Folder"), icon="FILE_FOLDER")        # アドオンフォルダを開く
 
     # アドオンの最新リリースのお知らせ
-    display_version = get_release_label()
-    if display_version:
-        row = box.row()
-        row.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
+    wm = bpy.context.window_manager
+    if wm.bprs_new_release_available:
+        display_version = get_release_label()
+        if display_version:
+            row = box.row()
+            row.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
 
     if False:
         wm = bpy.context.window_manager
