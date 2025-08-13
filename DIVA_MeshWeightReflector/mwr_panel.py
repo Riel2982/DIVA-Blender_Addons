@@ -13,7 +13,13 @@ from .mwr_reflector import (
 from .mwr_symmetry import (
     process_symmetrize,
 )
+
+from .mwr_sub import MODIFIER_LABELS
+from . import mwr_sub
 from .mwr_json import get_bone_pattern_items, get_selected_rules
+
+from .mwr_debug import DEBUG_MODE   # デバッグ用
+
 
 # Nパネル設定
 class DIVA_PT_MeshWeightReflectorPanel(bpy.types.Panel):
@@ -43,10 +49,37 @@ class DIVA_PT_MeshWeightReflectorPanel(bpy.types.Panel):
         right.prop(props, "bone_pattern", text="")  # ドロップダウン（ラベル非表示）
         right.operator("mwr.open_preferences", text="", icon="PREFERENCES")  # 設定ボタン（プリファレンスを開く）
 
-        # ミラー自動判別（チェックボタン）
-        row = box.row()
-        row.prop(props, "duplicate_and_mirror", text="")  # チェックボックス
-        row.label(text=_("Duplicate and Mirror"))  # ラベル
+        if DEBUG_MODE:
+            # UIレイアウトの分割（オプション処理）※対称化オプションに揃える
+            split = box.split(factor=0.35)
+
+            # 左側（1/3）：複製してミラー
+            col_left = split.column()
+            row_left = col_left.row()
+            row_left.prop(props, "duplicate_and_mirror", text="")
+            row_left.label(text=_("Duplicate and Mirror"))
+
+            # 右側（2/3）：モディファイア適用オプション
+            col_right = split.column()
+            row_right = col_right.row()
+            row_right.prop(props, "apply_modifiers", text="")
+            row_right.label(text=_("Apply Modifiers"))
+
+        if False:   # 均等表示        
+            # 複製してミラー（チェックボタン）
+            row = box.row()
+            row.prop(props, "duplicate_and_mirror", text="")  # チェックボックス
+            row.label(text=_("Duplicate and Mirror"))  # ラベル
+
+            # モディファイア適用オプション（右側）
+            row.prop(props, "apply_modifiers", text="")
+            row.label(text=_("Apply Modifiers"))
+
+        if not DEBUG_MODE:
+            # 複製してミラー（チェックボタン）
+            row = box.row()
+            row.prop(props, "duplicate_and_mirror", text="")  # チェックボックス
+            row.label(text=_("Duplicate and Mirror"))  # ラベル
 
         # 対称化モード（チェックボックス）
         row = box.row()
@@ -129,22 +162,70 @@ class DIVA_OT_MeshWeightReflector(bpy.types.Operator):
         pattern_struct = get_pattern_map_from_prefs(context, pattern_label, None)
         flip_map = pattern_struct["flip"]
 
-        # ✅ 対称化モードチェック
+        # 対称化モード
         if props.symmetrize_mode:
-            # 新オペレーターに切り替え実行
-            bpy.ops.mwr.symmetrize_mesh_weights('INVOKE_DEFAULT')  # 対称化モードオペレーター
+            result = bpy.ops.mwr.symmetrize_mesh_weights('EXEC_DEFAULT')
+            if result == {'FINISHED'}:
+                wm = context.window_manager
+                obj_name = getattr(wm, "mwr_last_symmetrized_obj_name", None)
+                applied_types = mwr_sub._last_applied_modifiers or []
+                translated = [MODIFIER_LABELS.get(t, t) for t in applied_types]
+
+                if obj_name:
+                    if applied_types:
+                        self.report({'INFO'}, _("Symmetrization completed: {name}. Applied modifiers: {types}").format(name=obj_name, types=", ".join(translated)))
+                    else:
+                        self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=obj_name))
+                else:
+                    self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=obj_name))
+            else:
+                self.report({'ERROR'}, _("Symmetrization failed"))
             return {'FINISHED'}
 
-        # ミラー処理実行（対称化モードではないとき）
-        mirrored_obj = process_origin_overlap(
-            obj,
-            pattern_map,
-            props.duplicate_and_mirror,
-            flip_map,
-            merge_center_vertices=False  # ← 絶対に False
-        )
+        if False:
+            # ✅ 対称化モードチェック
+            if props.symmetrize_mode:
+                # 新オペレーターに切り替え実行
+                # bpy.ops.mwr.symmetrize_mesh_weights('INVOKE_DEFAULT')  # 対称化モードオペレーター
+                bpy.ops.mwr.symmetrize_mesh_weights('EXEC_DEFAULT')  # 対称化モードオペレーター
+                return {'FINISHED'}
 
-        self.report({'INFO'}, _("Mirrored version generated: {name}").format(name=mirrored_obj.name))
+        if DEBUG_MODE:
+            # ミラー処理実行（対称化モードではないとき）
+            mirrored_obj = process_origin_overlap(
+                obj,
+                pattern_map,
+                props.duplicate_and_mirror,
+                flip_map,
+                merge_center_vertices=False,  # ← 絶対に False
+                apply_modifiers=props.apply_modifiers,
+                # apply_modifiers=True      # チェックオプションを不使用の場合（必ずモディファイアを適用）
+            )
+
+        if not DEBUG_MODE:
+            # ミラー処理実行（対称化モードではないとき）
+            mirrored_obj = process_origin_overlap(
+                obj,
+                pattern_map,
+                props.duplicate_and_mirror,
+                flip_map,
+                merge_center_vertices=False,  # ← 絶対に False
+                # apply_modifiers=props.apply_modifiers,
+                apply_modifiers=True      # チェックオプションを不使用の場合（必ずモディファイアを適用）
+            )
+
+        # self.report({'INFO'}, _("Mirrored version generated: {name}").format(name=mirrored_obj.name))
+
+        applied_types = mwr_sub._last_applied_modifiers or []
+
+        if DEBUG_MODE:
+            print(f"[DEBUG] Operator received applied_types = {applied_types}")
+        translated = [MODIFIER_LABELS.get(t, t) for t in applied_types]
+        if applied_types:
+            self.report({'INFO'}, _("Mirrored version generated: {name}. Applied modifiers: {types}").format(name=mirrored_obj.name, types=", ".join(translated)))
+        else:
+            self.report({'INFO'}, _("Mirrored version generated: {name}").format(name=mirrored_obj.name))
+            
         return {'FINISHED'}
 
 
@@ -193,18 +274,45 @@ class MWR_OT_MeshWeightSymmetry(bpy.types.Operator):
         pattern_label = props.bone_pattern
         flip_map = get_pattern_map_from_prefs(context, pattern_label, None)["flip"]
         
+        if not DEBUG_MODE:
+            # 実際の対称化処理ロジック
+            symmetrical_obj = process_symmetrize(
+                obj,
+                pattern_label,
+                props.duplicate_and_mirror,
+                flip_map,
+                merge_center_vertices=props.merge_center_vertices,
+                merge_threshold=props.merge_threshold,
+                apply_modifiers=True,  # モデフィファイア適用を固定化
+            )
 
-        # 実際の対称化処理ロジック
-        symmetrical_obj = process_symmetrize(
-            obj,
-            pattern_label,
-            props.duplicate_and_mirror,
-            flip_map,
-            merge_center_vertices=props.merge_center_vertices,
-            merge_threshold=props.merge_threshold
-        )
+        if DEBUG_MODE:
+            # 実際の対称化処理ロジック
+            symmetrical_obj = process_symmetrize(
+                obj,
+                pattern_label,
+                props.duplicate_and_mirror,
+                flip_map,
+                merge_center_vertices=props.merge_center_vertices,
+                merge_threshold=props.merge_threshold,
+                apply_modifiers=props.apply_modifiers,  # モディファイア適用をチェックオプション処理
+            )
 
-        self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=symmetrical_obj.name))
+        # self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=symmetrical_obj.name))
+
+        # 対称化結果のオブジェクト名をwindow_managerに保存
+        context.window_manager.mwr_last_symmetrized_obj_name = symmetrical_obj.name
+
+
+        applied_types = mwr_sub._last_applied_modifiers or []
+
+        if DEBUG_MODE:
+            print(f"[DEBUG] Operator received applied_types = {applied_types}")
+        translated = [MODIFIER_LABELS.get(t, t) for t in applied_types]
+        if applied_types:
+            self.report({'INFO'}, _("Symmetrization completed: {name}. Applied modifiers: {types}").format(name=symmetrical_obj.name, types=", ".join(translated)))
+        else:
+            self.report({'INFO'}, _("Symmetrization completed: {name}").format(name=symmetrical_obj.name))
         return {'FINISHED'}
 
 

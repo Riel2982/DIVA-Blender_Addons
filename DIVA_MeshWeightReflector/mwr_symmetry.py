@@ -17,7 +17,7 @@ from .mwr_sub import (
 
 from .mwr_debug import DEBUG_MODE   # デバッグ用
 
-def duplicate_and_apply_mirror_symmetry(obj, merge_center_vertices=False, merge_threshold=0.001):
+def duplicate_and_apply_mirror_symmetry(obj, merge_center_vertices=False, merge_threshold=0.001, apply_modifiers=True):
     """
     指定オブジェクトを複製し、Mirror モディファイアを追加して適用。
     merge_threshold は Blender のワールド空間ベースで処理される。
@@ -32,7 +32,8 @@ def duplicate_and_apply_mirror_symmetry(obj, merge_center_vertices=False, merge_
     mirrored_obj.name = f"{obj.name}_Mirror"
 
     # 複製した方に各種モディファイア適用
-    apply_specific_modifiers(mirrored_obj) 
+    if apply_modifiers:
+        apply_specific_modifiers(mirrored_obj) 
 
     # ミラーを追加＆適用
     bpy.context.view_layer.objects.active = mirrored_obj
@@ -190,8 +191,17 @@ def detect_group_side(name, rules):
     return None  # どちらにも属していない場合
 
 
-def process_symmetrize(obj, pattern_label, duplicate_and_mirror, flip_map, merge_center_vertices=False, merge_threshold=0.001, threshold=0.001):
-    """メッシュの対称化処理全体（識別子ラベルからルール取得を含む）"""
+# メッシュの対称化処理全体（識別子ラベルからルール取得を含む）
+def process_symmetrize(
+        obj, 
+        pattern_label, 
+        duplicate_and_mirror, 
+        flip_map, 
+        merge_center_vertices=False, 
+        merge_threshold=0.001, 
+        threshold=0.001,
+        apply_modifiers=True,
+        ):
 
     # Step 0: ラベルから識別子ルールを取得
     rules = get_selected_rules(pattern_label)
@@ -210,11 +220,13 @@ def process_symmetrize(obj, pattern_label, duplicate_and_mirror, flip_map, merge
         mirrored_obj = duplicate_and_apply_mirror_symmetry(
             obj,
             merge_center_vertices=merge_center_vertices,
-            merge_threshold=merge_threshold
+            merge_threshold=merge_threshold,
+            apply_modifiers=apply_modifiers,
         )
 
     else:
-        apply_specific_modifiers(obj)        # オリジナルに対してモディファイア適用
+        if apply_modifiers:
+            apply_specific_modifiers(obj)        # オリジナルに対してモディファイア適用
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_add(type='MIRROR')
         mirror_mod = obj.modifiers[-1]

@@ -38,6 +38,12 @@ class DIVA_MeshWeightReflectorProps(bpy.types.PropertyGroup):
         step=0.095,  # ドラッグ時のスライダー変化幅調整
     )
 
+    apply_modifiers: bpy.props.BoolProperty(    # モディファイア適用オプション
+        name="Apply Modifiers",
+        description=_("Apply specific modifiers before processing"),
+        default=True,
+    )
+
 
 
 # 識別子ルールのデータ（左右ペア）
@@ -74,9 +80,18 @@ def register_properties():
     
     bpy.types.Scene.diva_mesh_weight_reflect = bpy.props.PointerProperty(type=DIVA_MeshWeightReflectorProps)
 
+    bpy.types.WindowManager.mwr_last_symmetrized_obj_name = bpy.props.StringProperty(
+        name="Last Symmetrized Object Name",
+        description=_("Name of the last symmetrized mesh object"),
+        default=""
+    )
+
 def unregister_properties():
     if hasattr(bpy.types.WindowManager, "mwr_show_identifier_sets"):
         del bpy.types.WindowManager.mwr_show_identifier_sets
 
     if hasattr(bpy.types.Scene, "diva_mesh_weight_reflect"):
         del bpy.types.Scene.diva_mesh_weight_reflect
+
+    if hasattr(bpy.types.WindowManager, "mwr_last_symmetrized_obj_name"):
+        del bpy.types.WindowManager.mwr_last_symmetrized_obj_name

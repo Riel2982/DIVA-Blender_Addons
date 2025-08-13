@@ -9,7 +9,7 @@ from .mwr_types import MWR_BonePatternItem, MWR_BoneRuleItem
 from .mwr_types import get_bone_pattern_items, get_rule_items
 from .mwr_json import load_bone_patterns_to_preferences, get_json_path, DEFAULT_BONE_PATTERN
 from .mwr_json import load_json_data, save_json_data, sync_bone_patterns
-from .mwr_update import draw_update_ui
+from .mwr_uix_update import draw_update_ui
 
 
 # アドオンプリファレンス本体（表示と編集UI）
@@ -27,14 +27,6 @@ class MWR_AddonPreferences(bpy.types.AddonPreferences):
         scene = context.scene
         wm = context.window_manager
 
-        '''
-        # 初回描画時だけ、描画後に初期化処理を遅延実行（DLフォルダを更新）
-        from .mwr_update import initialize_candidate_list_delayed
-        if not prefs.initialized:
-            prefs.initialized = True
-            bpy.app.timers.register(initialize_candidate_list_delayed)
-        '''
-            
         # 更新用UI
         draw_update_ui(layout, scene)
 
@@ -107,7 +99,7 @@ def draw_identifier_ui(layout, wm, prefs):
 
         row = main_box.row()
         row.operator("mwr.add_bone_pattern", text=_("Add Identifier Set"), icon="COLLECTION_NEW") # 識別端子セットの追加
-        row.operator("mwr.append_default_bone_set", text=_("Restore default set"), icon="COPY_ID") # デフォルトセットの復元
+        row.operator("mwr.append_default_bone_set", text=_("Restore Default Set"), icon="COPY_ID") # デフォルトセットの復元
 
         row = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
         row.operator("mwr.sync_bone_patterns", text=_("Synchronize"), icon="FILE_REFRESH")

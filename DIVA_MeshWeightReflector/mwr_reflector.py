@@ -28,7 +28,7 @@ def disable_mirror_modifier(obj):
 
 
 # オブジェクト複製＆ミラー適用
-def duplicate_and_apply_mirror(obj):
+def duplicate_and_apply_mirror(obj, apply_modifiers=True):
     """オリジナルオブジェクトを複製し、複製にミラーモディファイアを適用"""
     # オリジナルを複製
     bpy.ops.object.select_all(action='DESELECT')  
@@ -40,7 +40,8 @@ def duplicate_and_apply_mirror(obj):
     mirrored_obj.name = f"{obj.name}_Mirror"  # ← 一貫した命名に統一
 
     # 複製した方に各種モディファイア適用
-    apply_specific_modifiers(mirrored_obj)      
+    if apply_modifiers:
+        apply_specific_modifiers(mirrored_obj)      
 
     # ミラーを追加＆適用
     bpy.context.view_layer.objects.active = mirrored_obj
@@ -142,7 +143,7 @@ def apply_name_flip(name, flip_map):
 
 
 # 原点越えミラー処理：複製・削除・グループ整備の統合フロー
-def process_origin_overlap(obj, pattern_map, duplicate_and_mirror, flip_map, merge_center_vertices=False):
+def process_origin_overlap(obj, pattern_map, duplicate_and_mirror, flip_map, merge_center_vertices=False,  apply_modifiers=True):
     marge_center_vertices = False
     """
     原点越え対象メッシュを反転し、頂点グループ名をルールに基づいて整備する。
@@ -155,9 +156,10 @@ def process_origin_overlap(obj, pattern_map, duplicate_and_mirror, flip_map, mer
 
     # Step 2: Mirror処理（複製あり／なし）
     if duplicate_and_mirror:    # オブジェクトを複製する
-        mirrored_obj = duplicate_and_apply_mirror(obj)
+        mirrored_obj = duplicate_and_apply_mirror(obj, apply_modifiers=apply_modifiers)
     else:
-        apply_specific_modifiers(obj)        # オリジナルに対して各種モディファイア適用
+        if apply_modifiers:
+            apply_specific_modifiers(obj)        # オリジナルに対して各種モディファイア適用
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_add(type='MIRROR')
         mirror_mod = obj.modifiers[-1]

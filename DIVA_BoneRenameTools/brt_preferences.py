@@ -9,7 +9,7 @@ from .brt_types import BRT_BonePatternItem, BRT_BoneRuleItem
 from .brt_types import get_bone_pattern_items, get_rule_items
 from .brt_json import load_bone_patterns_to_preferences, get_json_path, DEFAULT_BONE_PATTERN
 from .brt_json import load_json_data, save_json_data, sync_bone_patterns
-from .brt_update import draw_update_ui
+from .brt_uix_update import draw_update_ui
 
 '''
 # デフォルト識別子の定義
@@ -186,7 +186,7 @@ def draw_identifier_ui(layout, wm, prefs):
 
         row = main_box.row()
         row.operator("brt.add_bone_pattern", text=_("Add Identifier Set"), icon="COLLECTION_NEW") # 識別端子セットの追加
-        row.operator("brt.append_default_bone_set", text=_("Restore default set"), icon="COPY_ID") # デフォルトセットの復元
+        row.operator("brt.append_default_bone_set", text=_("Restore Default Set"), icon="COPY_ID") # デフォルトセットの復元
 
         row = main_box.row()    # ぴったりボタン同士をくっつけたい場合は(align=True)
         row.operator("brt.sync_bone_patterns", text=_("Synchronize"), icon="FILE_REFRESH")
@@ -418,14 +418,21 @@ class BRT_OT_SyncBonePatterns(bpy.types.Operator):
     def execute(self, context):
         try:
             synced = sync_bone_patterns()
-            if synced:
-                joined = ", ".join(synced)
-                self.report({'INFO'}, _("Synchronized: {names}").format(names=joined))
-            else:
-                self.report({'WARNING'}, _("No addons were synchronized"))
         except Exception as e:
-            self.report({'WARNING'}, _("Sync failed: {msg}").format(msg=str(e)))
+            if 'synced' in locals() and synced:
+                joined = ", ".join(str(name) for name in synced)    # 明示的に str に変換
+                self.report({'INFO'}, _("Partially synchronized: {names}").format(names=joined))
+            else:
+                self.report({'WARNING'}, _("Sync failed: {msg}").format(msg=str(e)))
+            return {'FINISHED'}
+
+        if synced:
+            joined = ", ".join(str(name) for name in synced)
+            self.report({'INFO'}, _("Synchronized: {names}").format(names=joined))
+        else:
+            self.report({'WARNING'}, _("No addons were synchronized"))
         return {'FINISHED'}
+
 
 
 

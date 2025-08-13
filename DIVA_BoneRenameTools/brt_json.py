@@ -6,7 +6,6 @@ import shutil
 import datetime
 import importlib
 import traceback
-from datetime import datetime
 import re
 
 from .brt_debug import DEBUG_MODE   # デバッグ用
@@ -33,6 +32,10 @@ def get_json_path():
 
 # JSONファイルの読み込み
 def load_bone_patterns_to_preferences(prefs):
+    if not hasattr(prefs, "bone_patterns"):
+        print("[DIVA] ⚠ bone_patterns 未定義 → 読み込み中止")
+        return
+
     path = get_json_path()
 
     def apply_default():
@@ -84,14 +87,14 @@ def load_bone_patterns_to_preferences(prefs):
             if DEBUG_MODE:
                 print(f"[DIVA] ⚠ 破損JSONをバックアップ: {backup_path}")
 
-            # 5件までに制限
+            # 3件までに制限
             dir_path = os.path.dirname(backup_path)
             base_name = os.path.basename(path).replace(".json", "")
             pattern = re.compile(rf"{re.escape(base_name)}\.invalid_\d{{8}}_\d{{6}}\.json")
             backups = [f for f in os.listdir(dir_path) if pattern.match(f)]
             backups.sort()  # 古い順になる
 
-            while len(backups) > 5: # 5件まで
+            while len(backups) > 3: # 3件まで
                 oldest = backups.pop(0)
                 try:
                     os.remove(os.path.join(dir_path, oldest))
@@ -111,9 +114,16 @@ def load_bone_patterns_to_preferences(prefs):
         apply_default()
 
 def get_bone_pattern_items(self, context):
-    prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-    items = []
+    # アドオンが未登録の可能性があるため安全に取得
+    addon = context.preferences.addons.get("DIVA_BoneRenameTools")
+    if not addon:
+        return []
 
+    prefs = addon.preferences
+    if not hasattr(prefs, "bone_patterns"):
+        return []
+
+    items = []
     for i, pattern in enumerate(prefs.bone_patterns):
         label = pattern.label.strip()
 
@@ -196,43 +206,51 @@ def get_diva_sync_targets():
     return targets
 
 def copy_json_to_targets(source_path, targets):
+    synced = []
     for name, mod in targets:
-        root_dir = os.path.dirname(mod.__file__)
-        target_path = os.path.join(root_dir, "bone_patterns.json")
+        try:
+            root_dir = os.path.dirname(mod.__file__)
+            target_path = os.path.join(root_dir, "bone_patterns.json")
 
-        if not os.path.exists(target_path):
-            continue  # スキップ対象
+            if not os.path.exists(target_path):
+                continue  # スキップ対象
 
-        # バックアップ
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_path = target_path.replace(".json", f"_{timestamp}.bak.json")
-        shutil.copy2(target_path, backup_path)
-        if DEBUG_MODE:
-            print(f"[BACKUP] {name}: {backup_path} にバックアップ")
+            # バックアップ
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_path = target_path.replace(".json", f"_{timestamp}.bak.json")
+            shutil.copy2(target_path, backup_path)
+            if DEBUG_MODE:
+                print(f"[BACKUP] {name}: {backup_path} にバックアップ")
 
-        # 🔁 バックアップファイルを3件に制限
-        base_name = os.path.basename(target_path).replace(".json", "")
-        pattern = re.compile(rf"{re.escape(base_name)}_\d{{8}}_\d{{6}}\.bak\.json")
-        backups = [
-            f for f in os.listdir(root_dir)
-            if pattern.match(f)
-        ]
-        backups.sort()  # 古い順
 
-        while len(backups) > 3: # 3件まで
-            oldest = backups.pop(0)
-            try:
-                os.remove(os.path.join(root_dir, oldest))
-                if DEBUG_MODE:
-                    print(f"[CLEANUP] {name}: 古いバックアップ削除 → {oldest}")
-            except Exception as rm_err:
-                if DEBUG_MODE:
-                    print(f"[ERROR] {name}: バックアップ削除失敗 → {rm_err}")
+            # バックアップファイルを3件に制限
+            base_name = os.path.basename(target_path).replace(".json", "")
+            pattern = re.compile(rf"{re.escape(base_name)}_\d{{8}}_\d{{6}}\.bak\.json")
+            backups = [f for f in os.listdir(root_dir) if pattern.match(f)]
+            backups.sort()  # 古い順
 
-        # 上書きコピー
-        shutil.copy2(source_path, target_path)
-        if DEBUG_MODE:
-            print(f"[COPY] {name}: {target_path} にコピー完了")
+            while len(backups) > 3: # 3件まで
+                oldest = backups.pop(0)
+                try:
+                    os.remove(os.path.join(root_dir, oldest))
+                    if DEBUG_MODE:
+                        print(f"[CLEANUP] {name}: 古いバックアップ削除 → {oldest}")
+                except Exception as rm_err:
+                    if DEBUG_MODE:
+                        print(f"[ERROR] {name}: バックアップ削除失敗 → {rm_err}")
+
+            # 上書きコピー
+            shutil.copy2(source_path, target_path)
+            if DEBUG_MODE:
+                print(f"[COPY] {name}: {target_path} にコピー完了")
+
+            synced.append(name)
+
+        except Exception as copy_err:
+            if DEBUG_MODE:
+                print(f"[ERROR] {name}: JSON同期失敗 → {copy_err}")
+    return synced
+
 
 def sync_bone_patterns():
     synced = []  # ← 成功したアドオン名をここに記録
@@ -258,7 +276,7 @@ def sync_bone_patterns():
 
             source_path = mod_brt.get_json_path()  # 編集元のJSONパス
             targets = get_diva_sync_targets()
-            copy_json_to_targets(source_path, targets)
+            copied = copy_json_to_targets(source_path, targets)  # 成功リスト取得
 
         # 対象DIVAアドオンへ反映
         for name, mod in get_diva_sync_targets():
@@ -267,10 +285,16 @@ def sync_bone_patterns():
                 mod.load_bone_patterns_to_preferences(prefs_target)
                 if DEBUG_MODE:
                     print(f"[SYNC] {name} → 同期成功")
-                synced.append(name)
+                if name not in synced:
+                    synced.append(name)
             except Exception as inner:
                 if DEBUG_MODE:
                     print(f"[SYNC] {name} → 同期失敗: {inner}")
+
+        # コピー成功分も追加（重複防止）
+        for name in copied:
+            if name not in synced:
+                synced.append(name)
 
     except Exception as e:
         if DEBUG_MODE:

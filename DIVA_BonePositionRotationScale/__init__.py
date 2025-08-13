@@ -3,7 +3,7 @@ bl_info = {
     "author": "Saltlapse, Riel",
     "version": (0, 2, 0),
     "blender": (3, 0, 0),
-    "location": "Nパネル > DIVA",
+    "location": "3D View > Sidebar > DIVA > Bone Position Rotation Scale",
     "description": "This addon converts bone data from Blender armatures into the DIVA format.",
     # "warning": "デバッグ中",
     "support": "COMMUNITY",
@@ -25,7 +25,7 @@ from . import (
     bprs_panel,
     # bprs_preferences,
     bprs_types,
-    bprs_update,
+    # bprs_update,
 )
 
 # Panel-UI機能モジュール
@@ -33,8 +33,10 @@ from . import (
     bprs_ui_export,
     # bprs_ui_import,
     bprs_ui_check,
+    bprs_uix_update,
 )
 
+from .bprs_update import bprs_on_blend_load
 
 # すべてのクラスをまとめる
 modules = [
@@ -45,7 +47,7 @@ modules = [
     # bprs_ui_import, 
     bprs_ui_check, 
     bprs_translation, 
-    bprs_update,
+    bprs_uix_update,
     ]
 
 # register() 内で動的にクラスを取得
@@ -65,15 +67,15 @@ def register():
             return None  # 一度だけでOK
         bpy.app.timers.register(delayed_initialize)
 
+    # アドオン有効化時に実行
+    bpy.app.timers.register(lambda: (bprs_update.initialize_candidate_list(), None)[1] if getattr(bpy.context, "scene", None) else 0.2)
     # ハンドラー登録（BLENDファイル読み込み時）
-    from .bprs_update import bprs_on_blend_load
     if bprs_on_blend_load not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(bprs_on_blend_load)        
 
 
 def unregister():
     # ハンドラー解除（BLENDファイル読み込み時用）
-    from .bprs_update import bprs_on_blend_load
     if bprs_on_blend_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(bprs_on_blend_load)
 

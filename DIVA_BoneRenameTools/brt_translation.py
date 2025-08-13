@@ -43,7 +43,7 @@ translation_dict = {
         # brt_preferences.py:188
         ("*", "Add Identifier Set"): "識別子セットを追加",
         # brt_preferences.py:189
-        ("*", "Restore default set"): "デフォルトセットを復元",
+        ("*", "Restore Default Set"): "デフォルトセットを復元",
         # brt_preferences.py:192
         ("*", "Synchronize"): "同期",
         # brt_preferences.py:193
@@ -104,19 +104,21 @@ translation_dict = {
         ("*", "Failed to delete: {msg}"): "削除に失敗しました: {msg}",
         # brt_preferences.py:415
         ("*", "Synchronize identifier sets"): "識別子セットを同期します",
-        # brt_preferences.py:423
-        ("*", "Synchronized: {names}"): "同期：{名前}",
-        # brt_preferences.py:425
-        ("*", "No addons were synchronized"): "同期されたアドオンはありませんでした",
-        # brt_preferences.py:427
+        # brt_preferences.py:424
+        ("*", "Partially synchronized: {names}"): "一部の同期に成功しました：{names}",
+        # brt_preferences.py:426
         ("*", "Sync failed: {msg}"): "同期失敗：{msg}",
-        # brt_replace.py:18
+        # brt_preferences.py:431
+        ("*", "Synchronized: {names}"): "同期：{names}",
+        # brt_preferences.py:433
+        ("*", "No addons were synchronized"): "同期されたアドオンはありませんでした",
+        # brt_replace.py:33
         ("*", "Please select an armature"): "アーマチュアを選択してください",
-        # brt_replace.py:26, brt_ui_invert.py:179, brt_ui_invert.py:95, brt_ui_rename.py:60, brt_ui_replace.py:58
+        # brt_replace.py:41, brt_ui_invert.py:179, brt_ui_invert.py:95, brt_ui_rename.py:59, brt_ui_replace.py:58
         ("*", "Supported modes are Pose and Edit"): "対応モードは Pose または Edit です",
-        # brt_replace.py:41, brt_ui_replace.py:76
+        # brt_replace.py:60, brt_ui_replace.py:76
         ("*", "Please check the settings of the selected bone name and the name before replacement"): "選択したボーン名と置換前の名前の設定を確認してください",
-        # brt_replace.py:43, brt_ui_replace.py:97
+        # brt_replace.py:62, brt_ui_replace.py:97
         ("*", "Some bones could not be replaced. Please check the bone name"): "一部のボーンが置き換えできませんでした。ボーン名を確認してください",
         # brt_types.py:52
         ("*", "Select a rule in the current set"): "現在のセット内のルールを選択",
@@ -198,7 +200,7 @@ translation_dict = {
         ("*", "show_group_tools"): "Other Rename Tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
-        # brt_types.py:186  # ⛳ 新規翻訳
+        # brt_types.py:186
         ("*", "Show batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
         # brt_types.py:192
         ("*", "Mirror selected bones along global X axis"): "選択したボーンをグローバルX軸でミラー反転させる",
@@ -220,13 +222,13 @@ translation_dict = {
         ("*", "選択ボーンをXミラー"): "選択ボーンをXミラー",
         # brt_ui_invert.py:75
         ("*", "Invert Left/Right Bone Names"): "選択ボーン反転リネーム",
-        # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:73, brt_ui_replace.py:68
+        # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:72, brt_ui_replace.py:68
         ("*", "No bones selected"): "ボーンを選択してください",
         # brt_ui_invert.py:124
         ("*", "Renamed {count} bones"): "{count}本のボーン名を変更しました",
         # brt_ui_invert.py:133
         ("*", "Select a linear chain from the currently selected bone"): "選択中ボーンから線形チェーンを選択",
-        # brt_ui_invert.py:146, brt_ui_rename.py:169
+        # brt_ui_invert.py:146, brt_ui_rename.py:172
         ("*", "Filter Out Inconsistent Bones"): "一致しないボーンを除外",
         # brt_ui_invert.py:147
         ("*", "Exclude bones that do not share naming rules"): "ネーミング規則が共通しないボーンを除外します",
@@ -238,13 +240,13 @@ translation_dict = {
         ("*", "Extended Selection"): "拡張選択",
         # brt_ui_invert.py:161
         ("*", "Select additional bones that match a common group name, ignoring embedded numbers"): "数字部分を除いた共通グループ名に一致するボーンを追加選択します",
-        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:181, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
+        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:184, brt_ui_rename.py:54, brt_ui_replace.py:123, brt_ui_replace.py:53
         ("*", "No armature is selected"): "アーマチュアが選択されていません",
         # brt_ui_invert.py:183
         ("*", "No origin bone selected"): "起点となるボーンが選択されていません",
-        # brt_ui_invert.py:237
+        # brt_ui_invert.py:238
         ("*", "Linear chain selected"): "線形チェーンを選択しました",
-        # brt_ui_invert.py:247
+        # brt_ui_invert.py:248
         ("*", "Open the addon settings in Preferences"): "プリファレンスのアドオン設定画面を開きます",
         # brt_ui_other.py:18
         ("*", "Apply Symmetric Renaming"): "対称化付与",
@@ -276,31 +278,31 @@ translation_dict = {
         ("*", "Number of bones to add"): "追加ボーン数",
         # brt_ui_rename.py:30
         ("*", "Execute Sequential Rename"): "連番リネーム実行",
-        # brt_ui_rename.py:78  # ⛳ 新規翻訳
+        # brt_ui_rename.py:77
         ("*", "Please enter a Base Name"): "ベース名を入力してください",
-        # brt_ui_rename.py:100
+        # brt_ui_rename.py:104
         ("*", "{label} is a terminal bone connected to another bone. Operation has been cancelled"): "{label} に直接接続された末端ボーンがあります",
-        # brt_ui_rename.py:105
+        # brt_ui_rename.py:109
         ("*", "{label} has children but is not physically connected"): "{label} ローカル接続ボーンがあります",
-        # brt_ui_rename.py:134
+        # brt_ui_rename.py:137
         ("*", "Detect common prefix among selected bone names and apply settings automatically"): "選択ボーン名の共通部分を抽出し、設定を自動反映します",
-        # brt_ui_rename.py:154, brt_ui_replace.py:113
+        # brt_ui_rename.py:157, brt_ui_replace.py:113
         ("*", "Select Linear Chain"): "線形チェーンを選択",
-        # brt_ui_rename.py:155
+        # brt_ui_rename.py:158
         ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
-        # brt_ui_rename.py:161
+        # brt_ui_rename.py:164
         ("*", "Select Only Toward Terminal"): "末端方向のみ選択",
-        # brt_ui_rename.py:162
+        # brt_ui_rename.py:165
         ("*", "If enabled, targets only the terminal direction from the initially selected bone"): "ONの場合、最初に選択されたボーンから末端までを対象とします",
-        # brt_ui_rename.py:170
-        ("*", "Filters out bones with clearly different naming patterns from extraction"): "明らかにネーミングルールが異なるボーンを共通抽出対象から除外します",
-        # brt_ui_rename.py:192, brt_ui_replace.py:132
+        # brt_ui_rename.py:173
+        ("*", "Filters out bones with clearly different naming patterns from extraction"): "明らかにネーミング法則が異なるボーンを共通抽出対象から除外します",
+        # brt_ui_rename.py:195, brt_ui_replace.py:132
         ("*", "Only Pose or Edit mode is supported"): "対応しているのは Pose モードまたは Edit モードです",
-        # brt_ui_rename.py:196, brt_ui_replace.py:136
+        # brt_ui_rename.py:199, brt_ui_replace.py:136
         ("*", "No bones are selected"): "ボーンが選択されていません",
-        # brt_ui_rename.py:208
+        # brt_ui_rename.py:211
         ("*", "Common prefix set: {prefix}"): "ベース名を設定: {prefix}",
-        # brt_ui_rename.py:210, brt_ui_replace.py:150
+        # brt_ui_rename.py:213, brt_ui_replace.py:150
         ("*", "Could not detect common prefix"): "ベース名が検出できませんでした",
         # brt_ui_replace.py:35
         ("*", "Remove duplicate suffix"): "重複識別子を削除",
@@ -311,7 +313,7 @@ translation_dict = {
         # brt_ui_replace.py:86
         ("*", "The replacement bone name was not entered. Please check"): "置換後のボーン名が設定されていませんでした",
         # brt_ui_replace.py:94
-        ("*", "Bone name replacement no completed"): "骨名の交換が完了していません",
+        ("*", "Bone name replacement no completed"): "ボーン名の置き換えができませんでした",
         # brt_ui_replace.py:100
         ("*", "Bone name replacement completed"): "ボーン名の置換を完了しました",
         # brt_ui_replace.py:111
@@ -320,62 +322,68 @@ translation_dict = {
         ("*", "If enabled, automatically selects a linear parent-child chain from selected bone"): "ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
         # brt_ui_replace.py:148
         ("*", "Detected prefix: {prefix}"): "抽出結果: {prefix}",
-        # brt_update.py:16
+        # brt_uix_update.py:21, brt_update - コピー.py:18
         ("*", "Update"): "アップデート",
-        # brt_update.py:19
+        # brt_uix_update.py:24, brt_update - コピー.py:21
         ("*", "Check for Updates"): "更新を確認",
-        # brt_update.py:22
+        # brt_uix_update.py:27, brt_update - コピー.py:24
         ("*", "Install"): "インストール",
-        # brt_update.py:23
+        # brt_uix_update.py:28, brt_update - コピー.py:25
         ("*", "Open Addon Folder"): "アドオンフォルダを開く",
-        # brt_update.py:27
-        ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
-        # brt_update.py:37
-        ("*", "Update file list: "): "更新ファイル一覧: ",
-        # brt_update.py:93
+        # brt_uix_update.py:34
+        ("*", "GitHub has a recent release: "): "Githubに最新リリースがあり",
+        # brt_uix_update.py:43, brt_uix_update.py:44
+        ("*", "GitHub has a recent release. "): "Githubに最新リリースあり / ",
+        # brt_uix_update.py:48
+        ("*", "Path to ZIP download folder "): "ZIP保存先フォルダ ",
+        # brt_uix_update.py:58, brt_update - コピー.py:39
+        ("*", "Update file list: "): "更新ファイル一覧：",
+        # brt_uix_update.py:91, brt_update - コピー.py:97
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
-        # brt_update.py:111
+        # brt_uix_update.py:115, brt_update - コピー.py:115
         ("*", "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update"): "アップデートをインストールするには、DIVA_BoneRenameToolsで始まるZIPファイルを選択してください",
-        # brt_update.py:116
+        # brt_uix_update.py:120, brt_update - コピー.py:120
         ("*", "Choose a ZIP file starting with DIVA_BoneRenameTools"): "DIVA_BoneRenameToolsで始まるZIPファイルを選択してください",
-        # brt_update.py:123
+        # brt_uix_update.py:127, brt_update - コピー.py:127
         ("*", "Choose the folder where the addon is installed"): "アドオンがインストールされているフォルダを選択してください",
-        # brt_update.py:154
+        # brt_uix_update.py:158, brt_update - コピー.py:158
         ("*", "No ZIP file selected. Please specify a file"): "ZIPファイルが選択されていません。ファイルを指定してください",
-        # brt_update.py:162
+        # brt_uix_update.py:166, brt_update - コピー.py:167
         ("*", "Only ZIP files starting with DIVA_BoneRenameTools can be processed"): "DIVA_BoneRenameTools で始まるZIPファイル以外は処理できません",
-        # brt_update.py:179
+        # brt_uix_update.py:183, brt_update - コピー.py:184
         ("*", "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file"): "ZIP内に DIVA_BoneRenameTools フォルダまたは __init__.py が見つかりません",
-        # brt_update.py:186
+        # brt_uix_update.py:190, brt_update - コピー.py:191
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "ZIP内の bl_info.name を取得できません",
-        # brt_update.py:209
+        # brt_uix_update.py:212, brt_update - コピー.py:214
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください",
-        # brt_update.py:215
+        # brt_uix_update.py:218, brt_update - コピー.py:220
         ("*", "Installation was cancelled"): "インストールはキャンセルされました",
-        # brt_update.py:224
+        # brt_uix_update.py:226, brt_update - コピー.py:229
         ("*", "__init__.py not found in the selected folder"): "選択されたフォルダに __init__.py が見つかりません",
-        # brt_update.py:231
+        # brt_uix_update.py:233, brt_update - コピー.py:236
         ("*", "Update failed because bl_info.name does not match"): "bl_info.name が一致しないため、更新できません",
-        # brt_update.py:250, brt_update.py:32
+        # brt_uix_update.py:261, brt_uix_update.py:53, brt_update - コピー.py:255, brt_update - コピー.py:34
         ("*", "Update completed. Please restart Blender"): "更新が完了しました。Blenderを再起動してください",
-        # brt_update.py:255
+        # brt_uix_update.py:266, brt_update - コピー.py:260
         ("*", "Update failed: {error}"): "更新に失敗しました: {error}",
-        # brt_update.py:263
+        # brt_uix_update.py:274, brt_update - コピー.py:268
         ("*", "Please select a ZIP file"): "ZIPファイルを選択してください",
-        # brt_update.py:264
+        # brt_uix_update.py:275, brt_update - コピー.py:269
         ("*", "Please restart Blender after the update"): "更新後はBlenderを再起動してください",
-        # brt_update.py:271
+        # brt_uix_update.py:282, brt_update - コピー.py:276
         ("*", "Opens the folder where this addon is installed"): "現在のアドオンフォルダを開く",
-        # brt_update.py:289
+        # brt_uix_update.py:300, brt_update - コピー.py:294
         ("*", "Scan the folder and list update candidate files"): "ZIPファイルリストの更新",
-        # brt_update.py:302
+        # brt_uix_update.py:314, brt_update - コピー.py:307
         ("*", "Download folder setting has been saved"): "DLフォルダ設定が保存されました",
-        # brt_update.py:324
+        # brt_uix_update.py:337, brt_update - コピー.py:330
         ("*", "Sort update files by file name. Click again to toggle order"): "ZIPファイル名ソート(A–Z / Z–A)",
-        # brt_update.py:343
+        # brt_uix_update.py:356, brt_update - コピー.py:349
         ("*", "Sort update files by update/download date. Click again to toggle order"): "日時順ソート(newest ↔ oldest)",
-        # brt_update.py:374
+        # brt_uix_update.py:388, brt_update - コピー.py:380
         ("*", "Specify the folder where the update ZIP is stored"): "更新用ZIPが保存されているフォルダを指定してください",
+        # brt_update - コピー.py:29
+        ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
     },
     "en_US": {
         # brt_panel.py:45
@@ -419,7 +427,7 @@ translation_dict = {
         # brt_preferences.py:188
         ("*", "Add Identifier Set"): "Add Identifier Set",
         # brt_preferences.py:189
-        ("*", "Restore default set"): "Restore default set",
+        ("*", "Restore Default Set"): "Restore Default Set",
         # brt_preferences.py:192
         ("*", "Synchronize"): "Synchronize",
         # brt_preferences.py:193
@@ -480,19 +488,21 @@ translation_dict = {
         ("*", "Failed to delete: {msg}"): "Failed to delete: {msg}",
         # brt_preferences.py:415
         ("*", "Synchronize identifier sets"): "Synchronize identifier sets",
-        # brt_preferences.py:423
-        ("*", "Synchronized: {names}"): "Synchronized: {names}",
-        # brt_preferences.py:425
-        ("*", "No addons were synchronized"): "No addons were synchronized",
-        # brt_preferences.py:427
+        # brt_preferences.py:424
+        ("*", "Partially synchronized: {names}"): "Partially synchronized: {names}",
+        # brt_preferences.py:426
         ("*", "Sync failed: {msg}"): "Sync failed: {msg}",
-        # brt_replace.py:18
+        # brt_preferences.py:431
+        ("*", "Synchronized: {names}"): "Synchronized: {names}",
+        # brt_preferences.py:433
+        ("*", "No addons were synchronized"): "No addons were synchronized",
+        # brt_replace.py:33
         ("*", "Please select an armature"): "Please select an armature",
-        # brt_replace.py:26, brt_ui_invert.py:179, brt_ui_invert.py:95, brt_ui_rename.py:60, brt_ui_replace.py:58
+        # brt_replace.py:41, brt_ui_invert.py:179, brt_ui_invert.py:95, brt_ui_rename.py:59, brt_ui_replace.py:58
         ("*", "Supported modes are Pose and Edit"): "Supported modes are Pose and Edit",
-        # brt_replace.py:41, brt_ui_replace.py:76
+        # brt_replace.py:60, brt_ui_replace.py:76
         ("*", "Please check the settings of the selected bone name and the name before replacement"): "Please check the settings of the selected bone name and the name before replacement",
-        # brt_replace.py:43, brt_ui_replace.py:97
+        # brt_replace.py:62, brt_ui_replace.py:97
         ("*", "Some bones could not be replaced. Please check the bone name"): "Some bones could not be replaced. Please check the bone name",
         # brt_types.py:52
         ("*", "Select a rule in the current set"): "Select a rule in the current set",
@@ -574,7 +584,7 @@ translation_dict = {
         ("*", "show_group_tools"): "show_group_tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "Batch renaming for symmetric bone names and revert option",
-        # brt_types.py:186  # ⛳ 新規翻訳
+        # brt_types.py:186
         ("*", "Show batch renaming for symmetric bone names and revert option"): "Show batch renaming for symmetric bone names and revert option",
         # brt_types.py:192
         ("*", "Mirror selected bones along global X axis"): "Mirror selected bones along global X axis",
@@ -596,13 +606,13 @@ translation_dict = {
         ("*", "選択ボーンをXミラー"): "X-mirror of selection bones",
         # brt_ui_invert.py:75
         ("*", "Invert Left/Right Bone Names"): "Invert Left/Right Bone Names",
-        # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:73, brt_ui_replace.py:68
+        # brt_ui_invert.py:105, brt_ui_other.py:53, brt_ui_other.py:99, brt_ui_rename.py:72, brt_ui_replace.py:68
         ("*", "No bones selected"): "No bones selected",
         # brt_ui_invert.py:124
         ("*", "Renamed {count} bones"): "Renamed {count} bones",
         # brt_ui_invert.py:133
         ("*", "Select a linear chain from the currently selected bone"): "Select a linear chain from the currently selected bone",
-        # brt_ui_invert.py:146, brt_ui_rename.py:169
+        # brt_ui_invert.py:146, brt_ui_rename.py:172
         ("*", "Filter Out Inconsistent Bones"): "Filter Out Inconsistent Bones",
         # brt_ui_invert.py:147
         ("*", "Exclude bones that do not share naming rules"): "Exclude bones that do not share naming rules",
@@ -614,13 +624,13 @@ translation_dict = {
         ("*", "Extended Selection"): "Extended Selection",
         # brt_ui_invert.py:161
         ("*", "Select additional bones that match a common group name, ignoring embedded numbers"): "Select additional bones that match a common group name, ignoring embedded numbers",
-        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:181, brt_ui_rename.py:55, brt_ui_replace.py:123, brt_ui_replace.py:53
+        # brt_ui_invert.py:170, brt_ui_invert.py:90, brt_ui_other.py:111, brt_ui_other.py:36, brt_ui_other.py:66, brt_ui_other.py:83, brt_ui_rename.py:184, brt_ui_rename.py:54, brt_ui_replace.py:123, brt_ui_replace.py:53
         ("*", "No armature is selected"): "No armature is selected",
         # brt_ui_invert.py:183
         ("*", "No origin bone selected"): "No origin bone selected",
-        # brt_ui_invert.py:237
+        # brt_ui_invert.py:238
         ("*", "Linear chain selected"): "Linear chain selected",
-        # brt_ui_invert.py:247
+        # brt_ui_invert.py:248
         ("*", "Open the addon settings in Preferences"): "Open the addon settings in Preferences",
         # brt_ui_other.py:18
         ("*", "Apply Symmetric Renaming"): "Apply Symmetric Renaming",
@@ -652,31 +662,31 @@ translation_dict = {
         ("*", "Number of bones to add"): "Number of bones to add",
         # brt_ui_rename.py:30
         ("*", "Execute Sequential Rename"): "Execute Sequential Rename",
-        # brt_ui_rename.py:78  # ⛳ 新規翻訳
+        # brt_ui_rename.py:77
         ("*", "Please enter a Base Name"): "Please enter a Base Name",
-        # brt_ui_rename.py:100
+        # brt_ui_rename.py:104
         ("*", "{label} is a terminal bone connected to another bone. Operation has been cancelled"): "{label} is a terminal bone connected to another bone. Operation has been cancelled",
-        # brt_ui_rename.py:105
+        # brt_ui_rename.py:109
         ("*", "{label} has children but is not physically connected"): "{label} has children but is not physically connected",
-        # brt_ui_rename.py:134
+        # brt_ui_rename.py:137
         ("*", "Detect common prefix among selected bone names and apply settings automatically"): "Detect common prefix among selected bone names and apply settings automatically",
-        # brt_ui_rename.py:154, brt_ui_replace.py:113
+        # brt_ui_rename.py:157, brt_ui_replace.py:113
         ("*", "Select Linear Chain"): "Select Linear Chain",
-        # brt_ui_rename.py:155
+        # brt_ui_rename.py:158
         ("*", "If enabled, automatically selects linear parent-child chain from selected bone"): "If enabled, automatically selects linear parent-child chain from selected bone",
-        # brt_ui_rename.py:161
+        # brt_ui_rename.py:164
         ("*", "Select Only Toward Terminal"): "Select Only Toward Terminal",
-        # brt_ui_rename.py:162
+        # brt_ui_rename.py:165
         ("*", "If enabled, targets only the terminal direction from the initially selected bone"): "If enabled, targets only the terminal direction from the initially selected bone",
-        # brt_ui_rename.py:170
+        # brt_ui_rename.py:173
         ("*", "Filters out bones with clearly different naming patterns from extraction"): "Filters out bones with clearly different naming patterns from extraction",
-        # brt_ui_rename.py:192, brt_ui_replace.py:132
+        # brt_ui_rename.py:195, brt_ui_replace.py:132
         ("*", "Only Pose or Edit mode is supported"): "Only Pose or Edit mode is supported",
-        # brt_ui_rename.py:196, brt_ui_replace.py:136
+        # brt_ui_rename.py:199, brt_ui_replace.py:136
         ("*", "No bones are selected"): "No bones are selected",
-        # brt_ui_rename.py:208
+        # brt_ui_rename.py:211
         ("*", "Common prefix set: {prefix}"): "Common prefix set: {prefix}",
-        # brt_ui_rename.py:210, brt_ui_replace.py:150
+        # brt_ui_rename.py:213, brt_ui_replace.py:150
         ("*", "Could not detect common prefix"): "Could not detect common prefix",
         # brt_ui_replace.py:35
         ("*", "Remove duplicate suffix"): "Remove duplicate suffix",
@@ -696,68 +706,76 @@ translation_dict = {
         ("*", "If enabled, automatically selects a linear parent-child chain from selected bone"): "If enabled, automatically selects a linear parent-child chain from selected bone",
         # brt_ui_replace.py:148
         ("*", "Detected prefix: {prefix}"): "Detected prefix: {prefix}",
-        # brt_update.py:16
+        # brt_uix_update.py:21, brt_update - コピー.py:18
         ("*", "Update"): "Update",
-        # brt_update.py:19
+        # brt_uix_update.py:24, brt_update - コピー.py:21
         ("*", "Check for Updates"): "Check for Updates",
-        # brt_update.py:22
+        # brt_uix_update.py:27, brt_update - コピー.py:24
         ("*", "Install"): "Install",
-        # brt_update.py:23
+        # brt_uix_update.py:28, brt_update - コピー.py:25
         ("*", "Open Addon Folder"): "Open Addon Folder",
-        # brt_update.py:27
-        ("*", "Path to ZIP download folder"): "Path to ZIP download folder",
-        # brt_update.py:37
-        ("*", "Update file list:"): "Update file list:",
-        # brt_update.py:93
+        # brt_uix_update.py:34
+        ("*", "GitHub has a recent release: "): "GitHub has a recent release: ",
+        # brt_uix_update.py:43, brt_uix_update.py:44
+        ("*", "GitHub has a recent release. "): "GitHub has a recent release. ",
+        # brt_uix_update.py:48
+        ("*", "Path to ZIP download folder "): "Path to ZIP download folder ",
+        # brt_uix_update.py:58, brt_update - コピー.py:39
+        ("*", "Update file list: "): "Update file list: ",
+        # brt_uix_update.py:91, brt_update - コピー.py:97
         ("*", "Opens the GitHub release page to check for update files"): "Opens the GitHub release page to check for update files",
-        # brt_update.py:111
+        # brt_uix_update.py:115, brt_update - コピー.py:115
         ("*", "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update"): "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update",
-        # brt_update.py:116
+        # brt_uix_update.py:120, brt_update - コピー.py:120
         ("*", "Choose a ZIP file starting with DIVA_BoneRenameTools"): "Choose a ZIP file starting with DIVA_BoneRenameTools",
-        # brt_update.py:123
+        # brt_uix_update.py:127, brt_update - コピー.py:127
         ("*", "Choose the folder where the addon is installed"): "Choose the folder where the addon is installed",
-        # brt_update.py:154
+        # brt_uix_update.py:158, brt_update - コピー.py:158
         ("*", "No ZIP file selected. Please specify a file"): "No ZIP file selected. Please specify a file",
-        # brt_update.py:162
+        # brt_uix_update.py:166, brt_update - コピー.py:167
         ("*", "Only ZIP files starting with DIVA_BoneRenameTools can be processed"): "Only ZIP files starting with DIVA_BoneRenameTools can be processed",
-        # brt_update.py:179
+        # brt_uix_update.py:183, brt_update - コピー.py:184
         ("*", "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file"): "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file",
-        # brt_update.py:186
+        # brt_uix_update.py:190, brt_update - コピー.py:191
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "Could not retrieve bl_info.name from the ZIP file",
-        # brt_update.py:209
+        # brt_uix_update.py:212, brt_update - コピー.py:214
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "Addon installation folder not found. Please select the destination folder manually",
-        # brt_update.py:215
+        # brt_uix_update.py:218, brt_update - コピー.py:220
         ("*", "Installation was cancelled"): "Installation was cancelled",
-        # brt_update.py:224
+        # brt_uix_update.py:226, brt_update - コピー.py:229
         ("*", "__init__.py not found in the selected folder"): "__init__.py not found in the selected folder",
-        # brt_update.py:231
+        # brt_uix_update.py:233, brt_update - コピー.py:236
         ("*", "Update failed because bl_info.name does not match"): "Update failed because bl_info.name does not match",
-        # brt_update.py:250, brt_update.py:32
+        # brt_uix_update.py:261, brt_uix_update.py:53, brt_update - コピー.py:255, brt_update - コピー.py:34
         ("*", "Update completed. Please restart Blender"): "Update completed. Please restart Blender",
-        # brt_update.py:255
+        # brt_uix_update.py:266, brt_update - コピー.py:260
         ("*", "Update failed: {error}"): "Update failed: {error}",
-        # brt_update.py:263
+        # brt_uix_update.py:274, brt_update - コピー.py:268
         ("*", "Please select a ZIP file"): "Please select a ZIP file",
-        # brt_update.py:264
+        # brt_uix_update.py:275, brt_update - コピー.py:269
         ("*", "Please restart Blender after the update"): "Please restart Blender after the update",
-        # brt_update.py:271
+        # brt_uix_update.py:282, brt_update - コピー.py:276
         ("*", "Opens the folder where this addon is installed"): "Opens the folder where this addon is installed",
-        # brt_update.py:289
+        # brt_uix_update.py:300, brt_update - コピー.py:294
         ("*", "Scan the folder and list update candidate files"): "Scan the folder and list update candidate files",
-        # brt_update.py:302
+        # brt_uix_update.py:314, brt_update - コピー.py:307
         ("*", "Download folder setting has been saved"): "Download folder setting has been saved",
-        # brt_update.py:324
+        # brt_uix_update.py:337, brt_update - コピー.py:330
         ("*", "Sort update files by file name. Click again to toggle order"): "Sort update files by file name. Click again to toggle order",
-        # brt_update.py:343
+        # brt_uix_update.py:356, brt_update - コピー.py:349
         ("*", "Sort update files by update/download date. Click again to toggle order"): "Sort update files by update/download date. Click again to toggle order",
-        # brt_update.py:374
+        # brt_uix_update.py:388, brt_update - コピー.py:380
         ("*", "Specify the folder where the update ZIP is stored"): "Specify the folder where the update ZIP is stored",
+        # brt_update - コピー.py:29
+        ("*", "Path to ZIP download folder"): "Path to ZIP download folder",
     },
 }
 
+DOMAIN = "diva_brt"
+
 def register():
-    bpy.app.translations.unregister(__name__)
-    bpy.app.translations.register(__name__, translation_dict)
+    bpy.app.translations.unregister(DOMAIN)
+    bpy.app.translations.register(DOMAIN, translation_dict)
 
 def unregister():
-    bpy.app.translations.unregister(__name__)
+    bpy.app.translations.unregister(DOMAIN)

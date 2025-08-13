@@ -1,9 +1,9 @@
 bl_info = {
     "name": "DIVA - Mesh Weight Reflector",
     "author": "Riel",
-    "version": (0, 0, 3),
+    "version": (0, 1, 0),
     "blender": (3, 0, 0),
-    "location": "Nパネル > DIVA",
+    "location": "3D View > Sidebar > DIVA > Mesh Weight Reflector",
     "description": "Automatically separates mirrored meshes and applies symmetrical weight copying to vertex groups.",
     # "warning": "デバッグ中",
     "support": "COMMUNITY",
@@ -18,14 +18,17 @@ import bpy
 from . import mwr_debug
 mwr_debug.DEBUG_MODE = False
 
+import bpy.app.timers
+
 from . import (
     mwr_translation,
     mwr_panel,
     mwr_preferences,
     mwr_types,
-    mwr_update,
+    mwr_uix_update,
 )
 from .mwr_preferences import load_bone_patterns_to_preferences
+from .mwr_update import mwr_on_blend_load
 
 # すべてのクラスをまとめる
 modules = [
@@ -33,7 +36,7 @@ modules = [
     mwr_panel, 
     mwr_preferences, 
     mwr_translation, 
-    mwr_update,
+    mwr_uix_update,
     ]
 
 # register() 内で動的にクラスを取得
@@ -57,15 +60,15 @@ def register():
     if addon:
         load_bone_patterns_to_preferences(addon.preferences)
 
-    # ハンドラー登録（BLENDファイル読み込み時）
-    from .mwr_update import mwr_on_blend_load
+    # アドオン有効化時に実行
+    bpy.app.timers.register(lambda: (mwr_update.initialize_candidate_list(), None)[1] if getattr(bpy.context, "scene", None) else 0.2)
+    # BLEND読み込み時に実行
     if mwr_on_blend_load not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(mwr_on_blend_load)
 
 
 def unregister():
     # ハンドラー解除（BLENDファイル読み込み時用）
-    from .mwr_update import mwr_on_blend_load
     if mwr_on_blend_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(mwr_on_blend_load)
 

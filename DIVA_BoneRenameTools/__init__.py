@@ -3,7 +3,7 @@ bl_info = {
     "author": "Riel",
     "version": (0, 1, 0),
     "blender": (3, 0, 0),
-    "location": "View3D > Sidebar > DIVA",
+    "location": "View3D > Sidebar > DIVA > Bone Rename Tools",
     "description": "Tools for renaming bones, assigning identifiers, and managing naming rules for armatures",
     # "warning": "バグチェック中",
     "support": "COMMUNITY",
@@ -25,7 +25,6 @@ from . import (
     brt_panel,
     brt_preferences,
     brt_types,
-    brt_update,
 )
 
 # Panel-UI機能モジュール
@@ -34,8 +33,10 @@ from . import (
     brt_ui_replace,
     brt_ui_invert,
     brt_ui_other,
+    brt_uix_update,
 )
 from .brt_preferences import load_bone_patterns_to_preferences
+from .brt_update import brt_on_blend_load
 
 # すべてのクラスをまとめる
 modules = [
@@ -47,7 +48,7 @@ modules = [
     brt_ui_invert, 
     brt_ui_other,
     brt_translation, 
-    brt_update
+    brt_uix_update
     ]
 
 # register() 内で動的にクラスを取得
@@ -71,15 +72,15 @@ def register():
     if addon:
         load_bone_patterns_to_preferences(addon.preferences)
 
+    # アドオン有効化時に実行
+    bpy.app.timers.register(lambda: (brt_update.initialize_candidate_list(), None)[1] if getattr(bpy.context, "scene", None) else 0.2)
     # ハンドラー登録（BLENDファイル読み込み時）
-    from .brt_update import brt_on_blend_load
     if brt_on_blend_load not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(brt_on_blend_load)
 
 
 def unregister():
     # ハンドラー解除（BLENDファイル読み込み時用）
-    from .brt_update import brt_on_blend_load
     if brt_on_blend_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(brt_on_blend_load)
 

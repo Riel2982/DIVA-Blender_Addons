@@ -1,11 +1,11 @@
 ## DIVA - Bone Position Rotation Scale  
 ### Overview  
 This addon allows you to **extract bone data (position, rotation, scale, and parent bone info) from a Blender armature and save it to a file**.  
-You can easily access it from the "DIVA" tab in the N Panel.  
+You can easily access it from the "DIVA" tab in the Sidebar.  
 
 ### How to Use: Bone Data Exporter  
 1. **Select the armature** from which you want to extract bone data.  
-2. Open the **"DIVA" tab in the N Panel** and click **Export Bone Data**.  
+2. Open the **"DIVA" tab in the Sidebar** and click **Export Bone Data**.  
 3. A bone data file will be generated based on your settings.  
 
 #### Settings Options  
@@ -40,7 +40,7 @@ You can easily access it from the "DIVA" tab in the N Panel.
    - **Selected Only**: Displays only bones currently selected in the 3D View  
    - **Unselected Only**: Displays bones that are not currently selected  
 
-- **➕ / ➖ buttons**  
+- **+ / - buttons**  
    - Add or remove data-display checkmarks for bones selected in the 3D View  
 
 - **Mouse Pointer icon**  

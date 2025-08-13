@@ -7,60 +7,31 @@ import zipfile
 import shutil
 import re
 import datetime
+import addon_utils
+
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
 
 from .mwr_debug import DEBUG_MODE   # デバッグ用
 
-# --- アドオン更新UI -------------------------------------
-def draw_update_ui(layout, scene):
-    box = layout.box()
-    # box.label(text=_("Update"), icon='FILE_REFRESH')
+# 処理制御関連 -------------------------------------
 
-    row = box.row()  # ← 横一列に並べる
-    op1 = row.operator("mwr.open_url", text=_("Check for Updates"), icon="CHECKMARK") 
-    op1.url = "https://github.com/Riel2982/DIVA-Blender_Addons/releases"
+# 通知モード切り替え（True: バージョン比較 / False: プレリリース含む時刻比較）
+USE_VERSION_CHECK = True
 
-    row.operator("mwr.execute_update", text=_("Install"), icon="IMPORT") 
-    row.operator("mwr.open_addon_folder", text=_("Open Addon Folder"), icon="FILE_FOLDER") 
+# モードに応じてフラグを設定（自動で排他的に切り替わる）
+CHECK_CURRENT_VERSION = USE_VERSION_CHECK
+CHECK_PRE_RELEASE = not USE_VERSION_CHECK
 
-    # ダウンロード先パスのラベル＋操作群をまとめて一行に並べる
-    row = box.row()
-    row.prop(scene, "mwr_download_folder", text=_("Path to ZIP download folder"))  # テキスト入力欄（ラベルなし）
+if False:
+    # 現在のバージョンと比較して通知を決定（Falseならバージョン関係なく日時基準で通知）
+    CHECK_CURRENT_VERSION = True
+    # stable以外の通知を出すかどうか
+    CHECK_PRE_RELEASE = False
 
-    # 成功時だけ表示する INFOラベル
-    wm = bpy.context.window_manager
-    if getattr(wm, "mwr_update_completed", False):
-        box.label(text=_("Update completed. Please restart Blender"), icon="INFO")
+# 不要ファイル実行制御フラグ（一括管理）
+ENABLE_OBSOLETE_FILE_REMOVAL = True
 
-    # 非実行時・失敗時に表示する 更新ファイルリスト
-    else:
-        row = box.row()
-        row.label(text=_("Update file list: "), icon='PRESET')
-        row.operator("mwr.sort_candidates_name", text="", icon="SORTALPHA")     # 名前順
-        row.operator("mwr.sort_candidates_date", text="", icon="SORTTIME")      # 日付順
-        row.operator("mwr.confirm_download_folder", text="", icon="FILE_REFRESH")  # リスト更新
-
-        box.template_list(
-            "MWR_UL_UpdateCandidateList", "",
-            scene, "mwr_update_candidates",
-            scene, "mwr_selected_candidate_index",
-            rows=2      # 初期行数
-        )
-
-
-# --- プロパティグループ＆UIリスト -------------------------------------
-class MWR_UpdateCandidateItem(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty()
-    path: bpy.props.StringProperty()
-    date: bpy.props.StringProperty()
-
-class MWR_UL_UpdateCandidateList(bpy.types.UIList):
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
-        # 行を分割して領域比率を調整
-        split = layout.split(factor=0.70, align=True)
-        split.label(text=item.name)   # 左側（70%）：ファイル名
-        split.label(text=item.date)   # 右側（30%）：日時
 
 # 設定ファイル関連の関数 -------------------------------------
 def get_addon_folder():
@@ -70,366 +41,332 @@ def get_settings_path():
     return os.path.join(get_addon_folder(), "mwr_settings.json")
 
 # 設定ファイルの生成・保存
-def save_download_folder(path):
-    try:        # w=存在しない場合は生成
-        with open(get_settings_path(), "w", encoding="utf-8") as f:
-            json.dump({"download_folder": path}, f)
-        if DEBUG_MODE:
-            print("✅ 設定ファイルを保存しました:", get_settings_path())
-    except Exception as e:
-        if DEBUG_MODE:
-            print("❌ 保存失敗:", str(e))
-
-def load_download_folder():
+def load_settings():
     try:
         with open(get_settings_path(), "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data.get("download_folder", "")
+            return json.load(f)
     except Exception:
-        return ""
+        return {}
 
+def save_settings(new_data):
+    settings = load_settings()
+    before = settings.copy()  # 変更前を記録
+    settings.update(new_data)  # 既存項目を保持しつつ更新
 
-# 各種オペレーター
-class MWR_OT_OpenURL(bpy.types.Operator):
-    """更新を確認"""
-    bl_idname = "mwr.open_url"
-    bl_label = "Check for Updates"
-    bl_description = _("Opens the GitHub release page to check for update files")
+    try:        # w=存在しない場合は生成
+        with open(get_settings_path(), "w", encoding="utf-8") as f:
+            json.dump(settings, f, indent=4, ensure_ascii=False)
 
-    url: bpy.props.StringProperty()
-
-    def execute(self, context):
-        import webbrowser
-        webbrowser.open(self.url)
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        # ZIPファイル選択ダイアログを開く
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-
-class MWR_OT_ExecuteUpdate(bpy.types.Operator):
-    """更新ファイルをインストール"""
-    bl_idname = "mwr.execute_update"
-    bl_label = "Install Update File"
-    bl_description = _("Select a ZIP archive beginning with DIVA_MeshWeightReflector to install the update")
-    # bl_options = {'UNDO'}
-
-    filepath: bpy.props.StringProperty(
-        name="Select ZIP File",
-        description=_("Choose a ZIP file starting with DIVA_MeshWeightReflector"),
-        #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
-    )
-
-    # ユーザーにフォルダ選択してもらうためのプロパティ（手動選択時のみ使用→なぜかZIPファイル選択ダイアログとして機能）
-    dirpath: bpy.props.StringProperty(
-        name="Select Addon Folder",
-        description=_("Choose the folder where the addon is installed"),
-        subtype='DIR_PATH'
-    )
-
-    # 共通処理(更新対象の照合関数)
-    def read_bl_info_name(self, init_path):
-        """指定された __init__.py から bl_info['name'] を抽出する"""
-        import ast
-        try:
-            with open(init_path, "r", encoding="utf-8") as f:
-                tree = ast.parse(f.read(), init_path)
-                for node in tree.body:
-                    if isinstance(node, ast.Assign):
-                        for target in node.targets:
-                            if isinstance(target, ast.Name) and target.id == "bl_info":
-                                for key, value in zip(node.value.keys, node.value.values):
-                                    if getattr(key, "s", "") == "name":
-                                        return getattr(value, "s", None)
-        except Exception:
-            return None
-
-    def execute(self, context):
-        # 🔹 UIリストが選ばれていて、filepath が空の場合のみ 自動補完
-        if not self.filepath:
-            index = context.scene.mwr_selected_candidate_index
-            candidates = context.scene.mwr_update_candidates
-            if 0 <= index < len(candidates):
-                self.filepath = candidates[index].path
-
-            # それでも filepath が空なら → ダイアログで選択させるべき
-            if not self.filepath:
-                self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))
-                context.window_manager.fileselect_add(self)
-                return {'RUNNING_MODAL'}
-
-
-        # ZIPファイル名の確認（パターンに一致しなければ処理中止）
-        filename = os.path.basename(self.filepath)
-        pattern = re.compile(r"^DIVA_MeshWeightReflector.*\.zip$", re.IGNORECASE)
-        if not pattern.match(filename):
-            self.report({'ERROR'}, _("Only ZIP files starting with DIVA_MeshWeightReflector can be processed"))
-            context.window_manager.mwr_update_completed = False
-            return {'CANCELLED'}
-
-        # 一時解凍フォルダの作成
-        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
-        extract_path = os.path.join(downloads_path, "_mwr_temp_extract")
-        os.makedirs(extract_path, exist_ok=True)
-
-        try:
-            with zipfile.ZipFile(self.filepath, 'r') as zip_ref:
-                zip_ref.extractall(extract_path)
-
-            # ZIP内のbl_info['name']を取得
-            source_folder = os.path.join(extract_path, "DIVA_MeshWeightReflector")
-            source_init = os.path.join(source_folder, "__init__.py")
-            if not os.path.isdir(source_folder) or not os.path.isfile(source_init):
-                self.report({'ERROR'}, _("Missing DIVA_MeshWeightReflector folder or __init__.py inside the ZIP file"))
-
-                shutil.rmtree(extract_path)
-                context.window_manager.mwr_update_completed = False
-                return {'CANCELLED'}
-
-            source_name = self.read_bl_info_name(source_init)
-            if not source_name:
-                self.report({'ERROR'}, _("Could not retrieve bl_info.name from the ZIP file"))
-                shutil.rmtree(extract_path)
-                context.window_manager.mwr_update_completed = False
-                return {'CANCELLED'}
-
-            # 自分自身のアドオンフォルダを取得
-            try:
-                self_folder = os.path.dirname(os.path.abspath(__file__))
-                self_init = os.path.join(self_folder, "__init__.py")
-                self_name = self.read_bl_info_name(self_init)
-            except Exception:
-                self_folder = None
-                self_name = None
-
-            # bl_info.name が一致するか判定（異なれば処理中止）
-            if self_folder and self_name == source_name:
-                target_folder = self_folder
-
-            # 自動判定失敗
+        if DEBUG_MODE:
+            changed = {k: (before.get(k), new_data[k]) for k in new_data if before.get(k) != new_data[k]}
+            if changed:
+                print("[MWR] 設定ファイルを保存しました:")
+                for k, (old, new) in changed.items():
+                    print(f"  - {k}: {old} → {new}")
             else:
-                '''
-                if not self.dirpath: ユーザーにフォルダを選ばせる（なぜかZIP選択ダイアログになる為削除）
-                    # ユーザーに状況を説明してからDIR選択させる
-                    self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))
-                    # context.window_manager.fileselect_add(self)  # DIR選択を促す
-                    return {'RUNNING_MODAL'}
+                print("[MWR] 設定ファイル: 変更なし")
 
-                # DIR選択後：キャンセルされた場合は中止＋後始末
-                if not self.dirpath:
-                    self.report({'INFO'}, _("Installation was cancelled"))
-                    shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
-                    context.window_manager.mwr_update_completed = False
-                    return {'CANCELLED'}
-                '''
-                # 選ばれたフォルダに __init__.py があるか確認
-                manual_init = os.path.join(self.dirpath, "__init__.py")
-                if not os.path.isfile(manual_init):
-                    self.report({'ERROR'}, _("__init__.py not found in the selected folder"))
-                    # shutil.rmtree(extract_path)     # 一時フォルダの削除
-                    context.window_manager.mwr_update_completed = False
-                    return {'CANCELLED'}
+    except Exception as e:
+        if DEBUG_MODE:
+            print("[MWR] 保存失敗:", str(e))
 
-                manual_name = self.read_bl_info_name(manual_init)
-                if manual_name != source_name:
-                    self.report({'ERROR'}, _("Update failed because bl_info.name does not match"))
-                    shutil.rmtree(extract_path)     # 一時フォルダの削除
-                    context.window_manager.mwr_update_completed = False
-                    return {'CANCELLED'}
+# DL先フォルダの読み込み
+def load_download_folder():
+    settings = load_settings()
+    return settings.get("download_folder", "")
 
-                # 一致したので選択されたフォルダに更新実行
-                target_folder = self.dirpath
 
-            # 更新を実行（アドオンフォルダに中身を上書きコピー）
-            for root, dirs, files in os.walk(source_folder):
-                rel_path = os.path.relpath(root, source_folder)
-                dest_dir = os.path.join(target_folder, rel_path)
-                os.makedirs(dest_dir, exist_ok=True)
-                for file in files:
-                    shutil.copy2(os.path.join(root, file), os.path.join(dest_dir, file))
 
-            # 一時フォルダの削除
-            shutil.rmtree(extract_path)
-            # 更新完了ポップアップ表示
-            self.report({'INFO'}, _("Update completed. Please restart Blender"))
-            context.window_manager.mwr_update_completed = True
-            return context.window_manager.invoke_popup(self, width=400)
 
-        except Exception as e:  # 例外発生時のエラー通知とクリーンアップ
-            self.report({'ERROR'}, _("Update failed: {error}").format(error=str(e)))
-            shutil.rmtree(extract_path, ignore_errors=True)
-            context.window_manager.mwr_update_completed = False
-            return {'CANCELLED'}
+# 更新通知関連の関数 -------------------------------------
 
-    # 更新完了時のポップアップ表示内容
-    def draw(self, context):
-        layout = self.layout
-        # layout.label(text=_("Please select a ZIP file"), icon='INFO')
-        layout.label(text=_("Please restart Blender after the update"), icon='INFO')
-
-        
-class MWR_OT_OpenAddonFolder(bpy.types.Operator):
-    """現在のアドオンフォルダを開く"""
-    bl_idname = "mwr.open_addon_folder"
-    bl_label = "Open Addon Folder"
-    bl_description = _("Opens the folder where this addon is installed")
-
-    def execute(self, context):
-        import os
-        import subprocess
-
-        # 実行中のアドオンフォルダを取得
-        self_folder = os.path.dirname(os.path.abspath(__file__))
-
-        # Windowsのエクスプローラーでフォルダを開く
-        subprocess.Popen(f'explorer "{self_folder}"')
-
-        return {'FINISHED'}
-
-class MWR_OT_ConfirmDownloadFolder(bpy.types.Operator):
-    """更新ファイルリスト更新"""
-    bl_idname = "mwr.confirm_download_folder"
-    bl_label = "Confirm Download Folder"
-    bl_description = _("Scan the folder and list update candidate files")
-
-    def execute(self, context):
-        import os
-        scene = context.scene
-        folder = scene.mwr_download_folder
-
-        if not os.path.isdir(folder):
-            self.report({'WARNING'}, "The specified folder is not valid")
-            return {'CANCELLED'}
-
-        # 設定ファイルに保存
-        save_download_folder(folder)
-        self.report({'INFO'}, _("Download folder setting has been saved"))
-
-        # 候補リスト初期化
-        scene.mwr_update_candidates.clear()
-        files = os.listdir(folder)
-        for fname in sorted(files, reverse=True):
-            if re.match(r"^DIVA_MeshWeightReflector.*\.zip$", fname, re.IGNORECASE):
-            # if fname.startswith("DIVA_MeshWeightReflector") and fname.endswith(".zip"):
-                full_path = os.path.join(folder, fname)
-                timestamp = os.path.getmtime(full_path)
-                import datetime
-                date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
-                item = scene.mwr_update_candidates.add()
-                item.name = fname
-                item.path = full_path
-                item.date = date
-
-        return {'FINISHED'}
-
-class MWR_OT_SortCandidatesByName(bpy.types.Operator):
-    """ZIPファイル名ソート(A–Z / Z–A)"""
-    bl_idname = "mwr.sort_candidates_name"
-    bl_label = "Sort by File Name"
-    bl_description = _("Sort update files by file name. Click again to toggle order")
-
-    def execute(self, context):
-        scene = context.scene
-        items = [(i.name, i.path, i.date) for i in scene.mwr_update_candidates]
-        scene.mwr_update_candidates.clear()
-
-        reverse = scene.mwr_sort_name_desc
-        for name, path, date in sorted(items, key=lambda x: x[0].lower(), reverse=reverse):
-            item = scene.mwr_update_candidates.add()
-            item.name, item.path, item.date = name, path, date
-
-        scene.mwr_sort_name_desc = not scene.mwr_sort_name_desc  # トグル切替
-        return {'FINISHED'}
-
-class MWR_OT_SortCandidatesByDate(bpy.types.Operator):
-    """日時順ソート(newest ↔ oldest)"""
-    bl_idname = "mwr.sort_candidates_date"
-    bl_label = "Sort by Update Date"
-    bl_description = _("Sort update files by update/download date. Click again to toggle order")
-
-    def execute(self, context):
-        scene = context.scene
-        items = [(i.name, i.path, i.date) for i in scene.mwr_update_candidates]
-        scene.mwr_update_candidates.clear()
-
-        reverse = scene.mwr_sort_date_desc
-        for name, path, date in sorted(items, key=lambda x: x[2], reverse=reverse):
-            item = scene.mwr_update_candidates.add()
-            item.name, item.path, item.date = name, path, date
-
-        scene.mwr_sort_date_desc = not scene.mwr_sort_date_desc  # トグル切替
-        return {'FINISHED'}
-
-def get_classes():
-    return [
-        MWR_OT_OpenURL,
-        MWR_OT_ExecuteUpdate,
-        MWR_OT_OpenAddonFolder,
-        MWR_OT_ConfirmDownloadFolder,
-        MWR_UpdateCandidateItem,
-        MWR_UL_UpdateCandidateList,
-        MWR_OT_SortCandidatesByName,
-        MWR_OT_SortCandidatesByDate,
-    ]
-
-def register_properties():
-    # プリファレンスの識別子セット編集折りたたみ機構
-    bpy.types.WindowManager.mwr_show_identifier_sets = bpy.props.BoolProperty(      # SceneからWindowManagerに変更して履歴に載せない・変更扱いにしない
-        name="Show Identifier Sets",
-        description=_("Display UI to edit identifier sets"),# 編集履歴に乗る名目
-        default=False  # デフォルトは閉じておく
+# ZIPファイル名からstatusを抽出
+def parse_release_filename(name):
+    name = name.lower().replace(".zip", "")
+    # match = re.match(r"^.*[_\-]?v?(\d+\.\d+\.\d+)(?:\s+([a-z0-9αβ]+))?$", name)
+    match = re.search(
+        r"[_\-]?v?(\d+\.\d+\.\d+)(?:[._\-\s]*([a-zαβ]+)[\s\-]?(\d+)?)?",
+        name
     )
 
-    # ダウンロードフォルダの初期値を設定ファイルから読み込む
-    bpy.types.Scene.mwr_download_folder = bpy.props.StringProperty(
-        name="Download Folder",
-        description=_("Specify the folder where the update ZIP is stored"),
-        subtype='DIR_PATH',
-        default=load_download_folder()
-    )
+    if match:
+        version = f"v{match.group(1)}"
+        raw_status = match.group(2)
+        status_num = match.group(3)
 
-    # 更新候補リスト（CollectionProperty + IntProperty）
-    bpy.types.Scene.mwr_update_candidates = bpy.props.CollectionProperty(
-        type=MWR_UpdateCandidateItem
-    )
-    bpy.types.Scene.mwr_selected_candidate_index = bpy.props.IntProperty(
-        name="Selected index in candidate list",        # 候補リスト選択インデックス
-        default=-1
-    )
+        if not raw_status:
+            status = "stable"
+        else:
+            original = raw_status
 
-    # 更新完了フラグ（INFOラベル表示の制御に使用）
-    bpy.types.WindowManager.mwr_update_completed = bpy.props.BoolProperty(
-        name="Update completed flag",      # 更新完了フラグ
-        default=False
-    )
+            # 正規化処理
+            status = raw_status.replace("α", "alpha").replace("β", "beta")
+
+            # 例: alpha3 → alpha3（そのまま）、beta → beta
+            # 例: rc1 → rc1（そのまま）
+
+            # 誤字補正（bata → beta）
+            status = re.sub(r"^bata", "beta", status)
+
+            # 数字があれば結合（例: beta + 3 → beta3）
+            if status_num:
+                status += status_num
+
+            if DEBUG_MODE and original != status:
+                print(f"[MWR] ステータス補正: '{original}' → '{status}'")
+
+        if DEBUG_MODE:
+            print(f"[MWR] ファイル名解析: version={version}, status={status}")
+
+        return {"version": version, "status": status}
+
+    if DEBUG_MODE:
+        print(f"[MWR] ファイル名解析失敗: '{name}'")
+
+    return {"version": "", "status": "unknown"}
+
+
+# GitHub最新リリース情報取得
+def get_latest_release_info(force=False):
+    settings = load_settings()
+    last_api_check_str = settings.get("api_checked_at", "")
+    try:
+        last_api_check = datetime.datetime.fromisoformat(last_api_check_str)
+    except Exception:
+        last_api_check = None
+
+    # GitHub APIを叩くかどうかを判定（60分以上経過していたら取得）
+    now = datetime.datetime.now(datetime.timezone.utc)
+    should_refresh = force or (not last_api_check or (now - last_api_check) > datetime.timedelta(minutes=60))   # 引数がTrueなら時間間隔を無視して取得
+
+    if not should_refresh:
+        # キャッシュされた日時を返す（保存済みの latest_release を使う）
+        release = settings.get("latest_release", {})
+        return release  # ← datetime に変換せず、そのまま返す
+
+    # 取得処理（GitHub API）
+    url = "https://api.github.com/repos/Riel2982/DIVA-Blender_Addons/releases/latest"
+    try:
+        import urllib.request, json
+        with urllib.request.urlopen(url) as response:
+            data = json.loads(response.read().decode())
+
+            if DEBUG_MODE:
+                print("[MWR] GitHub API レスポンス:")
+                print("  - published_at:", data.get("published_at"))
+                print("  - tag_name:", data.get("tag_name"))
+                print("  - assets:", [a.get("name") for a in data.get("assets", [])])
+
+            published_at = data.get("published_at", "")
+            assets = data.get("assets", [])
+
+            version = None
+
+            # ZIPファイル照合
+            pattern = re.compile(r"^DIVA_MeshWeightReflector.*\.zip$", re.IGNORECASE)
+            
+            for asset in assets:
+                name = asset.get("name", "")
+                if DEBUG_MODE:
+                    print("  [MWR] ZIPファイル名:", name)
+
+                if pattern.match(name):
+                    parsed = parse_release_filename(name)
+                    version = parsed["version"]
+                    status = parsed["status"]
+                    if DEBUG_MODE:
+                        print(f"  [MWR] バージョン抽出: {version} / ステータス: {status}")
+                    break
+                else:
+                    if DEBUG_MODE:
+                        print("  [MWR] バージョン抽出失敗:", name)
+
+            if not version and DEBUG_MODE:
+                print("[MWR] ZIPファイルからバージョンが抽出できません")
+
+            release_info = {
+                "published_at": published_at,
+                "version": version or "",
+                "status": status or "unknown"
+            }
+
+            # 保存
+            save_settings({
+                "api_checked_at": now.isoformat(),         # ← API取得制御用
+                "latest_release": release_info             # ← リリース情報
+            })
+
+            return release_info  # dict: {published_at, version}
+
+    except Exception as e:
+        if DEBUG_MODE:
+            print("[MWR] GitHub取得失敗:", str(e))
+
+        # 失敗しても取得時刻は記録する
+        save_settings({
+            "api_checked_at": now.isoformat()
+        })
+
+        return {}  # API取得失敗時
+
+
+# GitHubリリース情報の取得（API取得ではなく保存したローカルから取得）
+def get_latest_release_data():
+    settings = load_settings()
+    return settings.get("latest_release", {})
+
+# アドオンのバージョン取得
+def get_current_version():
+    try:
+        from . import bl_info
+        version = bl_info.get("version", ())
+        if DEBUG_MODE:
+            print(f"[MWR] 現在のアドオンバージョン: {version}")
+        return version
+    except Exception:
+        if DEBUG_MODE:
+            print("[MWR] bl_info の取得に失敗")
+        return ()
+
+# 更新通知判定
+def is_new_release_available():
+    latest = get_latest_release_info()
+    if not latest:
+        if DEBUG_MODE:
+            print("[MWR] 最新リリース情報が取得できません")
+        return False
+
+    # GitHubのバージョンを取得
+    version_str = latest.get("version", "").lstrip("v")
+    try:
+        latest_version = tuple(map(int, version_str.split(".")))
+        if DEBUG_MODE:
+            print("[MWR] GitHub最新バージョン:", latest_version)
+    except Exception:
+        if DEBUG_MODE:
+            print("[MWR] バージョン文字列の解析失敗:", version_str)
+        return False
+
+    # latest["published_at"] を datetime に変換
+    published_at = latest.get("published_at", "")
+    try:
+        latest_dt = datetime.datetime.fromisoformat(published_at.replace("Z", "+00:00"))
+        if DEBUG_MODE:
+            print("[MWR] GitHubリリース日時:", latest_dt)
+    except Exception:
+        if DEBUG_MODE:
+            print("[MWR] リリース日時の解析失敗:", published_at)
+        return False
+
+    settings = load_settings()
     
-    # 名前順ソートトグル式
-    bpy.types.Scene.mwr_sort_name_desc = bpy.props.BoolProperty(default=False)
-    # 日時順ソートトグル式
-    bpy.types.Scene.mwr_sort_date_desc = bpy.props.BoolProperty(default=True)
+    # update_check を取得
+    update_check_str = settings.get("update_check", "")
+    try:
+        update_check = datetime.datetime.fromisoformat(update_check_str)
+    except Exception:
+        update_check = None
 
-    # 不要ファイル削除要フラグ
-    bpy.types.WindowManager.mwr_obsolete_cleanup_done = bpy.props.BoolProperty(
-        name="Obsolete cleanup done",
-        default=False
-    )
+    # last_update を取得
+    last_update_str = settings.get("last_update", "")
+    try:
+        last_update = datetime.datetime.fromisoformat(last_update_str)
+    except Exception:
+        last_update = None
 
-def unregister_properties():
-    del bpy.types.WindowManager.mwr_show_identifier_sets    
-    del bpy.types.Scene.mwr_download_folder
-    del bpy.types.Scene.mwr_update_candidates
-    del bpy.types.Scene.mwr_selected_candidate_index
-    del bpy.types.WindowManager.mwr_update_completed
-    del bpy.types.Scene.mwr_sort_name_desc
-    del bpy.types.Scene.mwr_sort_date_desc
-    del bpy.types.WindowManager.mwr_obsolete_cleanup_done
+    # どちらか新しい方を基準にする
+    reference = max(filter(None, [update_check, last_update]), default=None)
+    if DEBUG_MODE:
+        print("[MWR] 通知判定の基準日時:", reference)
+
+    # 現在のアドオンバージョンを取得
+    if CHECK_CURRENT_VERSION:
+        current_version = get_current_version()
+
+        if current_version and latest_version <= current_version:
+            if DEBUG_MODE:
+                print("[MWR] 現在のバージョンが最新以上のため通知不要")
+            return False  # 最新と同じかそれ以上なら通知不要
+
+        # バージョンが新しい → 時刻も新しいか確認
+        if not reference or latest_dt > reference:
+            if DEBUG_MODE:
+                print("[MWR] 新しいバージョンが検出されました")
+            return True
+        else:
+            if DEBUG_MODE:
+                print("[MWR] バージョンは新しいが通知基準日時に達していません")
+            return False
+
+	# 時間基準で通知判定
+    else:
+        # バージョン無視 → 時刻のみで判定
+        if not reference or latest_dt > reference:
+            if DEBUG_MODE:
+                print("[MWR] リリース日時が通知基準を超えました")
+            return True
+        else:
+            if DEBUG_MODE:
+                print("[MWR] 通知不要：リリース日時が基準以下")
+            return False
+
+# UI通知ラベル表示
+def get_release_label():
+    wm = bpy.context.window_manager
+
+    # 通知なしログを一度だけ出す
+    if DEBUG_MODE:
+        ns = bpy.app.driver_namespace
+        if not ns.get("_mwr_logged_no_release"):
+            print("[MWR] 通知なし: mwr_new_release_available=False")
+            ns["_mwr_logged_no_release"] = True
+
+    release_info = get_latest_release_data()
+    version = release_info.get("version", "")
+    status = release_info.get("status", "unknown")
+
+    if not version:
+        if DEBUG_MODE:  # 通知なしログを一度だけ出す
+            ns = bpy.app.driver_namespace
+            if not ns.get("_mwr_logged_no_version"):
+                print("[MWR] 通知なし: versionが空")
+                ns["_mwr_logged_no_version"] = True
+        return None
+
+    if status != "stable" and not CHECK_PRE_RELEASE:
+        if DEBUG_MODE:  # 通知抑制ログを一度だけ出す
+            ns = bpy.app.driver_namespace
+            if not ns.get("_mwr_logged_status_suppressed"):
+                print(f"[MWR] 通知抑制: status={status}")
+                ns["_mwr_logged_status_suppressed"] = True
+        return None
+
+    # 表示用バージョン名
+    display_version = version
+    if status != "stable":
+        display_version += f" ({status})"
+
+    # 日本語用表示整形（statusの括弧を除去して括弧で囲む）
+    locale = bpy.app.translations.locale
+    if locale == "ja_JP":
+        clean = re.sub(r"\((.*?)\)", r" \1", display_version).strip()
+        display_version = f"({clean})"
+
+    if DEBUG_MODE:  # 通知表示ログを一度だけ出す
+        ns = bpy.app.driver_namespace
+        if not ns.get("_mwr_logged_display_version"):
+            print(f"[MWR] 通知表示: {display_version}")
+            ns["_mwr_logged_display_version"] = True
+
+    return display_version
 
 
 
 
-# 不要ファイル実行制御フラグ（一括管理）
-ENABLE_OBSOLETE_FILE_REMOVAL = True
+
+
+
+# アドオン起動時・Blendファイル展開時・アドオン有効化時関連の関数 -------------------------------------
 
 # フラグに応じて不要ファイル削除を実行
 def remove_obsolete_files_on_startup():
@@ -442,7 +379,6 @@ def remove_obsolete_files_on_startup():
 
     if not ENABLE_OBSOLETE_FILE_REMOVAL:
         return  # ファイルを削除しない
-    
 
     wm = bpy.context.window_manager
     if getattr(wm, "mwr_obsolete_cleanup_done", False):
@@ -458,20 +394,21 @@ def remove_obsolete_files_on_startup():
                 os.remove(abs_path)
                 deleted_files.append(rel_path)
                 if DEBUG_MODE:
-                    print(f"🗑️ 起動時に削除: {abs_path}")
+                    print(f"[MWR] 起動時に削除: {abs_path}")
             except Exception as e:
                 if DEBUG_MODE:
-                    print(f"❌ 起動時削除失敗: {abs_path} → {str(e)}")
+                    print(f"[MWR] 起動時削除失敗: {abs_path} → {str(e)}")
         else:
             if DEBUG_MODE:
-                print(f"⚠️ 起動時削除対象なし: {abs_path}")
+                print(f"[MWR] 起動時削除対象なし: {abs_path}")
 
     if DEBUG_MODE and deleted_files:
-        print("🗑️ 起動時に削除されたファイル一覧:")
+        print("[MWR] 起動時に削除されたファイル一覧:")
         for f in deleted_files:
             print(f"  - {f}")
 
     wm.mwr_obsolete_cleanup_done = True  # フラグを立てて再実行防止
+
 
 
 # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
@@ -488,79 +425,51 @@ def confirm_download_folder():
             print("[MWR] DLフォルダ確認を実行しました")
 
 
-# アドオン起動直後に呼ばれる初期処理
-def initialize_candidate_list():
-    # 更新完了フラグをリセット（前回の更新完了表示が残っていたら消す）
-    wm = bpy.context.window_manager
-    wm.mwr_update_completed = False
-
-    # 起動時に不要ファイル削除
-    remove_obsolete_files_on_startup()
-
-    # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
-    confirm_download_folder()
-
-    if False:
-        # 「有効なDLフォルダが設定されている場合のみ更新リストを自動生成する」  
-        scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
-        if not hasattr(scene, "mwr_download_folder"):
-            return  # DLフォルダプロパティがない → 以降の処理はスキップ
-        
-        folder = scene.mwr_download_folder# 有効なパスかチェック
-        if folder and os.path.isdir(folder):
-            bpy.ops.mwr.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
-
 
 # BLENDファイル読み込み後に不要ファイル削除とDLフォルダ確認を実行
 @persistent
 def mwr_on_blend_load(dummy):
-    # 起動時に不要ファイル削除
+    wm = bpy.context.window_manager
+
+    # 不要なファイルの削除
     remove_obsolete_files_on_startup()
 
     # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
     confirm_download_folder()
 
-    if False:
-        scene = bpy.context.scene
-        if not hasattr(scene, "mwr_download_folder"):
-            return  # プロパティ未登録 → スキップ
+    # GitHub更新チェック
+    result = is_new_release_available()
+    wm.mwr_new_release_available = result
 
-        folder = scene.mwr_download_folder
-        if folder and os.path.isdir(folder):
-            bpy.ops.mwr.confirm_download_folder('INVOKE_DEFAULT')
+    if DEBUG_MODE:
+        print("[MWR] ファイル読み込み時更新チェック:", result)
+        print("[MWR] 通知フラグ:", wm.mwr_new_release_available)
 
+
+# アドオン起動直後に呼ばれる初期処理
+def initialize_candidate_list():
+    wm = bpy.context.window_manager
+
+    # 初期化済みならスキップ
+    if getattr(wm, "mwr_initialized", False):
         if DEBUG_MODE:
-            print("[MWR] BLENDファイル読み込み時に不要ファイル削除とDLフォルダ確認を実行しました")
+            print("[MWR] 初期化スキップ: mwr_initialized=True")
+        return
+    wm.mwr_initialized = True   # 以降の処理はスキップし、初期化フラグを立てる
 
+    # 更新完了フラグをリセット（前回の更新完了表示が残っていたら消す）
+    wm.mwr_update_completed = False
 
-if False:
-    # アドオン起動直後に呼ばれる初期処理    
-    def initialize_candidate_list_delayed():
-        # 更新完了フラグをリセット（前回の更新完了表示が残っていたら消す）
-        wm = bpy.context.window_manager
-        wm.mwr_update_completed = False
+    # 起動時に不要ファイル削除
+    remove_obsolete_files_on_startup()
+    
+    # 有効なDLフォルダが設定されている場合のみ更新リストを自動生成
+    confirm_download_folder()
 
-        # 起動時に不要ファイル削除
-        remove_obsolete_files_on_startup()
+    # GitHub更新チェック
+    result = is_new_release_available()
+    wm.mwr_new_release_available = result
 
-        # 「有効なDLフォルダが設定されている場合のみ更新リストを自動生成する」  
-        scene = bpy.context.scene   # Scene からDLフォルダパスを取得（プロパティが未登録なら中止）
-        if not hasattr(scene, "mwr_download_folder"):
-            if DEBUG_MODE:
-                print("[DLチェック] DLフォルダプロパティ未登録")
-            return None  # DLフォルダプロパティがない → 以降の処理はスキップ
-
-        folder = scene.mwr_download_folder  # 有効なパスかチェック
-        if DEBUG_MODE:
-            print("[DLチェック] フォルダパス:", folder)
-
-        if folder and os.path.isdir(folder):
-            if DEBUG_MODE:
-                print("[DLチェック] フォルダが存在します。更新オペレータを実行します")
-            bpy.ops.mwr.confirm_download_folder('INVOKE_DEFAULT')   # フォルダが有効なら、リスト更新オペレーターを呼び出す
-        else:
-            if DEBUG_MODE:
-                print("[DLチェック] フォルダが無効です")
-
-
-        return None  # 一度だけで終了
+    if DEBUG_MODE:
+        print("[MWR] 起動時更新チェック:", result)
+        print("[MWR] 通知フラグ:", wm.mwr_new_release_available)
