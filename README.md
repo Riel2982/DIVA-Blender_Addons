@@ -1,7 +1,11 @@
 # DIVA-Blender_Addons
 DIVAのモデル編集に活用するBlenderアドオン集。  
 コードは **Microsoft Copilot** および**ChatGPT**を使用して生成され、一部調整が加えられています。    
-**Blender 3.6** にて検証済み。
+**Blender 3.6** にて検証済み。  
+
+- **FBX Operatios Pack**  
+  - FBXのインポートとエクスポートをサポートするツール。
+  - 標準アドオンFBX format導入必須。
 
 - **Bone Position Rotation Scale**
   - Blenderのアーマチュアからボーンデータ（位置・回転・スケール・親ボーン情報）を取得するツール。
