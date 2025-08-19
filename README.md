@@ -5,7 +5,7 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 
 - **FBX Operatios Pack**  
   - FBXのインポートとエクスポートをサポートするツール。
-  - 標準アドオンFBX format導入必須。
+  - 要標準アドオンFBX format。
 
 - **Bone Position Rotation Scale**
   - Blenderのアーマチュアからボーンデータ（位置・回転・スケール・親ボーン情報）を取得するツール。
@@ -38,6 +38,10 @@ The code was generated using **AI tools including Microsoft Copilot and ChatGPT*
 Verified on **Blender 3.6**.
 
 
+- **FBX Operation Pack**  
+  -
+  -  
+
 - **Bone Position Rotation Scale**  
   - Retrieves bone data (position, rotation, scale, and parent relationships) from Blender's armature system.  
   - Packaged as a Blender add-on based on code published by Saltlapse ([GitHub repository](https://github.com/Saltlapse/Blender-Mod-Scripts)).
@@ -54,5 +58,5 @@ Verified on **Blender 3.6**.
   - Generates a mirror-image mesh with reflected vertex weights.  
 
 
-Please refer to the [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki) for details about each addon.
+Please refer to the [Wiki](https://github.com/Riel2982/DIVA-Blender_Addons/wiki#diva-blender_addonsenglish) for details about each addon.
  
