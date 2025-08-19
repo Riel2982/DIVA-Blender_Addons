@@ -38,9 +38,10 @@ The code was generated using **AI tools including Microsoft Copilot and ChatGPT*
 Verified on **Blender 3.6**.
 
 
-- **FBX Operation Pack**  
-  -
-  -  
+
+- **FBX Operation Pack
+  - fbx 
+  - FBX format.
 
 - **Bone Position Rotation Scale**  
   - Retrieves bone data (position, rotation, scale, and parent relationships) from Blender's armature system.  
