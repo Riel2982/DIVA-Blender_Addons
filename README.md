@@ -39,7 +39,7 @@ Verified on **Blender 3.6**.
 
 
 
-- **FBX Operation Pack
+- **FBX Operation Pack**
   - fbx 
   - FBX format.
 
