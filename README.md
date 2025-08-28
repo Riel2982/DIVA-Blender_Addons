@@ -3,7 +3,7 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 コードは **Microsoft Copilot** および**ChatGPT**を使用して生成され、一部調整が加えられています。    
 **Blender 3.6** にて検証済み。  
 
-- **FBX Operatios Pack**  
+- **FBX Operation Pack**  
   - DIVAモデルのFBXのインポートとエクスポートをサポートするツール。
   - Blender標準アドオンである"**FBX format**"導入必須です。
 
