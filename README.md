@@ -41,7 +41,7 @@ Verified on **Blender 3.6**.
 
 - **FBX Operation Pack**
   - Supports importing and exporting DIVA models in FBX format.  
-  - Requires the built-in Blender add-on **"FBX format"** to be enabled.  
+  - Requires the built-in Blender addon **"FBX format"** to be enabled.  
 
 
 - **Bone Position Rotation Scale**  
