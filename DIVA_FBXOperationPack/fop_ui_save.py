@@ -14,9 +14,12 @@ from bpy.app.translations import pgettext as _
 
 from .fop_save import (
     get_safe_blend_save_path,
-    # make_paths_relative_safely,
-    # make_paths_absolute_safely,
+    make_paths_relative_safely,
+    make_paths_absolute_safely,
+    safe_pack_all_external,
     unpack_external_data_safely,
+    record_unpacked_resources,
+    detect_repacked_resources,
 )
 
 from .fop_debug import DEBUG_MODE   # デバッグ用
@@ -46,22 +49,44 @@ def draw_save_ui(layout, self, context, scene):
         row.prop(scene, "fop_blend_save_path", text="")
         row.operator("fop.select_blend_save_folder", text="", icon='FILE_FOLDER')
 
-        # リソースの自動パック
-        row = box.row()
-        split = row.split(factor=0.2)
-        split.label(text=_("External Data :"))
-        row = split.row(align=True)        
-        row.prop(settings, "external_data", text="")
-        # row.prop(settings, "external_data", text=_("External Data :")) 
-        row.separator()
-        row.separator()
-        row.prop(settings, "pack_resources", text="")
-        row.label(text=_("Pack Resources"))
+        if False: # パス選択ドロップダウン・パック選択チェックボックス
+            # リソースの自動パック
+            row = box.row()
+            split = row.split(factor=0.2)
+            split.label(text=_("External Data :"))
+            row = split.row(align=True)        
+            row.prop(settings, "external_data", text="")
+            # row.prop(settings, "external_data", text=_("External Data :")) 
+            row.separator()
+            row.separator()
+            row.prop(settings, "pack_resources", text="")
+            row.label(text=_("Pack Resources"))
 
         # 上書き防止
         row = box.row()
         row.prop(settings, "blendfile_overwrite_guard", text="")
         row.label(text=_("Auto Numbering"))
+
+        # 外部データ格納方式設定（折りたたみ式）
+        row = box.row(align=True)
+        row.prop(scene, "fop_show_external_data", text="", icon='DOWNARROW_HLT' if scene.fop_show_external_data else 'RIGHTARROW', emboss=False)
+        row.label(text=_("External data storage method selection"))#, icon="FILE_BACKUP") # セクションタイトル
+
+        if scene.fop_show_external_data:
+            # Pack mode → 3ボタン切り替え
+            row = box.row()
+            row.separator()
+            row.label(text=_("Pack Mode"))
+            # row.label(text=_("Pack Resources Mode"), icon='BLANK1')
+            row.prop(settings, "pack_mode", expand=True)
+            row.separator()
+            # External data mode → 3ボタン切り替え
+            row = box.row()
+            row.separator()
+            row.label(text=_("Path Mode"))
+            # row.label(text=_("External Data Path Mode"), icon='BLANK1')
+            row.prop(settings, "pass_mode", expand=True)
+            row.separator()
 
         
         # 保存ボタン
@@ -154,38 +179,76 @@ class FOP_OT_SaveBlendFile(bpy.types.Operator):
             overwrite_guard=settings.blendfile_overwrite_guard
         )
 
-        # 外部データの格納方式に応じた処理
-        if settings.pack_resources:        # リソースの自動パック
-            bpy.ops.file.pack_all()
+        pre_unpacked = []   # 保存前のアンパック済みリストを記録
+
+        # リソースのパックモード
+        if settings.pack_mode == 'PACK' :
+            # bpy.ops.file.pack_all()   # 全てパック
+            safe_pack_all_external()    # 一部除外してパック
             if DEBUG_MODE:
                 print("Packed all external resources.")
-        else:
+            
+            pre_unpacked = record_unpacked_resources()     # 保存前のアンパック済みリストを記録
+
+        elif settings.pack_mode == 'UNPACK' :
             unpack_external_data_safely()   # 一部除外してアンパック
             if DEBUG_MODE:
                 print("Unpacked external resources (excluding protected ones).")
+      
+            pre_unpacked = record_unpacked_resources()     # 保存前のアンパック済みリストを記録
 
-        if False:   # リソースの自動パックのドロップダウン式
-            if settings.external_data == 'PACK':
-                bpy.ops.file.pack_all()
-                if DEBUG_MODE:
-                    print("Packed all external resources.")
+        elif settings.pack_mode == 'MIXED' :    # 混合（そのまま）
+            if DEBUG_MODE:
+                    print("[FOP] Resources pack mode is MIXED → no path changes applied")
 
-        if settings.external_data == 'RELATIVE':  # 相対パス
-            bpy.ops.file.make_paths_relative()
+        # 外部データのパスモード
+        if settings.pass_mode == 'RELATIVE' :   # 相対パス
+            # bpy.ops.file.make_paths_relative()    # 全て
+            make_paths_relative_safely()
             if DEBUG_MODE:
                 print("Made all external paths relative.")
-
-        elif settings.external_data == 'ABSOLUTE':      # 絶対パス
-            bpy.ops.file.make_paths_absolute()
+        elif settings.pass_mode == 'ABSOLUTE':      # 絶対パス
+            # bpy.ops.file.make_paths_absolute()    # 全て
+            make_paths_absolute_safely()
             if DEBUG_MODE:
                 print("Made all external paths absolute.")
 
-        elif settings.external_data == 'MIXED':
+        elif settings.pass_mode == 'UNCHANGED':
             # 何も変更しない（初期状態のまま保存）
             if DEBUG_MODE:
-                print("[FOP] External data mode is MIXED → no path changes applied")
+                print("[FOP] External data mode is UNCHANGED → no path changes applied")
 
+        if False:
+            # 外部データの格納方式に応じた処理
+            if settings.pack_resources:        # リソースの自動パック
+                bpy.ops.file.pack_all()
+                if DEBUG_MODE:
+                    print("Packed all external resources.")
+            else:
+                unpack_external_data_safely()   # 一部除外してアンパック
+                if DEBUG_MODE:
+                    print("Unpacked external resources (excluding protected ones).")
 
+            if False:   # リソースの自動パックのドロップダウン式
+                if settings.external_data == 'PACK':
+                    bpy.ops.file.pack_all()
+                    if DEBUG_MODE:
+                        print("Packed all external resources.")
+
+            if settings.external_data == 'RELATIVE':  # 相対パス
+                bpy.ops.file.make_paths_relative()
+                if DEBUG_MODE:
+                    print("Made all external paths relative.")
+
+            elif settings.external_data == 'ABSOLUTE':      # 絶対パス
+                bpy.ops.file.make_paths_absolute()
+                if DEBUG_MODE:
+                    print("Made all external paths absolute.")
+
+            elif settings.external_data == 'MIXED':
+                # 何も変更しない（初期状態のまま保存）
+                if DEBUG_MODE:
+                    print("[FOP] External data mode is MIXED → no path changes applied")
 
         if False:
             # リソースの自動パック
@@ -234,6 +297,16 @@ class FOP_OT_SaveBlendFile(bpy.types.Operator):
                 print(f"[FOP] Save failed: {e}")
             return {'CANCELLED'}
 
+        # 保存後：再パック検知（UNPACK時のみ）
+        repacked = []
+        if settings.pack_mode == 'PACK' or settings.pack_mode == 'UNPACK':
+            repacked = detect_repacked_resources(pre_unpacked)
+            if repacked:
+                print("[FOP] Re-packed resources:")
+                for r in repacked:
+                    print("  -", r)
+            else:
+                print("[FOP] No resources were re-packed")
 
         # 保存先を記録
         context.scene.fop_blend_saved_path = os.path.dirname(full_path)
@@ -247,28 +320,61 @@ class FOP_OT_SaveBlendFile(bpy.types.Operator):
 
         blend_filename = os.path.basename(full_path)
 
-        if settings.pack_resources and settings.external_data == 'RELATIVE':    # パック＆相対パス
+        if False:
+            if settings.pack_resources and settings.external_data == 'RELATIVE':    # パック＆相対パス
+                self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+
+            elif settings.pack_resources and settings.external_data == 'ABSOLUTE':      # パック＆絶対パス
+                self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+
+            elif not settings.pack_resources and settings.external_data == 'RELATIVE':      # アンパック＆相対パス
+                self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+
+            elif not settings.pack_resources and settings.external_data == 'ABSOLUTE':      # アンパック＆絶対パス
+                self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+
+            elif settings.pack_resources and settings.external_data == 'MIXED':     # パック・パス変更なし
+                self.report({'INFO'}, _("Packed external data  and saved the Blend file as {name}").format(name=blend_filename))
+
+            elif not settings.pack_resources and settings.external_data == 'MIXED':     # アンパック・パス変更なし
+                self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}").format(name=blend_filename))
+
+
+            else:       # その他
+                self.report({'INFO'}, _("Blend file has been saved"))
+
+        # リソースの自動パック警告（UNPACKモードのみ）---
+        if settings.pack_mode == 'PACK' or settings.pack_mode == 'UNPACK' :
+            if repacked:    # 自動的に再パックされた場合 → 警告のみを出して終了
+                self.report({'WARNING'}, _("Some resources were automatically re-packed and saved the Blend file as {name}").format(name=blend_filename))
+                return {'FINISHED'}
+            else:    # 再パックされなかった場合 → 通常のINFO報告（下に流す）
+                pass
+
+        # 完了報告
+        if settings.pack_mode == 'PACK' and settings.pass_mode == 'RELATIVE':    # パック＆相対パス
             self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
-
-        elif settings.pack_resources and settings.external_data == 'ABSOLUTE':      # パック＆絶対パス
+        elif settings.pack_mode == 'PACK' and settings.pass_mode == 'ABSOLUTE':      # パック＆絶対パス
             self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+        elif settings.pack_mode == 'PACK' and settings.pass_mode == 'UNCHANGED':     # パック＆パス変更なし
+            self.report({'INFO'}, _("Packed external data and saved the Blend file as {name}").format(name=blend_filename))
 
-        elif not settings.pack_resources and settings.external_data == 'RELATIVE':      # アンパック＆相対パス
+        elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'RELATIVE':      # アンパック＆相対パス
             self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
-
-        elif not settings.pack_resources and settings.external_data == 'ABSOLUTE':      # アンパック＆絶対パス
+        elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'ABSOLUTE':      # アンパック＆絶対パス
             self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
-
-        elif settings.pack_resources and settings.external_data == 'MIXED':     # パック・パス変更なし
-            self.report({'INFO'}, _("Packed external data  and saved the Blend file as {name}").format(name=blend_filename))
-
-        elif not settings.pack_resources and settings.external_data == 'MIXED':     # アンパック・パス変更なし
+        elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'UNCHANGED':     # アンパック・パス変更なし
             self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}").format(name=blend_filename))
 
+        elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'RELATIVE':    # パックそのまま＆相対パス
+            self.report({'INFO'}, _("Packing state kept as-is, paths made relative, and saved the Blend file as {name}").format(name=blend_filename))
+        elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'ABSOLUTE':      # パックそのまま＆絶対パス
+            self.report({'INFO'}, _("Packing state kept as-is, paths made absolute, and saved the Blend file as {name}").format(name=blend_filename))
+        elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'UNCHANGED':     # パックそのまま＆パス変更なし
+            self.report({'INFO'}, _("Packing state kept as-is, paths unchanged, and saved the Blend file as {name}").format(name=blend_filename))
 
         else:       # その他
             self.report({'INFO'}, _("Blend file has been saved"))
-
         return {'FINISHED'}
 
 

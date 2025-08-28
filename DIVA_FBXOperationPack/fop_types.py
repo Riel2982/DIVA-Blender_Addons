@@ -22,7 +22,8 @@ class FOP_FBXSettings(bpy.types.PropertyGroup):
     # Saver
     blendfile_overwrite_guard: BoolProperty(
         name="Blend file Overwrite Guard",     # エクスポートファイルの上書き防止
-        description=_("Save with numbering if a file with the same name exists"),
+        # description=_("Save with numbering if a file with the same name exists"),
+        description=_("Always save blend files with numbering to prevent overwriting existing files"),
         default=True,
         update=update_overwrite_guard,  # UIの選択状況に応じてファイル名のナンバリング反映も制御
     )
@@ -31,16 +32,33 @@ class FOP_FBXSettings(bpy.types.PropertyGroup):
         description="Pack all used external files into this .blend",
         default=False
 )
-    external_data: EnumProperty(    # _("External Data Storage Mode") "外部データの格納方式"
-        name="External Data",
-        description=_("External Data Pass Mode"),
+
+    # リソースのパック方式
+    pack_mode : EnumProperty(
+        name="Resources to External Data",
+        description=_("Pack external data mode"),  # 外部データのパック方式
+        items=[
+            ('PACK', _("Pack Resources"), "Pack all used external files into this .blend"),
+            ('UNPACK', _("Unpack Resources"), "Unpack all packed into this .blend to external ones"),
+            ('MIXED', _("Auto / Mixed"), _("Do not change packing state")),
+        ],
+        default='MIXED',
+    )
+
+    # 外部データの格納方式
+    # external_data: EnumProperty(    # _("External Data Storage Mode") "外部データの格納方式"
+    pass_mode : EnumProperty(  
+        name="Path to External Data",
+        description=_("External data pass mode"),
         items=[
             # ('PACK', _("Pack Resources"), "Pack all used external files into this .blend"),
             ('RELATIVE', _("Make Paths Relative"), "Make all paths to external files relative to current .blend"),
             ('ABSOLUTE', _("Make Paths Absolute"), "Make all paths to external files absolute"), 
-            ('MIXED', _("Leave As-Is"), _("Do not change external file paths")),
+            # ('MIXED', _("Leave As-Is"), _("Do not change external file paths")),
+            ('UNCHANGED', _("Auto / Mixed"), _("Do not change external file paths")),
         ],
-        default='MIXED'
+        # default='MIXED'
+        default='UNCHANGED'
     )
 
     # Import
@@ -63,7 +81,8 @@ class FOP_FBXSettings(bpy.types.PropertyGroup):
 
     export_overwrite_guard: BoolProperty(
         name="FBX data Overwrite Guard",     # エクスポートファイルの上書き防止
-        description=_("Save with numbering if a data with the same name exists"),
+        # description=_("Save with numbering if a data with the same name exists"),
+        description=_("Always save with numbering to prevent overwriting existing files"),
         default=True
     )
     use_selection: BoolProperty(
@@ -109,6 +128,12 @@ def register_properties():
         description=_("Show tool to export fbx data"), 
         default=True
     )
+    # Save用
+    bpy.types.Scene.fop_show_external_data = bpy.props.BoolProperty(
+        name="Show External Data Mode",
+        description=_("Select the external data storage method"), 
+        default=False
+    )
     # Export用
     bpy.types.Scene.fop_blend_save_path = bpy.props.StringProperty(
         name="Save Path",
@@ -137,6 +162,7 @@ def unregister_properties():
     del bpy.types.Scene.fop_show_save_tools
     del bpy.types.Scene.fop_show_export_tools
     del bpy.types.Scene.fop_show_import_tools
+    del bpy.types.Scene.fop_show_external_data
     del bpy.types.Scene.fop_blend_save_path
     del bpy.types.Scene.fop_blend_saved_path
     del bpy.types.Scene.fop_blend_save_filename

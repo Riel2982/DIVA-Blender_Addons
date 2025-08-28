@@ -250,57 +250,89 @@ def unpack_external_data_safely():
             if DEBUG_MODE:
                 print(f"[SKIP] unpack不可: {name}（型: {type(block).__name__})")
 
-if False:
-    #  パス変更関数
-    def make_paths_relative_safely():   # 相対パス化
-        for block in (
-            list(bpy.data.images) +
-            list(bpy.data.fonts) +
-            list(bpy.data.movieclips) +
-            list(bpy.data.sounds) +
-            list(bpy.data.texts)
-        ):
-            name = getattr(block, "name", "")
-            path = getattr(block, "filepath", "")
-            if should_exclude(name, path):
-                if DEBUG_MODE:
-                    print(f"[SKIP] 除外対象（相対化対象外）: {name}")
-                continue
-            if hasattr(block, "filepath") and path.startswith("//") is False:
-                block.filepath = bpy.path.relpath(path)
-                if DEBUG_MODE:
-                    print(f"[RELATIVE] {name} → {block.filepath}")
 
-    def make_paths_absolute_safely():   # 絶対パス化
-        for block in (
-            bpy.data.images +
-            bpy.data.fonts +
-            bpy.data.movieclips +
-            bpy.data.sounds +
-            bpy.data.texts
-        ):
-            name = getattr(block, "name", "")
-            path = getattr(block, "filepath", "")
+# --- パス変更関数（安全版） ---
+def make_paths_relative_safely():   # 相対パス化
+    # すべての外部データをリスト化して統合
+    external_blocks = list(bpy.data.images) + \
+                      list(bpy.data.fonts) + \
+                      list(bpy.data.movieclips) + \
+                      list(bpy.data.sounds) + \
+                      list(bpy.data.texts)
 
-            if should_exclude(name, path):
-                if DEBUG_MODE:
-                    print(f"[SKIP] 除外対象（絶対化対象外）: {name}")
-                continue
+    for block in external_blocks:
+        name = getattr(block, "name", "")
+        path = getattr(block, "filepath", "")
 
-            if path and not os.path.isabs(bpy.path.abspath(path)):
-                try:
-                    block.filepath = bpy.path.abspath(path)
-                    if DEBUG_MODE:
-                        print(f"[ABSOLUTE] {name} → {block.filepath}")
-                except Exception as e:
-                    if DEBUG_MODE:
-                        print(f"[ERROR] 絶対パス変換失敗: {name} → {e}")
+        # 除外対象はスキップ
+        if should_exclude(name, path):
+            if DEBUG_MODE:
+                print(f"[SKIP] 除外対象（相対化対象外）: {name}")
+            continue
+
+        # filepathが空の場合もスキップ
+        if not path:
+            if DEBUG_MODE:
+                print(f"[SKIP] 空のパス: {name}")
+            continue
+
+        # すでに相対パスならスキップ
+        if path.startswith("//"):
+            continue
+
+        # 相対パス化
+        try:
+            block.filepath = bpy.path.relpath(path)
+            if DEBUG_MODE:
+                print(f"[RELATIVE] {name} → {block.filepath}")
+        except Exception as e:
+            if DEBUG_MODE:
+                print(f"[ERROR] 相対パス変換失敗: {name} → {e}")
 
 
+def make_paths_absolute_safely():   # 絶対パス化
+    # すべての外部データをリスト化して統合
+    external_blocks = list(bpy.data.images) + \
+                      list(bpy.data.fonts) + \
+                      list(bpy.data.movieclips) + \
+                      list(bpy.data.sounds) + \
+                      list(bpy.data.texts)
 
-# 外部データ格納方式の判別
-def detect_external_data_mode():
-    # 対象となる外部データ型を統合（画像・フォント・動画・音声・テキスト）
+    for block in external_blocks:
+        name = getattr(block, "name", "")
+        path = getattr(block, "filepath", "")
+
+        # 除外対象はスキップ
+        if should_exclude(name, path):
+            if DEBUG_MODE:
+                print(f"[SKIP] 除外対象（絶対化対象外）: {name}")
+            continue
+
+        # filepathが空の場合もスキップ
+        if not path:
+            if DEBUG_MODE:
+                print(f"[SKIP] 空のパス: {name}")
+            continue
+
+        # すでに絶対パスならスキップ
+        if os.path.isabs(bpy.path.abspath(path)):
+            continue
+
+        # 絶対パス化
+        try:
+            block.filepath = bpy.path.abspath(path)
+            if DEBUG_MODE:
+                print(f"[ABSOLUTE] {name} → {block.filepath}")
+        except Exception as e:
+            if DEBUG_MODE:
+                print(f"[ERROR] 絶対パス変換失敗: {name} → {e}")
+
+
+
+
+# --- 存在しないファイルや除外対象をスキップして、残りの外部データをパック
+def safe_pack_all_external():
+    # 対象となる外部データ型を統合
     external_blocks = (
         list(bpy.data.images) +
         list(bpy.data.fonts) +
@@ -309,60 +341,292 @@ def detect_external_data_mode():
         list(bpy.data.texts)
     )
 
-    # 各モードのカウント初期化
-    packed_count = 0       # PACKされたデータ数
-    relative_count = 0     # 相対パス（//）のデータ数
-    absolute_count = 0     # 絶対パスのデータ数
-    total = 0              # 判定対象の総数
+    skipped = []  # パックできなかったものを記録
+    packed = []   # パックできたものを記録
 
     for block in external_blocks:
-        # filepath を持たない型は除外（例：内蔵フォントや空テキスト）
-        if not hasattr(block, "filepath"):
+        name = getattr(block, "name", "")
+        path = getattr(block, "filepath", "")
+
+        # filepathが空かつ未パック → 実体なし
+        if not path and not getattr(block, "packed_file", None):
+            if DEBUG_MODE:
+                print(f"[SKIP] 実体なし: {name}")
+            skipped.append((name, "no file to pack"))
             continue
 
-        name = getattr(block, "name", "")
-        path = block.filepath
+        # 除外対象はスキップ
+        if should_exclude(name, path):
+            if DEBUG_MODE:
+                print(f"[SKIP] 除外対象: {name}")
+            skipped.append((name, "excluded"))
+            continue
 
-        # filepathが空かつ未パック → 実体なし（除外）
+        # ファイルが存在しない場合はスキップ
+        if path and not os.path.exists(bpy.path.abspath(path)):
+            if DEBUG_MODE:
+                print(f"[SKIP] ファイル行方不明: {name} → {path}")
+            skipped.append((name, "file missing"))
+            continue
+
+        # pack メソッドが存在する型のみパック
+        if hasattr(block, "pack"):
+            try:
+                block.pack()
+                packed.append(name)
+                if DEBUG_MODE:
+                    print(f"[PACK] パック成功: {name}")
+            except Exception as e:
+                skipped.append((name, str(e)))
+                if DEBUG_MODE:
+                    print(f"[SKIP] パック失敗: {name} → {e}")
+        else:
+            skipped.append((name, "cannot pack"))
+            if DEBUG_MODE:
+                print(f"[SKIP] パック不可: {name}（型: {type(block).__name__})")
+
+    return packed, skipped
+
+
+# --- リソースの自動パック処理検知 -------------------------------------------------------------------------------------
+# 保存前に「アンパック済みリソース一覧」を記録する（現在アンパック状態のリソース名を返す）
+def record_unpacked_resources():
+    unpacked = []
+    for block in (list(bpy.data.images) + list(bpy.data.fonts) +
+                  list(bpy.data.movieclips) + list(bpy.data.sounds) +
+                  list(bpy.data.texts)):
+        if not getattr(block, "packed_file", None):
+            unpacked.append(block.name)
+    return unpacked
+
+
+# 保存後に「強制再パックされたリソース」を検知する（保存前にアンパック済みだったものが保存後に再パックされていれば返す）
+def detect_repacked_resources(pre_unpacked):
+    repacked = []
+    for block in (list(bpy.data.images) + list(bpy.data.fonts) +
+                  list(bpy.data.movieclips) + list(bpy.data.sounds) +
+                  list(bpy.data.texts)):
+        if getattr(block, "packed_file", None) and block.name in pre_unpacked:
+            repacked.append(block.name)
+    return repacked
+
+
+
+
+# --- pack_mode / pass_mode 判定関数（パックできないものは除外）
+def detect_and_set_external_data_modes(scene):
+    settings = scene.fop_settings
+
+    # 対象となる外部データ型を統合
+    external_blocks = (
+        list(bpy.data.images) +
+        list(bpy.data.fonts) +
+        list(bpy.data.movieclips) +
+        list(bpy.data.sounds) +
+        list(bpy.data.texts)
+    )
+
+    packed_count = 0       # PACK済み
+    relative_count = 0     # //形式の相対パス
+    absolute_count = 0     # 絶対パス
+    total = 0              # 判定対象総数（除外済み）
+
+    for block in external_blocks:
+        name = getattr(block, "name", "")
+        path = getattr(block, "filepath", "")
+
+        # filepathが空かつ未パック → 実体なし
         if not path and not getattr(block, "packed_file", None):
             continue
 
-        # 除外対象かどうかを判定（name/path に対して）
+        # 除外対象は判定対象外
         if should_exclude(name, path):
-            if DEBUG_MODE:
-                print(f"[SKIP] 除外対象（モード判定対象外）: {name}")
             continue
 
+        # ファイルが存在しない場合は判定対象外
+        if path and not os.path.exists(bpy.path.abspath(path)):
+            continue
 
-        total += 1  # 判定対象としてカウント
+        total += 1
 
-        # PACKされたデータ
+        # PACKかUNPACK判定
         if getattr(block, "packed_file", None):
             packed_count += 1
 
-        # 相対パス（//）のデータ
-        elif path.startswith("//"):
+        # pass_mode 判定
+        if path.startswith("//"):
             relative_count += 1
-
-        # 絶対パスのデータ
         elif os.path.isabs(bpy.path.abspath(path)):
             absolute_count += 1
 
-    # 判定対象がゼロ → 判定不能
+    # 判定対象がゼロ → MIXED / UNCHANGED
     if total == 0:
-        return None
+        settings.pack_mode = 'MIXED'
+        settings.pass_mode = 'UNCHANGED'
+    else:
+        # threshold = 1.0 → 全員一致でのみ判定
+        if packed_count == total:
+            settings.pack_mode = 'PACK'
+        elif (total - packed_count) == total:
+            settings.pack_mode = 'UNPACK'
+        else:
+            settings.pack_mode = 'MIXED'
 
-    # dominant mode を判定（割合が閾値以上ならそのモード）
-    threshold = 0.8
-    if packed_count / total >= threshold:
-        return 'PACK'
-    elif relative_count / total >= threshold:
-        return 'RELATIVE'
-    elif absolute_count / total >= threshold:
-        return 'ABSOLUTE'
+        if relative_count == total:
+            settings.pass_mode = 'RELATIVE'
+        elif absolute_count == total:
+            settings.pass_mode = 'ABSOLUTE'
+        else:
+            settings.pass_mode = 'UNCHANGED'
 
-    # どのモードも支配的でない場合 → 混在とみなす
-    return 'MIXED'
+    if DEBUG_MODE:
+        print(f"[FOP] Detected pack_mode: {settings.pack_mode}, pass_mode: {settings.pass_mode}")
+
+    return settings.pack_mode, settings.pass_mode
+
+
+
+if False:   # 変更できなかったパスなどがあると反映結果は正しいけどUI操作的に困る
+    # 外部データ格納方式の判定（pack_mode と pass_mode に反映）
+    def detect_and_set_external_data_modes(scene):
+        settings = scene.fop_settings
+
+        # 対象となる外部データ型を統合（画像・フォント・動画・音声・テキスト）
+        external_blocks = (
+            list(bpy.data.images) +
+            list(bpy.data.fonts) +
+            list(bpy.data.movieclips) +
+            list(bpy.data.sounds) +
+            list(bpy.data.texts)
+        )
+
+        packed_count = 0
+        relative_count = 0
+        absolute_count = 0
+        total = 0  # 判定対象総数（除外済み）
+
+        for block in external_blocks:
+            if not hasattr(block, "filepath"):
+                continue
+
+            name = getattr(block, "name", "")
+            path = block.filepath
+
+            # filepathが空かつ未パック → 実体なし（除外）
+            if not path and not getattr(block, "packed_file", None):
+                continue
+
+            # 除外対象は判定対象外
+            if should_exclude(name, path):
+                if DEBUG_MODE:
+                    print(f"[SKIP] 除外対象（モード判定対象外）: {name}")
+                continue
+
+            total += 1
+
+            # PACK判定
+            if getattr(block, "packed_file", None):
+                packed_count += 1
+
+            # pass_mode判定
+            if path.startswith("//"):
+                relative_count += 1
+            else:
+                absolute_count += 1
+
+        # 判定対象がゼロの場合は MIXED / UNCHANGED
+        if total == 0:
+            settings.pack_mode = 'MIXED'
+            settings.pass_mode = 'UNCHANGED'
+        else:
+            # pack_mode判定
+            if packed_count == total:
+                settings.pack_mode = 'PACK'
+            elif packed_count == 0:
+                settings.pack_mode = 'UNPACK'
+            else:
+                settings.pack_mode = 'MIXED'
+
+            # pass_mode判定
+            if relative_count == total:
+                settings.pass_mode = 'RELATIVE'
+            elif absolute_count == total:
+                settings.pass_mode = 'ABSOLUTE'
+            else:
+                settings.pass_mode = 'UNCHANGED'
+
+        if DEBUG_MODE:
+            print(f"[FOP] Detected pack_mode: {settings.pack_mode}, pass_mode: {settings.pass_mode}")
+
+        # 判定結果を返す（returnがないと自動でNoneを返してしまう）
+        return settings.pack_mode, settings.pass_mode
+
+if False:
+    # 外部データ格納方式の判別
+    def detect_external_data_mode():
+        # 対象となる外部データ型を統合（画像・フォント・動画・音声・テキスト）
+        external_blocks = (
+            list(bpy.data.images) +
+            list(bpy.data.fonts) +
+            list(bpy.data.movieclips) +
+            list(bpy.data.sounds) +
+            list(bpy.data.texts)
+        )
+
+        # 各モードのカウント初期化
+        packed_count = 0       # PACKされたデータ数
+        relative_count = 0     # 相対パス（//）のデータ数
+        absolute_count = 0     # 絶対パスのデータ数
+        total = 0              # 判定対象の総数
+
+        for block in external_blocks:
+            # filepath を持たない型は除外（例：内蔵フォントや空テキスト）
+            if not hasattr(block, "filepath"):
+                continue
+
+            name = getattr(block, "name", "")
+            path = block.filepath
+
+            # filepathが空かつ未パック → 実体なし（除外）
+            if not path and not getattr(block, "packed_file", None):
+                continue
+
+            # 除外対象かどうかを判定（name/path に対して）
+            if should_exclude(name, path):
+                if DEBUG_MODE:
+                    print(f"[SKIP] 除外対象（モード判定対象外）: {name}")
+                continue
+
+
+            total += 1  # 判定対象としてカウント
+
+            # PACKされたデータ
+            if getattr(block, "packed_file", None):
+                packed_count += 1
+
+            # 相対パス（//）のデータ
+            elif path.startswith("//"):
+                relative_count += 1
+
+            # 絶対パスのデータ
+            elif os.path.isabs(bpy.path.abspath(path)):
+                absolute_count += 1
+
+        # 判定対象がゼロ → 判定不能
+        if total == 0:
+            return None
+
+        # dominant mode を判定（割合が閾値以上ならそのモード）
+        threshold = 0.8
+        if packed_count / total >= threshold:
+            return 'PACK'
+        elif relative_count / total >= threshold:
+            return 'RELATIVE'
+        elif absolute_count / total >= threshold:
+            return 'ABSOLUTE'
+
+        # どのモードも支配的でない場合 → 混在とみなす
+        return 'MIXED'
 
 
 
@@ -401,26 +665,39 @@ def update_blend_save_filename(scene):
     else:
         scene.fop_blend_save_filename = "untitled"
 
-# --- 外部データ格納方式反映（PACK / RELATIVE / ABSOLUTE / None）
+# --- 外部データ格納方式反映（PACK-UNPACK-MIXED / RELATIVE-ABSOLUTE-UNCHANGED）
 def update_external_data_mode(scene):
-    detected_mode = detect_external_data_mode()
+    pack_mode, pass_mode = detect_and_set_external_data_modes(scene)
 
-    # PACKモード → pack_resources を True に設定
-    if detected_mode == 'PACK':
-        scene.fop_settings.pack_resources = True
-        if DEBUG_MODE:
-            print("[FOP] PACK mode detected → pack_resources = True")
+    scene.fop_settings.pack_mode = pack_mode
+    scene.fop_settings.pass_mode = pass_mode
 
-    # RELATIVE / ABSOLUTE → external_data に反映
-    elif detected_mode in {'RELATIVE', 'ABSOLUTE'}:
-        scene.fop_settings.external_data = detected_mode
-        if DEBUG_MODE:
-            print(f"[FOP] external_data mode detected and set to: {detected_mode}")
+    if DEBUG_MODE:
+        print(f"[FOP] pack_mode detected and set to: {pack_mode}")
+        print(f"[FOP] pass_mode detected and set to: {pass_mode}")
 
-    # 判別不能（混在 or 不明）→ 何も設定せずログのみ
-    else:
-        if DEBUG_MODE:
-            print("[FOP] external_data mode could not be determined (mixed or unknown)")
+
+if False:
+    # --- 外部データ格納方式反映（PACK / RELATIVE / ABSOLUTE / None）
+    def update_external_data_mode(scene):
+        detected_mode = detect_external_data_mode()
+
+        # PACKモード → pack_resources を True に設定
+        if detected_mode == 'PACK':
+            scene.fop_settings.pack_resources = True
+            if DEBUG_MODE:
+                print("[FOP] PACK mode detected → pack_resources = True")
+
+        # RELATIVE / ABSOLUTE → external_data に反映
+        elif detected_mode in {'RELATIVE', 'ABSOLUTE'}:
+            scene.fop_settings.external_data = detected_mode
+            if DEBUG_MODE:
+                print(f"[FOP] external_data mode detected and set to: {detected_mode}")
+
+        # 判別不能（混在 or 不明）→ 何も設定せずログのみ
+        else:
+            if DEBUG_MODE:
+                print("[FOP] external_data mode could not be determined (mixed or unknown)")
 
 
 # --- 保存・読み込み時に自動更新

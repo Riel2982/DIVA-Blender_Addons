@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - FBX Operation Pack",
     "author": "Riel",
-    "version": (0, 0, 5),
+    "version": (0, 0, 6),
     "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA > FBX Oparation Pack",
     "description": "DIVAモデル用のFBXのインポート・エクスポートをサポートするツール",

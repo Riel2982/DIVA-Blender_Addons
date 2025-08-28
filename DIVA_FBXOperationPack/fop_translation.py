@@ -8,51 +8,58 @@ translation_dict = {
         ("*", "Open the FBX Format addon settings in Preferences"): "FBX format アドオンのプリファレンス設定を開きます",
         # fop_types.py:25
         ("*", "Save with numbering if a file with the same name exists"): "同名ファイルがある場合はナンバリングして保存",
-        # fop_types.py:34
+        # fop_types.py:26  # ⛳ 新規翻訳
+        ("*", "Always save blend files with numbering to prevent overwriting existing files"): "ファイル名にナンバリングを付けて保存",
+        # fop_types.py:35
         ("*", "External Data Storage Mode"): "外部データの格納方式",
-        # fop_types.py:36
+        # fop_types.py:37
         ("*", "External Data Pass Mode"): "外部データの格納方式",
-        # fop_types.py:38, fop_ui_save.py:59
+        # fop_types.py:39, fop_ui_save.py:59
         ("*", "Pack Resources"): "リソースをパック",
-        # fop_types.py:39
-        ("*", "Make Paths Relative"): "相対パスで格納",
         # fop_types.py:40
+        ("*", "Make Paths Relative"): "相対パスで格納",
+        # fop_types.py:41
         ("*", "Make Paths Absolute"): "絶対パスで格納",
-        # fop_types.py:41
+        # fop_types.py:42
         ("*", "Do not change external file paths"): "外部ファイルのパス格納形式をそのままにします",
-        # fop_types.py:41
+        # fop_types.py:42
+        ("*", "Auto / Mixed"): "変更なし／混在",  
         ("*", "Leave As-Is"): "変更なし",
-        # fop_types.py:49
+        ("*", "Pack Mode"): "パックモード",
+        ("*", "Pass Mode"): "パスモード",
+        # fop_types.py:50
         ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "カスタム法線をインポート（できない場合はBlenderが自動的に再計算）",
-        # fop_types.py:54
+        # fop_types.py:55
         ("*", "Create a new collection for imported FBX"): "コレクションを作成してFBXインポートデータを格納",
-        # fop_types.py:60
+        # fop_types.py:61
         ("*", "Name of the FBX file to export"): "出力するFBXファイル名",
-        # fop_types.py:66
+        # fop_types.py:67
         ("*", "Save with numbering if a data with the same name exists"): "同名ファイルがある場合はナンバリングして保存",
-        # fop_types.py:99
+        # fop_types.py:68  # ⛳ 新規翻訳
+        ("*", "Always save with numbering to prevent overwriting existing files"): "ファイル名にナンバリングを付けて保存",
+        # fop_types.py:101
         ("*", "Show tool to save blend file"): "Blendファイルを保存するツールを表示",
-        # fop_types.py:104
+        # fop_types.py:106
         ("*", "Show tool to import fbx data"): "FBXファイルを読み込むツールを表示",
-        # fop_types.py:109
+        # fop_types.py:111
         ("*", "Show tool to export fbx data"): "FBXファイルを出力するツールを表示",
-        # fop_types.py:115
+        # fop_types.py:117
         ("*", "Folder to save blend file"): "Blendファイルの保存先フォルダ",
-        # fop_types.py:121
+        # fop_types.py:123
         ("*", "Whether the blend file is saved"): "Blendファイルが保存されているかどうか",
-        # fop_types.py:125
+        # fop_types.py:127
         ("*", "Name of the blend file to save"): "保存するBlendファイル名",
-        # fop_types.py:130, fop_ui_export.py:41
+        # fop_types.py:132, fop_ui_export.py:40
         ("*", "Save in the same location as the blend file"): "Blendファイルと同じ場所に保存する",
-        # fop_ui_export.py:37, fop_ui_save.py:64
+        # fop_ui_export.py:36, fop_ui_save.py:64
         ("*", "Auto Numbering"): "自動ナンバリング保存（上書き防止）",
-        # fop_ui_export.py:46
+        # fop_ui_export.py:45
         ("*", "Export Options :"): "出力オプション",
-        # fop_ui_export.py:53
+        # fop_ui_export.py:52
         ("*", "Export FBX Data"): "Export FBX Data",
-        # fop_ui_export.py:61
+        # fop_ui_export.py:60
         ("*", "FBX Exported"): "FBXで出力",
-        # fop_ui_export.py:65
+        # fop_ui_export.py:64
         ("*", "Path to export FBX file"): "FBXファイルの保存場所",
         # fop_ui_export.py:110, fop_ui_export.py:124
         ("*", "Export filename is empty"): "ファイル名を設定してください",
@@ -115,7 +122,7 @@ translation_dict = {
         # fop_ui_save.py:260
         ("*", "Unpacked external data using absolute paths and saved the Blend file as {name}"): "外部データを絶対パス形式でアンパックし、{name} にBlendファイルを保存しました",
         # fop_ui_save.py:263
-        ("*", "Packed external data  and saved the Blend file as {name}"): "外部データをパックし、{name}でBlendファイルを保存しました",
+        ("*", "Packed external data and saved the Blend file as {name}"): "外部データをパックし、{name}でBlendファイルを保存しました",
         # fop_ui_save.py:266
         ("*", "Unpacked external data and saved the Blend file as {name}"): "外部データをアンパックし、{name}でBlendファイルを保存しました",
         # fop_ui_save.py:286
@@ -200,51 +207,55 @@ translation_dict = {
         ("*", "Open the FBX Format addon settings in Preferences"): "Open the FBX Format addon settings in Preferences",
         # fop_types.py:25
         ("*", "Save with numbering if a file with the same name exists"): "Save with numbering if a file with the same name exists",
-        # fop_types.py:34
+        # fop_types.py:26  # ⛳ 新規翻訳
+        ("*", "Always save blend files with numbering to prevent overwriting existing files"): "Always save blend files with numbering to prevent overwriting existing files",
+        # fop_types.py:35
         ("*", "External Data Storage Mode"): "External Data Storage Mode",
-        # fop_types.py:36
+        # fop_types.py:37
         ("*", "External Data Pass Mode"): "External Data Pass Mode",
-        # fop_types.py:38, fop_ui_save.py:59
+        # fop_types.py:39, fop_ui_save.py:59
         ("*", "Pack Resources"): "Pack Resources",
-        # fop_types.py:39
-        ("*", "Make Paths Relative"): "Make Paths Relative",
         # fop_types.py:40
+        ("*", "Make Paths Relative"): "Make Paths Relative",
+        # fop_types.py:41
         ("*", "Make Paths Absolute"): "Make Paths Absolute",
-        # fop_types.py:41
+        # fop_types.py:42
         ("*", "Do not change external file paths"): "Do not change external file paths",
-        # fop_types.py:41
+        # fop_types.py:42
         ("*", "Leave As-Is"): "Leave As-Is",
-        # fop_types.py:49
+        # fop_types.py:50
         ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "Import custom normals if they are available; if not, Blender will recompute them automatically",
-        # fop_types.py:54
+        # fop_types.py:55
         ("*", "Create a new collection for imported FBX"): "Create a new collection for imported FBX",
-        # fop_types.py:60
+        # fop_types.py:61
         ("*", "Name of the FBX file to export"): "Name of the FBX file to export",
-        # fop_types.py:66
+        # fop_types.py:67
         ("*", "Save with numbering if a data with the same name exists"): "Save with numbering if a data with the same name exists",
-        # fop_types.py:99
+        # fop_types.py:68  # ⛳ 新規翻訳
+        ("*", "Always save with numbering to prevent overwriting existing files"): "Always save with numbering to prevent overwriting existing files",
+        # fop_types.py:101
         ("*", "Show tool to save blend file"): "Show tool to save blend file",
-        # fop_types.py:104
+        # fop_types.py:106
         ("*", "Show tool to import fbx data"): "Show tool to import fbx data",
-        # fop_types.py:109
+        # fop_types.py:111
         ("*", "Show tool to export fbx data"): "Show tool to export fbx data",
-        # fop_types.py:115
+        # fop_types.py:117
         ("*", "Folder to save blend file"): "Folder to save blend file",
-        # fop_types.py:121
+        # fop_types.py:123
         ("*", "Whether the blend file is saved"): "Whether the blend file is saved",
-        # fop_types.py:125
+        # fop_types.py:127
         ("*", "Name of the blend file to save"): "Name of the blend file to save",
-        # fop_types.py:130, fop_ui_export.py:41
+        # fop_types.py:132, fop_ui_export.py:40
         ("*", "Save in the same location as the blend file"): "Save in the same location as the blend file",
-        # fop_ui_export.py:37, fop_ui_save.py:64
+        # fop_ui_export.py:36, fop_ui_save.py:64
         ("*", "Auto Numbering"): "Auto Numbering",
-        # fop_ui_export.py:46
+        # fop_ui_export.py:45
         ("*", "Export Options :"): "Export Options :",
-        # fop_ui_export.py:53
+        # fop_ui_export.py:52
         ("*", "Export FBX Data"): "Export FBX Data",
-        # fop_ui_export.py:61
+        # fop_ui_export.py:60
         ("*", "FBX Exported"): "FBX Exported",
-        # fop_ui_export.py:65
+        # fop_ui_export.py:64
         ("*", "Path to export FBX file"): "Path to export FBX file",
         # fop_ui_export.py:110, fop_ui_export.py:124
         ("*", "Export filename is empty"): "Export filename is empty",
