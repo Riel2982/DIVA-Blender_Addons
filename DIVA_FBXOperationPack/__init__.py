@@ -1,11 +1,11 @@
 bl_info = {
     "name": "DIVA - FBX Operation Pack",
     "author": "Riel",
-    "version": (0, 0, 6),
+    "version": (0, 1, 0),
     "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA > FBX Oparation Pack",
-    "description": "DIVAモデル用のFBXのインポート・エクスポートをサポートするツール",
-    "warning": "構築中",
+    "description": "Tool supporting FBX import and export for DIVA models",
+    # "warning": "構築中",
     "support": "COMMUNITY",
     "doc_url": "https://github.com/Riel2982/DIVA-Blender_Addons/wiki/DIVA-%E2%80%90-FBX-Operation-Pack",
     "tracker_url": "https://github.com/Riel2982/DIVA-Blender_Addons",
@@ -100,7 +100,6 @@ def unregister():
     # ハンドラー解除（BLENDファイル読み込み時用）
     if fop_on_blend_load in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(fop_on_blend_load)
-
 
     for mod in reversed(modules):
         if hasattr(mod, "get_classes"):

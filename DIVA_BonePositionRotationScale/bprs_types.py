@@ -32,7 +32,7 @@ def register_properties():
     bpy.types.Scene.bprs_show_export_tools = bpy.props.BoolProperty(
         name="show_export_tools",
         description=_("Show tool to export bone data of selected armature to file"),        # 選択アーマーチュアのボーンデータをファイルに出力するツールを表示
-        default=True
+        default=False
     )
     '''
     bpy.types.Scene.bprs_show_import_tools = bpy.props.BoolProperty(

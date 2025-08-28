@@ -164,43 +164,43 @@ def register_properties():
     )
 
     bpy.types.Scene.brt_show_renumber_tools = bpy.props.BoolProperty(
-        name=_("show_renumber_tools"),
+        name="Show Renumber Tools",
         description=_("Renames the selected bone rows based on the specified settings"),    # _("Show renaming tools based on bone prefixes and numbering rules")
         default=True
     )
 
     bpy.types.Scene.brt_show_replace_tools = bpy.props.BoolProperty(
-        name=_("show_replace_tools"),
+        name="Show Replace Tools",
         description=_("Replace the selected bone name substring in bulk"),   # _("Show tools for substring replacement and removing duplicate identifiers")
         default=True
     )
 
     bpy.types.Scene.brt_show_invert_tools = bpy.props.BoolProperty(
-        name=_("show_invert_tools"),
+        name="Show Invert Tools",
         description=_("Invert left/right in selected bone names"),    # _("Show tools to invert Left/Right identifiers for selected bones")
         default=True
     )
 
     bpy.types.Scene.brt_show_group_tools = bpy.props.BoolProperty(
-        name=_("show_group_tools"),
+        name="Show Group Tools",
         description=_("Batch renaming for symmetric bone names and revert option"),    # _("Show batch renaming for symmetric bone names and revert option")
         default=False
     )
 
     bpy.types.Scene.brt_bone_x_mirror = bpy.props.BoolProperty(
-        name="bone_x_mirror",
+        name="Bone X-Mirror",
         description=_("Mirror selected bones along global X axis"),
         default=True
     )
 
     bpy.types.Scene.brt_duplicate_and_rename = bpy.props.BoolProperty(
-        name="duplicate_and_rename",        # 複製してリネームする
+        name="Duplicate and Rename",        # 複製してリネームする
         description=_("Duplicate and rename selected bones"),
         default=False
     )
 
     bpy.types.Scene.brt_assign_identifier = bpy.props.BoolProperty(
-        name="assign_identifier",
+        name="Assign Identifier",
         description=_("Assign left/right identifiers"),
         default=False
     )

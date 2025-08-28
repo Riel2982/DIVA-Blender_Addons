@@ -7,10 +7,13 @@ import zipfile
 import shutil
 import re
 import datetime
+from bpy.props import StringProperty 
+import bpy_extras.io_utils
+from bpy_extras.io_utils import ImportHelper
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
 
-from .brt_update import save_settings, load_download_folder, get_latest_release_data, get_release_label
+from .brt_update import save_settings, load_download_folder, get_latest_release_data, get_release_label, download_and_finalize
 
 from .brt_debug import DEBUG_MODE   # デバッグ用
 
@@ -31,9 +34,22 @@ def draw_update_ui(layout, scene):
     wm = bpy.context.window_manager
     if wm.brt_new_release_available:
         display_version = get_release_label()
+        release_info = get_latest_release_data()
+        download_url = release_info.get("download_url", "")
+        is_prerelease = release_info.get("prerelease", False)
+
         if display_version:
             row = box.row()
-            row.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
+            split = row.split(factor=0.7)
+            if is_prerelease:   # プレリリースの場合
+                split.label(text=_("GitHub has a preview release: ") + display_version, icon="INFO")
+            else:   # 正式リリースの場合
+                split.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
+
+            # download_url が有効な場合のみボタンを表示
+            if download_url:
+                split.operator("brt.download_latest_zip", text=("Download"))
+                row.separator()
 
     if False:
         wm = bpy.context.window_manager
@@ -110,17 +126,66 @@ class BRT_OT_OpenURL(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class BRT_OT_ExecuteUpdate(bpy.types.Operator):
+class BRT_OT_DownloadLatestZip(bpy.types.Operator):
+    bl_idname = "brt.download_latest_zip"
+    bl_label = "Download Latest ZIP"    # "最新ZIPをダウンロード"
+    bl_description = "Download the latest ZIP file from GitHub"     # "GitHubから最新のZIPファイルをダウンロードします"
+
+    def execute(self, context):
+        release_info = get_latest_release_data()
+        url = release_info.get("download_url", "")
+        version = release_info.get("version", "unknown")
+
+        if not url:
+            self.report({'ERROR'}, _("Download URL could not be retrieved"))
+            return {'CANCELLED'}
+
+        # 保存先フォルダの決定
+        folder = load_download_folder()
+        if not folder or not os.path.isdir(folder):
+            # DLフォルダが未設定または無効 → フォルダ確認オペレーターを呼び出す
+            bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')
+            self.report({'WARNING'}, _("Please specify a valid download folder and run again"))
+            return {'CANCELLED'}
+
+        # 処理の実行
+        success = download_and_finalize(url, folder, context)
+        if success:
+            # 通知フラグを下げる
+            context.window_manager.brt_new_release_available = False
+
+            # 更新チェック日時を保存
+            save_settings({"update_check": datetime.datetime.now(datetime.timezone.utc).isoformat()})
+
+            self.report({'INFO'}, _("Download completed"))
+            return {'FINISHED'}
+        else:
+            self.report({'ERROR'}, _("Download failed"))
+            return {'CANCELLED'}
+
+
+
+class BRT_OT_ExecuteUpdate(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """更新ファイルをインストール"""
     bl_idname = "brt.execute_update"
     bl_label = "Install Update File"
     bl_description = _("Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update")
     # bl_options = {'UNDO'}
 
-    filepath: bpy.props.StringProperty(
+    # ImportHelper 用のファイル選択パス（ダイアログ）
+    filepath_dialog: StringProperty(
         name="Select ZIP File",
         description=_("Choose a ZIP file starting with DIVA_BoneRenameTools"),    # DIVA_BoneRenameToolsで始まるZIPファイルを選択してください
-        #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
+        subtype='FILE_PATH',
+    )
+    filename_ext = ".zip"
+    filter_glob: StringProperty(default="*.zip", options={'HIDDEN'})
+
+    # UIリスト選択用のパス
+    filepath_list: StringProperty(
+        name="Selected from list",
+        description="Path from update candidate list",
+        subtype='FILE_PATH'
     )
 
     # ユーザーにフォルダ選択してもらうためのプロパティ（手動選択時のみ使用想定だがZIPファイル選択ダイアログとして機能）
@@ -147,19 +212,30 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
         except Exception:
             return None
 
-    def execute(self, context):
-        # 🔹 UIリストが選ばれていて、filepath が空の場合のみ 自動補完
-        if not self.filepath:
-            index = context.scene.brt_selected_candidate_index
-            candidates = context.scene.brt_update_candidates
-            if 0 <= index < len(candidates):
-                self.filepath = candidates[index].path
+    # UIからの選択かダイアログかで分岐
+    def invoke(self, context, event):
+        index = context.scene.fst_selected_candidate_index
+        candidates = context.scene.fst_update_candidates
 
-            # それでも filepath が空なら → ダイアログで選択させるべき
-            if not self.filepath:
-                self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))     # ZIPファイルが選択されていません。ファイルを指定してください
-                context.window_manager.fileselect_add(self)
-                return {'RUNNING_MODAL'}
+        if 0 <= index < len(candidates):
+            # リスト選択があればダイアログを開かず直接実行
+            self.filepath_list = candidates[index].path
+            self.filepath = self.filepath_list  # execute 内で使う共通変数にコピー
+            return self.execute(context)
+        else:
+            # 選択がなければダイアログで ZIP ファイルを選択
+            self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))     # ZIPファイルが選択されていません。ファイルを指定してください
+            return super().invoke(context, event)  # ImportHelper の fileselect_add() が呼ばれる
+
+    def execute(self, context):
+        # 選択されたパスを共通変数 filepath にセット
+        if getattr(self, "filepath_dialog", ""):
+            self.filepath = self.filepath_dialog
+
+        # ZIPファイルがない場合はキャンセル
+        if not getattr(self, "filepath", None):
+            self.report({'WARNING'}, _("No ZIP file selected"))
+            return {'CANCELLED'}
 
         # ZIPファイル名の確認（パターンに一致しなければ処理中止）
         filename = os.path.basename(self.filepath)
@@ -209,31 +285,32 @@ class BRT_OT_ExecuteUpdate(bpy.types.Operator):
 
             # 自動判定失敗 → ユーザーにフォルダを選ばせる
             else:
-                if not self.dirpath:
-                    # ユーザーに状況を説明してからDIR選択させる
-                    self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))    # インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください
-                    context.window_manager.fileselect_add(self)  # DIR選択を促す
-                    return {'RUNNING_MODAL'}
+                if False:
+                    if not self.dirpath:
+                        # ユーザーに状況を説明してからDIR選択させる
+                        self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))    # インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください
+                        context.window_manager.fileselect_add(self)  # DIR選択を促す
+                        return {'RUNNING_MODAL'}
 
-                # DIR選択後：キャンセルされた場合は中止＋後始末
-                if not self.dirpath:
-                    self.report({'INFO'}, _("Installation was cancelled"))
-                    shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
-                    context.window_manager.brt_update_completed = False
+                    # DIR選択後：キャンセルされた場合は中止＋後始末
+                    if not self.dirpath:
+                        self.report({'INFO'}, _("Installation was cancelled"))
+                        shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
+                        context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
                 # 選ばれたフォルダに __init__.py があるか確認
                 manual_init = os.path.join(self.dirpath, "__init__.py")
                 if not os.path.isfile(manual_init):
                     self.report({'WARNING'}, _("__init__.py not found in the selected folder"))
-                    shutil.rmtree(extract_path)
+                    # shutil.rmtree(extract_path)
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
                 manual_name = self.read_bl_info_name(manual_init)
                 if manual_name != source_name:
                     self.report({'WARNING'}, _("Update failed because bl_info.name does not match"))        # bl_info.name が一致しないため、更新できません
-                    shutil.rmtree(extract_path)
+                    shutil.rmtree(extract_path)     # 一時フォルダの削除
                     context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
@@ -320,7 +397,8 @@ class BRT_OT_ConfirmDownloadFolder(bpy.types.Operator):
         files = os.listdir(folder)
         for fname in sorted(files, reverse=True):
             # if fname.startswith("DIVA_BoneRenameTools") and fname.endswith(".zip"):
-            if re.match(r"^DIVA_BoneRenameTools.*\.zip$", fname, re.IGNORECASE):
+            # if re.match(r"^DIVA_BoneRenameTools.*\.zip$", fname, re.IGNORECASE):      # GamaBanana対応
+            if re.match(r"^DIVA_BoneRenameTools.*?( |\.)?v\d+\.\d+\.\d+(?:[ _\.-][a-zA-Z0-9]+)?(?: \(\d+\))?\.zip$", fname):  # 半角スペース→ピリオド変換 / 自動ナンバリング対応
                 full_path = os.path.join(folder, fname)
                 timestamp = os.path.getmtime(full_path)
                 import datetime
@@ -374,6 +452,7 @@ class BRT_OT_SortCandidatesByDate(bpy.types.Operator):
 def get_classes():
     return [
         BRT_OT_OpenURL,
+        BRT_OT_DownloadLatestZip,
         BRT_OT_ExecuteUpdate,
         BRT_OT_OpenAddonFolder,
         BRT_OT_ConfirmDownloadFolder,

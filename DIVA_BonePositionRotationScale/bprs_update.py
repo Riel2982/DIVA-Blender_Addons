@@ -7,7 +7,10 @@ import zipfile
 import shutil
 import re
 import datetime
+import time
+import urllib.request
 import addon_utils
+import traceback
 
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
@@ -25,9 +28,9 @@ CHECK_PRE_RELEASE = not USE_VERSION_CHECK
 
 if False:
     # 現在のバージョンと比較して通知を決定（Falseならバージョン関係なく日時基準で通知）
-    CHECK_CURRENT_VERSION = True
+    CHECK_CURRENT_VERSION = False
     # stable以外の通知を出すかどうか
-    CHECK_PRE_RELEASE = False
+    CHECK_PRE_RELEASE = True
 
 # 不要ファイル実行制御フラグ（一括管理）
 ENABLE_OBSOLETE_FILE_REMOVAL = False
@@ -58,9 +61,11 @@ def save_settings(new_data):
             json.dump(settings, f, indent=4, ensure_ascii=False)
 
         if DEBUG_MODE:
-            changed_keys = [k for k in new_data if before.get(k) != new_data[k]]
-            if changed_keys:
-                print("[BPRS] 設定ファイルを保存しました:", ", ".join(changed_keys))
+            changed = {k: (before.get(k), new_data[k]) for k in new_data if before.get(k) != new_data[k]}
+            if changed:
+                print("[BPRS] 設定ファイルを保存しました:")
+                for k, (old, new) in changed.items():
+                    print(f"  - {k}: {old} → {new}")
             else:
                 print("[BPRS] 設定ファイル: 変更なし")
 
@@ -72,6 +77,7 @@ def save_settings(new_data):
 def load_download_folder():
     settings = load_settings()
     return settings.get("download_folder", "")
+
 
 
 
@@ -124,6 +130,7 @@ def parse_release_filename(name):
     return {"version": "", "status": "unknown"}
 
 
+
 # GitHub最新リリース情報取得
 def get_latest_release_info(force=False):
     settings = load_settings()
@@ -162,6 +169,8 @@ def get_latest_release_info(force=False):
 
             # ZIPファイル照合
             pattern = re.compile(r"^DIVA_BonePositionRotationScale.*\.zip$", re.IGNORECASE)
+            download_url = ""  # URLを格納する変数
+            matched_zip_found = False   # ZIPファイルの存在初期化
             
             for asset in assets:
                 name = asset.get("name", "")
@@ -169,15 +178,22 @@ def get_latest_release_info(force=False):
                     print("  [BPRS] ZIPファイル名:", name)
 
                 if pattern.match(name):
+                    matched_zip_found = True    # ZIPファイルの確認
                     parsed = parse_release_filename(name)
                     version = parsed["version"]
                     status = parsed["status"]
+                    download_url = asset.get("browser_download_url", "")  # URL取得
                     if DEBUG_MODE:
                         print(f"  [BPRS] バージョン抽出: {version} / ステータス: {status}")
+                        print(f"  [BPRS] URL確認 / {download_url}")
                     break
+
                 else:
                     if DEBUG_MODE:
                         print("  [BPRS] バージョン抽出失敗:", name)
+
+            if not matched_zip_found and DEBUG_MODE:
+                print("[BPRS] 対象ZIPが見つかりませんでした")
 
             if not version and DEBUG_MODE:
                 print("[BPRS] ZIPファイルからバージョンが抽出できません")
@@ -185,7 +201,8 @@ def get_latest_release_info(force=False):
             release_info = {
                 "published_at": published_at,
                 "version": version or "",
-                "status": status or "unknown"
+                "status": status or "unknown",
+                "download_url": download_url,  # URLを保存
             }
 
             # 保存
@@ -198,7 +215,19 @@ def get_latest_release_info(force=False):
 
     except Exception as e:
         if DEBUG_MODE:
-            print("[BPRS] GitHub取得失敗:", str(e))
+            print("[BPRS] GitHub取得失敗:", repr(e))
+            traceback.print_exc()
+
+        # 失敗しても取得時刻は記録する
+        save_settings({
+            "api_checked_at": now.isoformat(),
+            "latest_release": {
+                "version": "",
+                "status": "unavailable",    # 取得できなかったステータス（他は空っぽに）
+                "download_url": "",
+                "published_at": ""
+            }
+        })
         return {}  # API取得失敗時
 
 
@@ -220,7 +249,7 @@ def get_current_version():
             print("[BPRS] bl_info の取得に失敗")
         return ()
 
-# 更新通知判定
+# 更新通知判定（if not reference or latest_dt > reference:基準日時がない場合は通知する）
 def is_new_release_available():
     latest = get_latest_release_info()
     if not latest:
@@ -305,24 +334,49 @@ def is_new_release_available():
 # UI通知ラベル表示
 def get_release_label():
     wm = bpy.context.window_manager
-    if not getattr(wm, "bprs_new_release_available", False):
-        if DEBUG_MODE:
-            print("[BPRS] 通知なし: bprs_new_release_available=False")
-        return None
+    
+    # 通知なしログを一度だけ出す
+    if DEBUG_MODE:
+        ns = bpy.app.driver_namespace
+        if not ns.get("_bprs_logged_no_release"):
+            print("[BPRS] 通知なし: brt_new_release_available=False")
+            ns["_bprs_logged_no_release"] = True
+    if False:
+        if not getattr(wm, "bprs_new_release_available", False):
+            if DEBUG_MODE:
+                print("[BPRS] 通知なし: bprs_new_release_available=False")
+            return None
 
     release_info = get_latest_release_data()
     version = release_info.get("version", "")
     status = release_info.get("status", "unknown")
 
     if not version:
-        if DEBUG_MODE:
-            print("[BPRS] 通知なし: versionが空")
+        if DEBUG_MODE:  # 通知なしログを一度だけ出す
+            ns = bpy.app.driver_namespace
+            if not ns.get("_bprs_logged_no_version"):
+                print("[BPRS] 通知なし: versionが空")
+                ns["_bprs_logged_no_version"] = True
         return None
 
     if status != "stable" and not CHECK_PRE_RELEASE:
-        if DEBUG_MODE:
-            print(f"[BPRS] 通知抑制: status={status}")
+        if DEBUG_MODE:  # 通知抑制ログを一度だけ出す
+            ns = bpy.app.driver_namespace
+            if not ns.get("_bprs_logged_status_suppressed"):
+                print(f"[BPRS] 通知抑制: status={status}")
+                ns["_bprs_logged_status_suppressed"] = True
         return None
+
+    if False:
+        if not version:
+            if DEBUG_MODE:
+                print("[BPRS] 通知なし: versionが空")
+            return None
+
+        if status != "stable" and not CHECK_PRE_RELEASE:
+            if DEBUG_MODE:
+                print(f"[BPRS] 通知抑制: status={status}")
+            return None
 
     # 表示用バージョン名
     display_version = version
@@ -335,14 +389,76 @@ def get_release_label():
         clean = re.sub(r"\((.*?)\)", r" \1", display_version).strip()
         display_version = f"({clean})"
 
-    if DEBUG_MODE:
-        print(f"[BPRS] 通知表示: {display_version}")
+    if DEBUG_MODE:  # 通知表示ログを一度だけ出す
+        ns = bpy.app.driver_namespace
+        if not ns.get("_bprs_logged_display_version"):
+            print(f"[BPRS] 通知表示: {display_version}")
+            ns["_bprs_logged_display_version"] = True
+
+
+    if False:
+        # 通知ログの重複防止
+        last_displayed = getattr(wm, "bprs_last_display_version", None)
+        if DEBUG_MODE and display_version != last_displayed:
+            print(f"[BPRS] 通知表示: {display_version}")
+            wm.bprs_last_display_version = display_version
 
     return display_version
 
+# ダウンロードファイルの自動ナンバリング
+def get_unique_filename(folder, filename):
+    base, ext = os.path.splitext(filename)
+    candidate = filename
+    counter = 1
+    while os.path.exists(os.path.join(folder, candidate)):
+        candidate = f"{base} ({counter}){ext}"
+        counter += 1
+    return candidate
 
+# 更新ファイルのダウンロード
+def download_and_finalize(url, folder, context):
+    scene = context.scene
+    try:
+        # ファイル名と保存先パスの決定
+        filename = os.path.basename(url)
+        filename = get_unique_filename(folder, filename)    # 自動ナンバリング
+        save_path = os.path.join(folder, filename)
 
+        # ダウンロード処理
+        urllib.request.urlretrieve(url, save_path)
+        if DEBUG_MODE:
+            print(f"[BPRS] ダウンロード完了: {save_path}")
 
+        # 少し待ってから通知フラグを下げる
+        time.sleep(1.5)
+        if False:
+            context.window_manager.bprs_new_release_available = False   
+            if DEBUG_MODE:
+                print("[BPRS] 通知フラグを False に設定しました")
+
+        # 候補リスト更新処理
+        scene.bprs_update_candidates.clear()
+        files = os.listdir(folder)
+        for fname in sorted(files, reverse=True):
+            # if re.match(r"^DIVA_BonePositionRotationScale.*( |\.)?v\d+\.\d+\.\d+([ _\.-][a-zA-Z0-9]+)?\.zip$", fname):
+            if re.match(r"^DIVA_BonePositionRotationScale.*?( |\.)?v\d+\.\d+\.\d+(?:[ _\.-][a-zA-Z0-9]+)?(?: \(\d+\))?\.zip$", fname):  # 自動ナンバリング対応
+                full_path = os.path.join(folder, fname)
+                timestamp = os.path.getmtime(full_path)
+                date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+                item = scene.bprs_update_candidates.add()
+                item.name = fname
+                item.path = full_path
+                item.date = date
+
+        if DEBUG_MODE:
+            print("[BPRS] 候補リストを更新しました")
+
+        return True
+
+    except Exception as e:
+        if DEBUG_MODE:
+            print(f"[BPRS] ダウンロード失敗: {str(e)}")
+        return False
 
 
 
@@ -371,6 +487,8 @@ def remove_obsolete_files_on_startup():
 
     for rel_path in OBSOLETE_FILES:
         abs_path = os.path.join(addon_folder, rel_path)
+
+        # ファイルを削除
         if os.path.isfile(abs_path):
             try:
                 os.remove(abs_path)
@@ -380,6 +498,18 @@ def remove_obsolete_files_on_startup():
             except Exception as e:
                 if DEBUG_MODE:
                     print(f"[BPRS] 起動時削除失敗: {abs_path} → {str(e)}")
+        
+        # フォルダを削除
+        elif os.path.isdir(abs_path):
+            try:
+                shutil.rmtree(abs_path)
+                deleted_files.append(rel_path + "/")  # フォルダとわかるように表記
+                if DEBUG_MODE:
+                    print(f"[BPRS] 起動時にフォルダ削除: {abs_path}")
+            except Exception as e:
+                if DEBUG_MODE:
+                    print(f"[BPRS] 起動時フォルダ削除失敗: {abs_path} → {str(e)}")
+
         else:
             if DEBUG_MODE:
                 print(f"[BPRS] 起動時削除対象なし: {abs_path}")
@@ -455,3 +585,101 @@ def initialize_candidate_list():
     if DEBUG_MODE:
         print("[BPRS] 起動時更新チェック:", result)
         print("[BPRS] 通知フラグ:", wm.bprs_new_release_available)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 未使用関数（該当ZIPが複数ある時の判断基準）/ GutHub運用でカバー
+
+# 大きなバージョン数値を割り出す時の補正用（version_tuple の生成関数）
+def parse_version_tuple(version_str):
+    """
+    version_str: "1.2.3" のような文字列
+    戻り値: (1, 2, 3) のような数値タプル（比較用）
+    """
+    try:
+        return tuple(map(int, version_str.split(".")))
+    except Exception:
+        return (0, 0, 0)  # パース失敗時は最小値で処理
+
+# status の優先度関数
+def get_status_rank(status):
+    # 優先度の数値（小さいほど優先）
+    rank_map = {"stable": 0, "rc": 1, "beta": 2, "alpha": 3, "unknown": 4}
+    return rank_map.get(status.lower(), 4)
+
+# GitHubリリースのアセット群から、最も適切なZIPファイルを選択
+def select_best_release_zip(assets, allow_pre_release=False):
+    """
+    優先順位：
+      1. バージョン数値が最大かつ stable
+      2. バージョンが同じなら stable > rc > beta > alpha
+      3. pre-release（beta等）は allow_pre_release=True のときのみ選択対象
+    """
+
+    candidates = []
+
+    # ① ZIPファイルのうち、対象名を含むものだけを抽出
+    for asset in assets:
+        name = asset.get("name", "")
+        if name.endswith(".zip") and "DIVA_BonePositionRotationScale" in name:
+            # ファイル名から version と status を抽出（抽出責任は parse_release_filename に限定）
+            parsed = parse_release_filename(name)
+            version_str = parsed["version"].lstrip("v")  # "v1.2.3" → "1.2.3"
+            status = parsed["status"]
+
+            # version_str を比較用に数値タプルへ変換（抽出ではなく選択の責任）
+            version_tuple = parse_version_tuple(version_str)
+
+            # 候補リストに追加（version, status, asset の3要素）
+            candidates.append((version_tuple, status, asset))
+
+    # ② 該当ZIPが1つもなかった場合は None を返す
+    if not candidates:
+        if DEBUG_MODE:
+            print("[BPRS] 該当ZIPが見つかりません")
+        return None
+
+    # ③ ソート基準を定義：バージョン降順 → ステータス優先度（stableが最優先）
+    def sort_key(item):
+        version, status, _ = item
+        # status_rank は stable > rc > beta > alpha の優先度を定義
+        return (-version[0], -version[1], -version[2], get_status_rank(status))
+
+    # ④ 候補リストを優先順位に従ってソート
+    candidates.sort(key=sort_key)
+
+    # ⑤ ソート済み候補から最適なZIPを選択
+    for version, status, asset in candidates:
+        rank = get_status_rank(status)
+        if rank == 0:  # stable
+            if DEBUG_MODE:
+                print(f"[BPRS] 選択ZIP: {asset['name']} （stable優先）")
+            return asset
+        elif allow_pre_release and rank < 4:
+            if DEBUG_MODE:
+                print(f"[BPRS] 選択ZIP: {asset['name']} （pre-release許可）")
+            return asset
+        else:
+            if DEBUG_MODE:
+                print(f"[BPRS] スキップZIP: {asset['name']} （{status}は除外）")
+
+    # ⑥ すべて除外された場合は None を返す
+    if DEBUG_MODE:
+        print("[BPRS] 有効なZIPが選択されませんでした")
+    return None

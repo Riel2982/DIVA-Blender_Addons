@@ -166,70 +166,82 @@ translation_dict = {
         ("*", "Display UI to edit identifier sets"): "識別子セットを編集するUIを表示する",
         # mwr_types.py:85
         ("*", "Name of the last symmetrized mesh object"): "最後に対称化処理をしたメッシュオブジェクトの名前",
-        # mwr_uix_update.py:21, mwr_update - コピー.py:18
+        # mwr_uix_update.py:27, mwr_update - コピー.py:18
         ("*", "Update"): "アップデート",
-        # mwr_uix_update.py:24, mwr_update - コピー.py:21
+        # mwr_uix_update.py:30, mwr_update - コピー.py:21
         ("*", "Check for Updates"): "更新を確認",
-        # mwr_uix_update.py:27, mwr_update - コピー.py:24
+        # mwr_uix_update.py:33, mwr_update - コピー.py:24
         ("*", "Install"): "インストール",
-        # mwr_uix_update.py:28, mwr_update - コピー.py:25
+        # mwr_uix_update.py:34, mwr_update - コピー.py:25
         ("*", "Open Addon Folder"): "アドオンフォルダを開く",
-        # mwr_uix_update.py:34
-        ("*", "GitHub has a recent release: "): "Githubに最近リリースあり ",
-        # mwr_uix_update.py:43, mwr_uix_update.py:44
-        ("*", "GitHub has a recent release. "): "Githubに最近リリースあり /  ",
         # mwr_uix_update.py:48
+        ("*", "GitHub has a preview release: "): "",
+        # mwr_uix_update.py:50
+        ("*", "GitHub has a recent release: "): "Githubに最近リリースあり ",
+        # mwr_uix_update.py:64, mwr_uix_update.py:65
+        ("*", "GitHub has a recent release. "): "Githubに最近リリースあり /  ",
+        # mwr_uix_update.py:69
         ("*", "Path to ZIP download folder "): "ZIP保存先フォルダ ",
-        # mwr_uix_update.py:58, mwr_update - コピー.py:44
+        # mwr_uix_update.py:79, mwr_update - コピー.py:44
         ("*", "Update file list: "): "更新ファイル一覧： ",
-        # mwr_uix_update.py:91, mwr_update - コピー.py:145
+        # mwr_uix_update.py:112, mwr_update - コピー.py:145
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
-        # mwr_uix_update.py:115, mwr_update - コピー.py:171
+        # mwr_uix_update.py:142
+        ("*", "Download URL could not be retrieved"): "ダウンロードURLが取得できません",
+        # mwr_uix_update.py:150
+        ("*", "Please specify a valid download folder and run again"): "ZIP保存先フォルダを指定後、再び実行してください",
+        # mwr_uix_update.py:162
+        ("*", "Download completed"): "ダウンロードが完了しました",
+        # mwr_uix_update.py:165
+        ("*", "Download failed"): "ダウンロードできませんでした",
+        # mwr_uix_update.py:173, mwr_update - コピー.py:171
         ("*", "Select a ZIP archive beginning with DIVA_MeshWeightReflector to install the update"): "アップデートをインストールするには、DIVA_MeshWeightReflectorで始まるZIPファイルを選択してください",
-        # mwr_uix_update.py:120, mwr_update - コピー.py:176
+        # mwr_uix_update.py:179, mwr_update - コピー.py:176
         ("*", "Choose a ZIP file starting with DIVA_MeshWeightReflector"): "DIVA_MeshWeightReflectorで始まるZIPファイルを選択してください",
-        # mwr_uix_update.py:127, mwr_update - コピー.py:183
+        # mwr_uix_update.py:195, mwr_update - コピー.py:183
         ("*", "Choose the folder where the addon is installed"): "アドオンがインストールされているフォルダを選択してください",
-        # mwr_uix_update.py:158, mwr_update - コピー.py:214
+        # mwr_uix_update.py:228, mwr_update - コピー.py:214
         ("*", "No ZIP file selected. Please specify a file"): "ZIPファイルが選択されていません。ファイルを指定してください",
-        # mwr_uix_update.py:166, mwr_update - コピー.py:223
+        # mwr_uix_update.py:238
+        ("*", "No ZIP file selected"): "ZIPファイルを選択してください",
+        # mwr_uix_update.py:245, mwr_update - コピー.py:223
         ("*", "Only ZIP files starting with DIVA_MeshWeightReflector can be processed"): "DIVA_MeshWeightReflector で始まるZIPファイル以外は処理できません",
-        # mwr_uix_update.py:183, mwr_update - コピー.py:240
+        # mwr_uix_update.py:262, mwr_update - コピー.py:240
         ("*", "Missing DIVA_MeshWeightReflector folder or __init__.py inside the ZIP file"): "ZIP内に DIVA_MeshWeightReflector フォルダまたは __init__.py が見つかりません",
-        # mwr_uix_update.py:190, mwr_update - コピー.py:248
+        # mwr_uix_update.py:269, mwr_update - コピー.py:248
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "ZIP内の bl_info.name を取得できません",
-        # mwr_uix_update.py:212, mwr_update - コピー.py:271
+        # mwr_uix_update.py:292, mwr_update - コピー.py:271
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください",
-        # mwr_uix_update.py:218, mwr_update - コピー.py:277
+        # mwr_uix_update.py:298, mwr_update - コピー.py:277
         ("*", "Installation was cancelled"): "インストールはキャンセルされました",
-        # mwr_uix_update.py:226, mwr_update - コピー.py:285
+        # mwr_uix_update.py:306, mwr_update - コピー.py:285
         ("*", "__init__.py not found in the selected folder"): "選択されたフォルダに __init__.py が見つかりません",
-        # mwr_uix_update.py:233, mwr_update - コピー.py:292
+        # mwr_uix_update.py:313, mwr_update - コピー.py:292
         ("*", "Update failed because bl_info.name does not match"): "bl_info.name が一致しないため、更新できません",
-        # mwr_uix_update.py:261, mwr_uix_update.py:53, mwr_update - コピー.py:315, mwr_update - コピー.py:39
+        # mwr_uix_update.py:352, mwr_uix_update.py:74, mwr_update - コピー.py:315, mwr_update - コピー.py:39
         ("*", "Update completed. Please restart Blender"): "更新が完了しました。Blenderを再起動してください",
-        # mwr_uix_update.py:266, mwr_update - コピー.py:320
+        # mwr_uix_update.py:357, mwr_update - コピー.py:320
         ("*", "Update failed: {error}"): "更新に失敗しました: {error}",
-        # mwr_uix_update.py:274, mwr_update - コピー.py:328
+        # mwr_uix_update.py:365, mwr_update - コピー.py:328
         ("*", "Please select a ZIP file"): "ZIPファイルを選択してください",
-        # mwr_uix_update.py:275, mwr_update - コピー.py:329
+        # mwr_uix_update.py:366, mwr_update - コピー.py:329
         ("*", "Please restart Blender after the update"): "更新後はBlenderを再起動してください",
-        # mwr_uix_update.py:282, mwr_update - コピー.py:336
+        # mwr_uix_update.py:373, mwr_update - コピー.py:336
         ("*", "Opens the folder where this addon is installed"): "現在のアドオンフォルダを開く",
-        # mwr_uix_update.py:300, mwr_update - コピー.py:354
+        # mwr_uix_update.py:391, mwr_update - コピー.py:354
         ("*", "Scan the folder and list update candidate files"): "ZIPファイルリストの更新",
-        # mwr_uix_update.py:314, mwr_update - コピー.py:368
+        # mwr_uix_update.py:405, mwr_update - コピー.py:368
         ("*", "Download folder setting has been saved"): "DLフォルダ設定が保存されました",
-        # mwr_uix_update.py:337, mwr_update - コピー.py:391
+        # mwr_uix_update.py:429, mwr_update - コピー.py:391
         ("*", "Sort update files by file name. Click again to toggle order"): "ZIPファイル名ソート(A–Z / Z–A)",
-        # mwr_uix_update.py:356, mwr_update - コピー.py:410
+        # mwr_uix_update.py:448, mwr_update - コピー.py:410
         ("*", "Sort update files by update/download date. Click again to toggle order"): "日時順ソート(newest ↔ oldest)",
-        # mwr_uix_update.py:388, mwr_update - コピー.py:448
+        # mwr_uix_update.py:481, mwr_update - コピー.py:448
         ("*", "Specify the folder where the update ZIP is stored"): "更新用ZIPが保存されているフォルダを指定してください",
         # mwr_update - コピー.py:30
         ("*", "GitHub has a recent release. Check if it includes updates for this addon."): "GitHubに新しいリリースがあります。更新が含まれているかご確認ください。",
         # mwr_update - コピー.py:34
-        ("*", "Path to ZIP download folder"): "ダウンロードフォルダーへのzipへのパス",
+        ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
     },
     "en_US": {
         # mwr_panel.py:47
@@ -396,65 +408,77 @@ translation_dict = {
         ("*", "Display UI to edit identifier sets"): "Display UI to edit identifier sets",
         # mwr_types.py:85
         ("*", "Name of the last symmetrized mesh object"): "Name of the last symmetrized mesh object",
-        # mwr_uix_update.py:21, mwr_update - コピー.py:18
+        # mwr_uix_update.py:27, mwr_update - コピー.py:18
         ("*", "Update"): "Update",
-        # mwr_uix_update.py:24, mwr_update - コピー.py:21
+        # mwr_uix_update.py:30, mwr_update - コピー.py:21
         ("*", "Check for Updates"): "Check for Updates",
-        # mwr_uix_update.py:27, mwr_update - コピー.py:24
+        # mwr_uix_update.py:33, mwr_update - コピー.py:24
         ("*", "Install"): "Install",
-        # mwr_uix_update.py:28, mwr_update - コピー.py:25
+        # mwr_uix_update.py:34, mwr_update - コピー.py:25
         ("*", "Open Addon Folder"): "Open Addon Folder",
-        # mwr_uix_update.py:34
-        ("*", "GitHub has a recent release: "): "GitHub has a recent release: ",
-        # mwr_uix_update.py:43, mwr_uix_update.py:44
-        ("*", "GitHub has a recent release. "): "GitHub has a recent release. ",
         # mwr_uix_update.py:48
+        ("*", "GitHub has a preview release: "): "GitHub has a preview release: ",
+        # mwr_uix_update.py:50
+        ("*", "GitHub has a recent release: "): "GitHub has a recent release: ",
+        # mwr_uix_update.py:64, mwr_uix_update.py:65
+        ("*", "GitHub has a recent release. "): "GitHub has a recent release. ",
+        # mwr_uix_update.py:69
         ("*", "Path to ZIP download folder "): "Path to ZIP download folder ",
-        # mwr_uix_update.py:58, mwr_update - コピー.py:44
+        # mwr_uix_update.py:79, mwr_update - コピー.py:44
         ("*", "Update file list: "): "Update file list: ",
-        # mwr_uix_update.py:91, mwr_update - コピー.py:145
+        # mwr_uix_update.py:112, mwr_update - コピー.py:145
         ("*", "Opens the GitHub release page to check for update files"): "Opens the GitHub release page to check for update files",
-        # mwr_uix_update.py:115, mwr_update - コピー.py:171
+        # mwr_uix_update.py:142
+        ("*", "Download URL could not be retrieved"): "Download URL could not be retrieved",
+        # mwr_uix_update.py:150
+        ("*", "Please specify a valid download folder and run again"): "Please specify a valid download folder and run again",
+        # mwr_uix_update.py:162
+        ("*", "Download completed"): "Download completed",
+        # mwr_uix_update.py:165
+        ("*", "Download failed"): "Download failed",
+        # mwr_uix_update.py:173, mwr_update - コピー.py:171
         ("*", "Select a ZIP archive beginning with DIVA_MeshWeightReflector to install the update"): "Select a ZIP archive beginning with DIVA_MeshWeightReflector to install the update",
-        # mwr_uix_update.py:120, mwr_update - コピー.py:176
+        # mwr_uix_update.py:179, mwr_update - コピー.py:176
         ("*", "Choose a ZIP file starting with DIVA_MeshWeightReflector"): "Choose a ZIP file starting with DIVA_MeshWeightReflector",
-        # mwr_uix_update.py:127, mwr_update - コピー.py:183
+        # mwr_uix_update.py:195, mwr_update - コピー.py:183
         ("*", "Choose the folder where the addon is installed"): "Choose the folder where the addon is installed",
-        # mwr_uix_update.py:158, mwr_update - コピー.py:214
+        # mwr_uix_update.py:228, mwr_update - コピー.py:214
         ("*", "No ZIP file selected. Please specify a file"): "No ZIP file selected. Please specify a file",
-        # mwr_uix_update.py:166, mwr_update - コピー.py:223
+        # mwr_uix_update.py:238
+        ("*", "No ZIP file selected"): "No ZIP file selected",
+        # mwr_uix_update.py:245, mwr_update - コピー.py:223
         ("*", "Only ZIP files starting with DIVA_MeshWeightReflector can be processed"): "Only ZIP files starting with DIVA_MeshWeightReflector can be processed",
-        # mwr_uix_update.py:183, mwr_update - コピー.py:240
+        # mwr_uix_update.py:262, mwr_update - コピー.py:240
         ("*", "Missing DIVA_MeshWeightReflector folder or __init__.py inside the ZIP file"): "Missing DIVA_MeshWeightReflector folder or __init__.py inside the ZIP file",
-        # mwr_uix_update.py:190, mwr_update - コピー.py:248
+        # mwr_uix_update.py:269, mwr_update - コピー.py:248
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "Could not retrieve bl_info.name from the ZIP file",
-        # mwr_uix_update.py:212, mwr_update - コピー.py:271
+        # mwr_uix_update.py:292, mwr_update - コピー.py:271
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "Addon installation folder not found. Please select the destination folder manually",
-        # mwr_uix_update.py:218, mwr_update - コピー.py:277
+        # mwr_uix_update.py:298, mwr_update - コピー.py:277
         ("*", "Installation was cancelled"): "Installation was cancelled",
-        # mwr_uix_update.py:226, mwr_update - コピー.py:285
+        # mwr_uix_update.py:306, mwr_update - コピー.py:285
         ("*", "__init__.py not found in the selected folder"): "__init__.py not found in the selected folder",
-        # mwr_uix_update.py:233, mwr_update - コピー.py:292
+        # mwr_uix_update.py:313, mwr_update - コピー.py:292
         ("*", "Update failed because bl_info.name does not match"): "Update failed because bl_info.name does not match",
-        # mwr_uix_update.py:261, mwr_uix_update.py:53, mwr_update - コピー.py:315, mwr_update - コピー.py:39
+        # mwr_uix_update.py:352, mwr_uix_update.py:74, mwr_update - コピー.py:315, mwr_update - コピー.py:39
         ("*", "Update completed. Please restart Blender"): "Update completed. Please restart Blender",
-        # mwr_uix_update.py:266, mwr_update - コピー.py:320
+        # mwr_uix_update.py:357, mwr_update - コピー.py:320
         ("*", "Update failed: {error}"): "Update failed: {error}",
-        # mwr_uix_update.py:274, mwr_update - コピー.py:328
+        # mwr_uix_update.py:365, mwr_update - コピー.py:328
         ("*", "Please select a ZIP file"): "Please select a ZIP file",
-        # mwr_uix_update.py:275, mwr_update - コピー.py:329
+        # mwr_uix_update.py:366, mwr_update - コピー.py:329
         ("*", "Please restart Blender after the update"): "Please restart Blender after the update",
-        # mwr_uix_update.py:282, mwr_update - コピー.py:336
+        # mwr_uix_update.py:373, mwr_update - コピー.py:336
         ("*", "Opens the folder where this addon is installed"): "Opens the folder where this addon is installed",
-        # mwr_uix_update.py:300, mwr_update - コピー.py:354
+        # mwr_uix_update.py:391, mwr_update - コピー.py:354
         ("*", "Scan the folder and list update candidate files"): "Scan the folder and list update candidate files",
-        # mwr_uix_update.py:314, mwr_update - コピー.py:368
+        # mwr_uix_update.py:405, mwr_update - コピー.py:368
         ("*", "Download folder setting has been saved"): "Download folder setting has been saved",
-        # mwr_uix_update.py:337, mwr_update - コピー.py:391
+        # mwr_uix_update.py:429, mwr_update - コピー.py:391
         ("*", "Sort update files by file name. Click again to toggle order"): "Sort update files by file name. Click again to toggle order",
-        # mwr_uix_update.py:356, mwr_update - コピー.py:410
+        # mwr_uix_update.py:448, mwr_update - コピー.py:410
         ("*", "Sort update files by update/download date. Click again to toggle order"): "Sort update files by update/download date. Click again to toggle order",
-        # mwr_uix_update.py:388, mwr_update - コピー.py:448
+        # mwr_uix_update.py:481, mwr_update - コピー.py:448
         ("*", "Specify the folder where the update ZIP is stored"): "Specify the folder where the update ZIP is stored",
         # mwr_update - コピー.py:30
         ("*", "GitHub has a recent release. Check if it includes updates for this addon."): "GitHub has a recent release. Check if it includes updates for this addon.",

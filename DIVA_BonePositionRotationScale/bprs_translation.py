@@ -34,15 +34,15 @@ translation_dict = {
         ("*", "Filename to save - without extension"): "保存するファイル名（拡張子なし）",
         # bprs_types.py:59
         ("*", "Destination folder"): "保存先フォルダ",
-        # bprs_types.py:63
+        # bprs_types.py:63, bprs_ui_export.py:42
         ("*", "Auto Open File"): "ファイルを自動で開く",
         # bprs_types.py:64
         ("*", "Automatically open the file after export"): "エクスポート後に自動でファイルを開く",
-        # bprs_types.py:68
+        # bprs_types.py:68, bprs_ui_export.py:46
         ("*", "Overwrite Existing File"): "ファイルの上書きを防止",
         # bprs_types.py:69
         ("*", "Overwrite existing file / rename if unchecked"): "既存ファイルを上書きする（OFFならリネーム）",
-        # bprs_types.py:73
+        # bprs_types.py:73, bprs_ui_export.py:50
         ("*", "Export as JSON"): "JSON形式で保存",
         # bprs_types.py:74
         ("*", "Save in JSON format / TXT if unchecked"): "JSON形式で保存する（チェックなしならTXT）",
@@ -92,6 +92,10 @@ translation_dict = {
         ("*", "removed"): "解除",
         # bprs_ui_check.py:443
         ("*", "{count} bones were {mode} from display"): "{count} 件のボーン表示を {mode} しました",
+        # bprs_ui_export.py:27
+        ("*", "File Name :"): "ファイル名：",
+        # bprs_ui_export.py:33
+        ("*", "Export Path :"): "保存場所：",
         # bprs_ui_export.py:81
         ("*", "Open folder selection dialog"): "フォルダ選択ダイアログを開く",
         # bprs_ui_export.py:103
@@ -110,67 +114,77 @@ translation_dict = {
         ("*", "Bone data exported to: {path}"): "ボーンデータのファイル出力完了：{path}",
         # bprs_ui_export.py:209
         ("*", "Failed to export: {error}"): "エクスポートに失敗しました: {error}",
-        # bprs_uix_update.py:39, bprs_update - コピー.py:57
+        # bprs_uix_update.py:47, bprs_update - コピー.py:57
         ("*", "Update"): "アップデート",
-        # bprs_uix_update.py:42, bprs_update - コピー.py:60
+        # bprs_uix_update.py:50, bprs_update - コピー.py:60
         ("*", "Check for Updates"): "更新を確認",
-        # bprs_uix_update.py:45, bprs_update - コピー.py:63
+        # bprs_uix_update.py:53, bprs_update - コピー.py:63
         ("*", "Install"): "インストール",
-        # bprs_uix_update.py:46, bprs_update - コピー.py:64
+        # bprs_uix_update.py:54, bprs_update - コピー.py:64
         ("*", "Open Addon Folder"): "アドオンフォルダを開く",
-        # bprs_uix_update.py:52
+        # bprs_uix_update.py:65, bprs_uix_update.py:80
         ("*", "GitHub has a recent release: "): "GitHubに最新リリースあり ",
-        # bprs_uix_update.py:61, bprs_uix_update.py:62
+        # bprs_uix_update.py:89, bprs_uix_update.py:90
         ("*", "GitHub has a recent release. "): "GitHubに最新リリースあり。",
-        # bprs_uix_update.py:66
+        # bprs_uix_update.py:94
         ("*", "Path to ZIP download folder "): "ZIP保存先フォルダ ",
-        # bprs_uix_update.py:76, bprs_update - コピー.py:78
+        # bprs_uix_update.py:104, bprs_update - コピー.py:78
         ("*", "Update file list: "): "更新ファイル一覧：",
-        # bprs_uix_update.py:109, bprs_update - コピー.py:136
+        # bprs_uix_update.py:137, bprs_update - コピー.py:136
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
-        # bprs_uix_update.py:133, bprs_update - コピー.py:154
+        # bprs_uix_update.py:168
+        ("*", "Download URL could not be retrieved"): "ダウンロードURLが取得できません",
+        # bprs_uix_update.py:176
+        ("*", "Please specify a valid download folder and run again"): "ZIP保存先フォルダを指定後、再び実行してください",
+        # bprs_uix_update.py:188
+        ("*", "Download completed"): "ダウンロードが完了しました",
+        # bprs_uix_update.py:191
+        ("*", "Download failed"): "ダウンロードできませんでした",
+        # bprs_uix_update.py:201, bprs_update - コピー.py:154
         ("*", "Select a ZIP archive beginning with DIVA_BonePositionRotationScale to install the update"): "アップデートをインストールするには、DIVA_BonePositionRotationScaleで始まるZIPファイルを選択してください",
-        # bprs_uix_update.py:138, bprs_update - コピー.py:159
+        # bprs_uix_update.py:207, bprs_update - コピー.py:159
         ("*", "Choose a ZIP file starting with DIVA_BonePositionRotationScale"): "DIVA_BonePositionRotationScaleで始まるZIPファイルを選択してください",
-        # bprs_uix_update.py:145, bprs_update - コピー.py:166
+        # bprs_uix_update.py:223, bprs_update - コピー.py:166
         ("*", "Choose the folder where the addon is installed"): "アドオンがインストールされているフォルダを選択してください",
-        # bprs_uix_update.py:176, bprs_update - コピー.py:197
+        # bprs_uix_update.py:256, bprs_update - コピー.py:197
         ("*", "No ZIP file selected. Please specify a file"): "ZIPファイルが選択されていません。ファイルを指定してください",
-        # bprs_uix_update.py:184, bprs_update - コピー.py:205
+        # bprs_uix_update.py:266
+        ("*", "No ZIP file selected"): "zipファイルが選択されていません",
+        # bprs_uix_update.py:273, bprs_update - コピー.py:205
         ("*", "Only ZIP files starting with DIVA_BonePositionRotationScale can be processed"): "DIVA_BonePositionRotationScale で始まるZIPファイル以外は処理できません",
-        # bprs_uix_update.py:201, bprs_update - コピー.py:222
+        # bprs_uix_update.py:290, bprs_update - コピー.py:222
         ("*", "Missing DIVA_BonePositionRotationScale folder or __init__.py inside the ZIP file"): "ZIP内に DIVA_BonePositionRotationScale フォルダまたは __init__.py が見つかりません",
-        # bprs_uix_update.py:208, bprs_update - コピー.py:229
+        # bprs_uix_update.py:297, bprs_update - コピー.py:229
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "ZIP内の bl_info.name を取得できません",
-        # bprs_uix_update.py:230, bprs_update - コピー.py:251
+        # bprs_uix_update.py:320, bprs_update - コピー.py:251
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください",
-        # bprs_uix_update.py:236, bprs_update - コピー.py:257
+        # bprs_uix_update.py:326, bprs_update - コピー.py:257
         ("*", "Installation was cancelled"): "インストールはキャンセルされました",
-        # bprs_uix_update.py:244, bprs_update - コピー.py:265
+        # bprs_uix_update.py:334, bprs_update - コピー.py:265
         ("*", "__init__.py not found in the selected folder"): "選択されたフォルダに __init__.py が見つかりません",
-        # bprs_uix_update.py:251, bprs_update - コピー.py:272
+        # bprs_uix_update.py:341, bprs_update - コピー.py:272
         ("*", "Update failed because bl_info.name does not match"): "bl_info.name が一致しないため、更新できません",
-        # bprs_uix_update.py:279, bprs_uix_update.py:71, bprs_update - コピー.py:291, bprs_update - コピー.py:73
+        # bprs_uix_update.py:379, bprs_uix_update.py:99, bprs_update - コピー.py:291, bprs_update - コピー.py:73
         ("*", "Update completed. Please restart Blender"): "更新が完了しました。Blenderを再起動してください",
-        # bprs_uix_update.py:284, bprs_update - コピー.py:296
+        # bprs_uix_update.py:384, bprs_update - コピー.py:296
         ("*", "Update failed: {error}"): "更新に失敗しました: {error}",
-        # bprs_uix_update.py:292, bprs_update - コピー.py:304
+        # bprs_uix_update.py:392, bprs_update - コピー.py:304
         ("*", "Please select a ZIP file"): "ZIPファイルを選択してください",
-        # bprs_uix_update.py:293, bprs_update - コピー.py:305
+        # bprs_uix_update.py:393, bprs_update - コピー.py:305
         ("*", "Please restart Blender after the update"): "更新後はBlenderを再起動してください",
-        # bprs_uix_update.py:300, bprs_update - コピー.py:312
+        # bprs_uix_update.py:400, bprs_update - コピー.py:312
         ("*", "Opens the folder where this addon is installed"): "現在のアドオンフォルダを開く",
-        # bprs_uix_update.py:318, bprs_update - コピー.py:330
+        # bprs_uix_update.py:418, bprs_update - コピー.py:330
         ("*", "Scan the folder and list update candidate files"): "ZIPファイルリストの更新",
-        # bprs_uix_update.py:332, bprs_update - コピー.py:343
+        # bprs_uix_update.py:431, bprs_update - コピー.py:343
         ("*", "Download folder setting has been saved"): "DLフォルダ設定が保存されました",
-        # bprs_uix_update.py:355, bprs_update - コピー.py:366
+        # bprs_uix_update.py:456, bprs_update - コピー.py:366
         ("*", "Sort update files by file name. Click again to toggle order"): "ZIPファイル名ソート(A–Z / Z–A)",
-        # bprs_uix_update.py:374, bprs_update - コピー.py:385
+        # bprs_uix_update.py:475, bprs_update - コピー.py:385
         ("*", "Sort update files by update/download date. Click again to toggle order"): "日時順ソート(newest ↔ oldest)",
-        # bprs_uix_update.py:407, bprs_update - コピー.py:418
+        # bprs_uix_update.py:509, bprs_update - コピー.py:418
         ("*", "Specify the folder where the update ZIP is stored"): "更新用ZIPが保存されているフォルダを指定してください",
-        # bprs_update - コピー.py:68  # ⛳ 新規翻訳
+        # bprs_update - コピー.py:68
         ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
     },
     "en_US": {
@@ -206,15 +220,15 @@ translation_dict = {
         ("*", "Filename to save - without extension"): "Filename to save - without extension",
         # bprs_types.py:59
         ("*", "Destination folder"): "Destination folder",
-        # bprs_types.py:63
+        # bprs_types.py:63, bprs_ui_export.py:42
         ("*", "Auto Open File"): "Auto Open File",
         # bprs_types.py:64
         ("*", "Automatically open the file after export"): "Automatically open the file after export",
-        # bprs_types.py:68
+        # bprs_types.py:68, bprs_ui_export.py:46
         ("*", "Overwrite Existing File"): "Overwrite Existing File",
         # bprs_types.py:69
         ("*", "Overwrite existing file / rename if unchecked"): "Overwrite existing file / rename if unchecked",
-        # bprs_types.py:73
+        # bprs_types.py:73, bprs_ui_export.py:50
         ("*", "Export as JSON"): "Export as JSON",
         # bprs_types.py:74
         ("*", "Save in JSON format / TXT if unchecked"): "Save in JSON format / TXT if unchecked",
@@ -264,6 +278,10 @@ translation_dict = {
         ("*", "removed"): "removed",
         # bprs_ui_check.py:443
         ("*", "{count} bones were {mode} from display"): "{count} bones were {mode} from display",
+        # bprs_ui_export.py:27
+        ("*", "File Name :"): "File Name :",
+        # bprs_ui_export.py:33
+        ("*", "Export Path :"): "Export Path :",
         # bprs_ui_export.py:81
         ("*", "Open folder selection dialog"): "Open folder selection dialog",
         # bprs_ui_export.py:103
@@ -282,67 +300,77 @@ translation_dict = {
         ("*", "Bone data exported to: {path}"): "Bone data exported to: {path}",
         # bprs_ui_export.py:209
         ("*", "Failed to export: {error}"): "Failed to export: {error}",
-        # bprs_uix_update.py:39, bprs_update - コピー.py:57
+        # bprs_uix_update.py:47, bprs_update - コピー.py:57
         ("*", "Update"): "Update",
-        # bprs_uix_update.py:42, bprs_update - コピー.py:60
+        # bprs_uix_update.py:50, bprs_update - コピー.py:60
         ("*", "Check for Updates"): "Check for Updates",
-        # bprs_uix_update.py:45, bprs_update - コピー.py:63
+        # bprs_uix_update.py:53, bprs_update - コピー.py:63
         ("*", "Install"): "Install",
-        # bprs_uix_update.py:46, bprs_update - コピー.py:64
+        # bprs_uix_update.py:54, bprs_update - コピー.py:64
         ("*", "Open Addon Folder"): "Open Addon Folder",
-        # bprs_uix_update.py:52
+        # bprs_uix_update.py:65, bprs_uix_update.py:80
         ("*", "GitHub has a recent release: "): "GitHub has a recent release: ",
-        # bprs_uix_update.py:61, bprs_uix_update.py:62
+        # bprs_uix_update.py:89, bprs_uix_update.py:90
         ("*", "GitHub has a recent release. "): "GitHub has a recent release. ",
-        # bprs_uix_update.py:66
+        # bprs_uix_update.py:94
         ("*", "Path to ZIP download folder "): "Path to ZIP download folder ",
-        # bprs_uix_update.py:76, bprs_update - コピー.py:78
+        # bprs_uix_update.py:104, bprs_update - コピー.py:78
         ("*", "Update file list: "): "Update file list: ",
-        # bprs_uix_update.py:109, bprs_update - コピー.py:136
+        # bprs_uix_update.py:137, bprs_update - コピー.py:136
         ("*", "Opens the GitHub release page to check for update files"): "Opens the GitHub release page to check for update files",
-        # bprs_uix_update.py:133, bprs_update - コピー.py:154
+        # bprs_uix_update.py:168
+        ("*", "Download URL could not be retrieved"): "Download URL could not be retrieved",
+        # bprs_uix_update.py:176
+        ("*", "Please specify a valid download folder and run again"): "Please specify a valid download folder and run again",
+        # bprs_uix_update.py:188
+        ("*", "Download completed"): "Download completed",
+        # bprs_uix_update.py:191
+        ("*", "Download failed"): "Download failed",
+        # bprs_uix_update.py:201, bprs_update - コピー.py:154
         ("*", "Select a ZIP archive beginning with DIVA_BonePositionRotationScale to install the update"): "Select a ZIP archive beginning with DIVA_BonePositionRotationScale to install the update",
-        # bprs_uix_update.py:138, bprs_update - コピー.py:159
+        # bprs_uix_update.py:207, bprs_update - コピー.py:159
         ("*", "Choose a ZIP file starting with DIVA_BonePositionRotationScale"): "Choose a ZIP file starting with DIVA_BonePositionRotationScale",
-        # bprs_uix_update.py:145, bprs_update - コピー.py:166
+        # bprs_uix_update.py:223, bprs_update - コピー.py:166
         ("*", "Choose the folder where the addon is installed"): "Choose the folder where the addon is installed",
-        # bprs_uix_update.py:176, bprs_update - コピー.py:197
+        # bprs_uix_update.py:256, bprs_update - コピー.py:197
         ("*", "No ZIP file selected. Please specify a file"): "No ZIP file selected. Please specify a file",
-        # bprs_uix_update.py:184, bprs_update - コピー.py:205
+        # bprs_uix_update.py:266
+        ("*", "No ZIP file selected"): "No ZIP file selected",
+        # bprs_uix_update.py:273, bprs_update - コピー.py:205
         ("*", "Only ZIP files starting with DIVA_BonePositionRotationScale can be processed"): "Only ZIP files starting with DIVA_BonePositionRotationScale can be processed",
-        # bprs_uix_update.py:201, bprs_update - コピー.py:222
+        # bprs_uix_update.py:290, bprs_update - コピー.py:222
         ("*", "Missing DIVA_BonePositionRotationScale folder or __init__.py inside the ZIP file"): "Missing DIVA_BonePositionRotationScale folder or __init__.py inside the ZIP file",
-        # bprs_uix_update.py:208, bprs_update - コピー.py:229
+        # bprs_uix_update.py:297, bprs_update - コピー.py:229
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "Could not retrieve bl_info.name from the ZIP file",
-        # bprs_uix_update.py:230, bprs_update - コピー.py:251
+        # bprs_uix_update.py:320, bprs_update - コピー.py:251
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "Addon installation folder not found. Please select the destination folder manually",
-        # bprs_uix_update.py:236, bprs_update - コピー.py:257
+        # bprs_uix_update.py:326, bprs_update - コピー.py:257
         ("*", "Installation was cancelled"): "Installation was cancelled",
-        # bprs_uix_update.py:244, bprs_update - コピー.py:265
+        # bprs_uix_update.py:334, bprs_update - コピー.py:265
         ("*", "__init__.py not found in the selected folder"): "__init__.py not found in the selected folder",
-        # bprs_uix_update.py:251, bprs_update - コピー.py:272
+        # bprs_uix_update.py:341, bprs_update - コピー.py:272
         ("*", "Update failed because bl_info.name does not match"): "Update failed because bl_info.name does not match",
-        # bprs_uix_update.py:279, bprs_uix_update.py:71, bprs_update - コピー.py:291, bprs_update - コピー.py:73
+        # bprs_uix_update.py:379, bprs_uix_update.py:99, bprs_update - コピー.py:291, bprs_update - コピー.py:73
         ("*", "Update completed. Please restart Blender"): "Update completed. Please restart Blender",
-        # bprs_uix_update.py:284, bprs_update - コピー.py:296
+        # bprs_uix_update.py:384, bprs_update - コピー.py:296
         ("*", "Update failed: {error}"): "Update failed: {error}",
-        # bprs_uix_update.py:292, bprs_update - コピー.py:304
+        # bprs_uix_update.py:392, bprs_update - コピー.py:304
         ("*", "Please select a ZIP file"): "Please select a ZIP file",
-        # bprs_uix_update.py:293, bprs_update - コピー.py:305
+        # bprs_uix_update.py:393, bprs_update - コピー.py:305
         ("*", "Please restart Blender after the update"): "Please restart Blender after the update",
-        # bprs_uix_update.py:300, bprs_update - コピー.py:312
+        # bprs_uix_update.py:400, bprs_update - コピー.py:312
         ("*", "Opens the folder where this addon is installed"): "Opens the folder where this addon is installed",
-        # bprs_uix_update.py:318, bprs_update - コピー.py:330
+        # bprs_uix_update.py:418, bprs_update - コピー.py:330
         ("*", "Scan the folder and list update candidate files"): "Scan the folder and list update candidate files",
-        # bprs_uix_update.py:332, bprs_update - コピー.py:343
+        # bprs_uix_update.py:431, bprs_update - コピー.py:343
         ("*", "Download folder setting has been saved"): "Download folder setting has been saved",
-        # bprs_uix_update.py:355, bprs_update - コピー.py:366
+        # bprs_uix_update.py:456, bprs_update - コピー.py:366
         ("*", "Sort update files by file name. Click again to toggle order"): "Sort update files by file name. Click again to toggle order",
-        # bprs_uix_update.py:374, bprs_update - コピー.py:385
+        # bprs_uix_update.py:475, bprs_update - コピー.py:385
         ("*", "Sort update files by update/download date. Click again to toggle order"): "Sort update files by update/download date. Click again to toggle order",
-        # bprs_uix_update.py:407, bprs_update - コピー.py:418
+        # bprs_uix_update.py:509, bprs_update - コピー.py:418
         ("*", "Specify the folder where the update ZIP is stored"): "Specify the folder where the update ZIP is stored",
-        # bprs_update - コピー.py:68  # ⛳ 新規翻訳
+        # bprs_update - コピー.py:68
         ("*", "Path to ZIP download folder"): "Path to ZIP download folder",
     },
 }

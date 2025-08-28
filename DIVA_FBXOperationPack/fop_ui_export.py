@@ -41,6 +41,7 @@ def draw_export_ui(layout, context, scene):
 
         # 出力オプション
         row = box.row()
+        row.separator()
         split = row.split(factor=0.22)
         split.label(text=_("Export Options :"))
         split.prop(settings, "use_selection", text="", toggle=True, icon='RESTRICT_SELECT_OFF')    # 選択オブジェクトのみ

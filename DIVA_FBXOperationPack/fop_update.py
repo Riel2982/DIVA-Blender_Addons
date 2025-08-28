@@ -33,7 +33,7 @@ if False:
     CHECK_PRE_RELEASE = True
 
 # 不要ファイル実行制御フラグ（一括管理）
-ENABLE_OBSOLETE_FILE_REMOVAL = True
+ENABLE_OBSOLETE_FILE_REMOVAL = False
 
 
 # 設定ファイル関連の関数 -------------------------------------

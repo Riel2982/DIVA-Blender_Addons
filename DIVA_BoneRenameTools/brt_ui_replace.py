@@ -15,7 +15,7 @@ def panel_replace_ui(layout, scene):
     left = split.row(align=True)
     left.prop(scene, "brt_show_replace_tools", text="", 
             icon='DOWNARROW_HLT' if scene.brt_show_replace_tools else 'RIGHTARROW', emboss=False)
-    left.label(text="Replace Bone Name", icon="GREASEPENCIL")
+    left.label(text="Replace Bone Name", icon="LINE_DATA")
 
     # 右エリア：スポイトツール（開いているときだけ表示）
     right = split.row(align=True)
@@ -34,7 +34,7 @@ def panel_replace_ui(layout, scene):
         row.prop(scene, "brt_remove_number_suffix", text="")  # チェックボックス
         row.label(text=_("Remove duplicate suffix")) # 非連動
 
-        box2.operator("brt.replace_bone_name", text=_("Rename Bones by Specified Name"), icon="GREASEPENCIL") # 実行ボタン
+        box2.operator("brt.replace_bone_name", text=_("Rename Bones by Specified Name"), icon="LINE_DATA") # 実行ボタン
 
 
 

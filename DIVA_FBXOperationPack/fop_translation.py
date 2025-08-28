@@ -8,70 +8,79 @@ translation_dict = {
         ("*", "Open the FBX Format addon settings in Preferences"): "FBX format アドオンのプリファレンス設定を開きます",
         # fop_types.py:25
         ("*", "Save with numbering if a file with the same name exists"): "同名ファイルがある場合はナンバリングして保存",
-        # fop_types.py:26  # ⛳ 新規翻訳
+        # fop_types.py:26
         ("*", "Always save blend files with numbering to prevent overwriting existing files"): "ファイル名にナンバリングを付けて保存",
-        # fop_types.py:35
-        ("*", "External Data Storage Mode"): "外部データの格納方式",
-        # fop_types.py:37
-        ("*", "External Data Pass Mode"): "外部データの格納方式",
-        # fop_types.py:39, fop_ui_save.py:59
+        # fop_types.py:38
+        ("*", "Disable Blenders Automatically Pack Resources when saving in UNPACK mode"): "パック解除モードで保存するときに、Blenderのリソースの自動パック機能を無効化します",
+        # fop_types.py:45
+        ("*", "External data pack mode"): "外部データのパックモード選択",
+        # fop_types.py:47, fop_types.py:60, fop_ui_save.py:63
         ("*", "Pack Resources"): "リソースをパック",
-        # fop_types.py:40
-        ("*", "Make Paths Relative"): "相対パスで格納",
-        # fop_types.py:41
-        ("*", "Make Paths Absolute"): "絶対パスで格納",
-        # fop_types.py:42
-        ("*", "Do not change external file paths"): "外部ファイルのパス格納形式をそのままにします",
-        # fop_types.py:42
-        ("*", "Auto / Mixed"): "変更なし／混在",  
-        ("*", "Leave As-Is"): "変更なし",
-        ("*", "Pack Mode"): "パックモード",
-        ("*", "Pass Mode"): "パスモード",
-        # fop_types.py:50
-        ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "カスタム法線をインポート（できない場合はBlenderが自動的に再計算）",
+        # fop_types.py:48
+        ("*", "Unpack Resources"): "パックしない",
+        # fop_types.py:49, fop_types.py:64
+        ("*", "Auto / Mixed"): "変更なし / 混在",
+        # fop_types.py:49
+        ("*", "Do not change packing state"): "外部データのリソース格納方式をそのままにします",
         # fop_types.py:55
-        ("*", "Create a new collection for imported FBX"): "コレクションを作成してFBXインポートデータを格納",
+        ("*", "External Data Storage Mode"): "外部データの格納方式",
+        # fop_types.py:58
+        ("*", "External data pass mode"): "外部データのパスモード選択",
         # fop_types.py:61
+        ("*", "Make Paths Relative"): "相対パスで格納",
+        # fop_types.py:62
+        ("*", "Make Paths Absolute"): "絶対パスで格納",
+        # fop_types.py:63, fop_types.py:64
+        ("*", "Do not change external file paths"): "外部データのパス格納形式をそのままにします",
+        # fop_types.py:63
+        ("*", "Leave As-Is"): "変更なし",
+        # fop_types.py:73
+        ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "カスタム法線をインポート（できない場合はBlenderが自動的に再計算）",
+        # fop_types.py:78
+        ("*", "Create a new collection for imported FBX"): "コレクションを作成してFBXインポートデータを格納",
+        # fop_types.py:84
         ("*", "Name of the FBX file to export"): "出力するFBXファイル名",
-        # fop_types.py:67
+        # fop_types.py:90
         ("*", "Save with numbering if a data with the same name exists"): "同名ファイルがある場合はナンバリングして保存",
-        # fop_types.py:68  # ⛳ 新規翻訳
+        # fop_types.py:91
         ("*", "Always save with numbering to prevent overwriting existing files"): "ファイル名にナンバリングを付けて保存",
-        # fop_types.py:101
+        # fop_types.py:124
         ("*", "Show tool to save blend file"): "Blendファイルを保存するツールを表示",
-        # fop_types.py:106
+        # fop_types.py:129
         ("*", "Show tool to import fbx data"): "FBXファイルを読み込むツールを表示",
-        # fop_types.py:111
+        # fop_types.py:134
         ("*", "Show tool to export fbx data"): "FBXファイルを出力するツールを表示",
-        # fop_types.py:117
+        # fop_types.py:140
+        ("*", "Select the external data storage method"): "外部データの格納方法を選択",
+        # fop_types.py:146
         ("*", "Folder to save blend file"): "Blendファイルの保存先フォルダ",
-        # fop_types.py:123
+        # fop_types.py:152
         ("*", "Whether the blend file is saved"): "Blendファイルが保存されているかどうか",
-        # fop_types.py:127
+        # fop_types.py:156
         ("*", "Name of the blend file to save"): "保存するBlendファイル名",
-        # fop_types.py:132, fop_ui_export.py:40
+        # fop_types.py:161, fop_ui_export.py:40
         ("*", "Save in the same location as the blend file"): "Blendファイルと同じ場所に保存する",
-        # fop_ui_export.py:36, fop_ui_save.py:64
+        # fop_ui_export.py:36, fop_ui_save.py:68
         ("*", "Auto Numbering"): "自動ナンバリング保存（上書き防止）",
-        # fop_ui_export.py:45
+        # fop_ui_export.py:46
         ("*", "Export Options :"): "出力オプション",
-        # fop_ui_export.py:52
+        # fop_ui_export.py:53
         ("*", "Export FBX Data"): "Export FBX Data",
-        # fop_ui_export.py:60
+        # fop_ui_export.py:61
         ("*", "FBX Exported"): "FBXで出力",
-        # fop_ui_export.py:64
+        # fop_ui_export.py:65
         ("*", "Path to export FBX file"): "FBXファイルの保存場所",
-        # fop_ui_export.py:110, fop_ui_export.py:124
+        # fop_ui_export.py:111, fop_ui_export.py:125
         ("*", "Export filename is empty"): "ファイル名を設定してください",
-        # fop_ui_export.py:172, fop_ui_export.py:213
+        # fop_ui_export.py:173, fop_ui_export.py:214
         ("*", "No Armature found in export data"): "出力データにアーマーチュアが存在しません。確認してください",
-        # fop_ui_export.py:183, fop_ui_export.py:220
+        # fop_ui_export.py:184, fop_ui_export.py:221
         ("*", "There are {count} mesh objects not linked to any Armature"): "{count} 個のオブジェクトがアーマーチュアにペアレントされていません。確認してください",
-        # fop_ui_export.py:236
+        # fop_ui_export.py:237
         ("*", "FBX data exported to: {path}"): "FBX出力完了：{path}",
-        # fop_ui_export.py:237, fop_ui_export.py:240
+        # fop_ui_export.py:238, fop_ui_export.py:241
         ("*", "FBX data exported"): "FBX出力完了",
-        # fop_ui_export.py:247
+        # fop_ui_export.py:248
         ("*", "Please select where you would like to export the FBX file"): "FBXファイルの保存場所を選択してください",
         # fop_ui_import.py:26
         ("*", "Import Custom Normals"): "カスタム法線をインポート",
@@ -85,47 +94,81 @@ translation_dict = {
         ("*", "FBX data imported to: {name}"): "FBXインポート完了：{name}",
         # fop_ui_import.py:79
         ("*", "Please select the FBX file you wish to import"): "FBXファイルを選択してください",
-        # fop_ui_save.py:38
+        # fop_ui_save.py:41
         ("*", "File Name :"): "ファイル名：",
-        # fop_ui_save.py:44
+        # fop_ui_save.py:47
         ("*", "Save Path :"): "保存場所：",
-        # fop_ui_save.py:52, fop_ui_save.py:55
+        # fop_ui_save.py:56, fop_ui_save.py:59
         ("*", "External Data :"): "外部データ：",
-        # fop_ui_save.py:80
+        # fop_ui_save.py:74, fop_ui_save.py:81, fop_ui_save.py:94
+        ("*", "External data storage method selection"): "外部データ格納方式オプション",
+        # fop_ui_save.py:101, fop_ui_save.py:109, fop_ui_save.py:87
+        ("*", "Disable Auto-Pack"): "自動パック無効",
+        # fop_ui_save.py:113
+        ("*", "Pack Mode"): "パックモード",
+        # fop_ui_save.py:114
+        ("*", "Resources Packing Mode"): "リソースのパックモード",
+        # fop_ui_save.py:120
+        ("*", "Path Mode"): "パスモード",
+        # fop_ui_save.py:121
+        ("*", "External Data Path Mode"): "外部データパスモード",
+        # fop_ui_save.py:139
         ("*", "Open dialog to select blend file save location"): "Blendファイル保存先選択ダイアグを開く",
-        # fop_ui_save.py:95
+        # fop_ui_save.py:154
         ("*", "Save location has been set"): "保存先を設定しました",
-        # fop_ui_save.py:104
+        # fop_ui_save.py:163
         ("*", "Save blend file"): "Blendファイルを保存する",
-        # fop_ui_save.py:144
+        # fop_ui_save.py:203
         ("*", "Please select a valid folder to save"): "有効な保存先フォルダを選択してください",
-        # fop_ui_save.py:206
+        # fop_ui_save.py:303
         ("*", "Invalid folder path"): "保存先が見つかりません",
-        # fop_ui_save.py:211
+        # fop_ui_save.py:308
         ("*", "Cannot write to the selected folder"): "保存先に書き込み権限がありません",
-        # fop_ui_save.py:225
+        # fop_ui_save.py:322, fop_ui_save.py:394
         ("*", "Cannot write to the selected location (permission denied)"): "アクセスが拒否されたため保存できません",
-        # fop_ui_save.py:227
+        # fop_ui_save.py:324, fop_ui_save.py:396
         ("*", "Blend file could not be saved because it is locked or in use"): "ファイルがロックされているため保存できません",
-        # fop_ui_save.py:229
+        # fop_ui_save.py:326, fop_ui_save.py:398
         ("*", "Invalid path. Please check the save location"): "保存先ファイルパスが存在しないため保存できません",
-        # fop_ui_save.py:231
+        # fop_ui_save.py:328, fop_ui_save.py:400
         ("*", "Failed to save Blend file: {error}"): "保存できませんでした：{error}",
-        # fop_ui_save.py:246, fop_ui_save.py:270
+        # fop_ui_save.py:353, fop_ui_save.py:378, fop_ui_save.py:467
         ("*", "Blend file has been saved"): "Blendファイルを保存しました",
-        # fop_ui_save.py:251
-        ("*", "Packed external data using relative paths and saved the Blend file as {name}"): "外部データを相対パス形式でパックし、{name}でBlendファイルを保存しました",
-        # fop_ui_save.py:254
-        ("*", "Packed external data using absolute paths and saved the Blend file as {name}"): "外部データを絶対パス形式でパックし、{name}でBlendファイルを保存しました",
-        # fop_ui_save.py:257
-        ("*", "Unpacked external data using relative paths and saved the Blend file as {name}"): "外部データを相対パス形式でアンパックし、{name} にBlendファイルを保存しました",
-        # fop_ui_save.py:260
-        ("*", "Unpacked external data using absolute paths and saved the Blend file as {name}"): "外部データを絶対パス形式でアンパックし、{name} にBlendファイルを保存しました",
-        # fop_ui_save.py:263
-        ("*", "Packed external data and saved the Blend file as {name}"): "外部データをパックし、{name}でBlendファイルを保存しました",
-        # fop_ui_save.py:266
-        ("*", "Unpacked external data and saved the Blend file as {name}"): "外部データをアンパックし、{name}でBlendファイルを保存しました",
-        # fop_ui_save.py:286
+        # fop_ui_save.py:359, fop_ui_save.py:446
+        ("*", "Packed external data using relative paths and saved the Blend file as {name}.blend"): "外部データを相対パス形式でパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:362, fop_ui_save.py:448
+        ("*", "Packed external data using absolute paths and saved the Blend file as {name}.blend"): "外部データを絶対パス形式でパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:365, fop_ui_save.py:453
+        ("*", "Unpacked external data using relative paths and saved the Blend file as {name}.blend"): "外部データを相対パス形式でアンパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:368, fop_ui_save.py:455
+        ("*", "Unpacked external data using absolute paths and saved the Blend file as {name}.blend"): "外部データを絶対パス形式でアンパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:371, fop_ui_save.py:450
+        ("*", "Packed external data and saved the Blend file as {name}.blend"): "外部データをパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:374, fop_ui_save.py:457
+        ("*", "Unpacked external data and saved the Blend file as {name}.blend"): "外部データをアンパックし、Blendファイルを{name}.blendで保存しました",
+        # fop_ui_save.py:413
+        ("*", "Auto-pack disabled, using relative paths and saved the Blend file as {name}.blend"): "リソースの自動パック機能を解除して、相対パス形式でBlendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:415
+        ("*", "Auto-pack disabled, using absolute paths and saved the Blend file as {name}.blend"): "リソースの自動パック機能を解除して、絶対パス形式でBlendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:417
+        ("*", "Auto-pack disabled, paths unchanged, and saved the Blend file as {name}.blend"): "リソースの自動パック機能を解除して、Blendファイルを{name}.blendとして保存しました。",
+        # fop_ui_save.py:419
+        ("*", "Auto-pack detected and disabled. UNPACK re-applied before saving."): "自動リソースパック機能を無効化してそのまま保存しました",
+        # fop_ui_save.py:424
+        ("*", "Resources were automatically re-packed and using relative paths and saved the Blend file as {name}.blend"): "リソースの自動パック機能が有効状態です。外部データをパックして相対パス形式でBlendファイルを{name}.blendとして保存しました。",
+        # fop_ui_save.py:426
+        ("*", "Resources were automatically re-packed and using absolute paths and saved the Blend file as {name}.blend"): "リソースの自動パック機能が有効状態です。外部データをパックして絶対パス形式でBlendファイルを{name}.blendとして保存しました。",
+        # fop_ui_save.py:428
+        ("*", "Resources were automatically re-packed and saved the Blend file as {name}.blend"): "リソースの自動パック機能が有効状態です。外部データをパックしてBlendファイルを{name}.blendとして保存しました。",
+        # fop_ui_save.py:430, fop_ui_save.py:439
+        ("*", "Some resources were automatically re-packed and saved the Blend file as {name}.blend"): "リソースの自動パック機能が有効状態です。外部データをパックしてBlendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:460
+        ("*", "Packing state kept as-is, paths made relative, and saved the Blend file as {name}.blend"): "相対パス形式でBlendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:462
+        ("*", "Packing state kept as-is, paths made absolute, and saved the Blend file as {name}.blend"): "絶対パス形式でBlendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:464
+        ("*", "Packing state kept as-is, paths unchanged, and saved the Blend file as {name}.blend"): "Blendファイルを{name}.blendとして保存しました",
+        # fop_ui_save.py:482
         ("*", "Please select where you would like to export the blend file"): "Blendファイルを保存する場所を選択してください",
         # fop_uix_update.py:47
         ("*", "Update"): "アップデート",
@@ -207,67 +250,79 @@ translation_dict = {
         ("*", "Open the FBX Format addon settings in Preferences"): "Open the FBX Format addon settings in Preferences",
         # fop_types.py:25
         ("*", "Save with numbering if a file with the same name exists"): "Save with numbering if a file with the same name exists",
-        # fop_types.py:26  # ⛳ 新規翻訳
+        # fop_types.py:26
         ("*", "Always save blend files with numbering to prevent overwriting existing files"): "Always save blend files with numbering to prevent overwriting existing files",
-        # fop_types.py:35
-        ("*", "External Data Storage Mode"): "External Data Storage Mode",
-        # fop_types.py:37
-        ("*", "External Data Pass Mode"): "External Data Pass Mode",
-        # fop_types.py:39, fop_ui_save.py:59
+        # fop_types.py:38
+        ("*", "Disable Blenders Automatically Pack Resources when saving in UNPACK mode"): "Disable Blender's Automatically Pack Resources when saving in Unpack Resources mode",
+        # fop_types.py:45
+        ("*", "External data pack mode"): "External data pack mode",
+        # fop_types.py:47, fop_types.py:60, fop_ui_save.py:63
         ("*", "Pack Resources"): "Pack Resources",
-        # fop_types.py:40
-        ("*", "Make Paths Relative"): "Make Paths Relative",
-        # fop_types.py:41
-        ("*", "Make Paths Absolute"): "Make Paths Absolute",
-        # fop_types.py:42
-        ("*", "Do not change external file paths"): "Do not change external file paths",
-        # fop_types.py:42
-        ("*", "Leave As-Is"): "Leave As-Is",
-        # fop_types.py:50
-        ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "Import custom normals if they are available; if not, Blender will recompute them automatically",
+        # fop_types.py:48
+        ("*", "Unpack Resources"): "Unpack Resources",
+        # fop_types.py:49, fop_types.py:64
+        ("*", "Auto / Mixed"): "Auto / Mixed",
+        # fop_types.py:49
+        ("*", "Do not change packing state"): "Do not change packing state",
         # fop_types.py:55
-        ("*", "Create a new collection for imported FBX"): "Create a new collection for imported FBX",
+        ("*", "External Data Storage Mode"): "External Data Storage Mode",
+        # fop_types.py:58
+        ("*", "External data pass mode"): "External data pass mode",
         # fop_types.py:61
+        ("*", "Make Paths Relative"): "Make Paths Relative",
+        # fop_types.py:62
+        ("*", "Make Paths Absolute"): "Make Paths Absolute",
+        # fop_types.py:63, fop_types.py:64
+        ("*", "Do not change external file paths"): "Do not change external file paths",
+        # fop_types.py:63
+        ("*", "Leave As-Is"): "Leave As-Is",
+        # fop_types.py:73
+        ("*", "Import custom normals if they are available; if not, Blender will recompute them automatically"): "Import custom normals if they are available; if not, Blender will recompute them automatically",
+        # fop_types.py:78
+        ("*", "Create a new collection for imported FBX"): "Create a new collection for imported FBX",
+        # fop_types.py:84
         ("*", "Name of the FBX file to export"): "Name of the FBX file to export",
-        # fop_types.py:67
+        # fop_types.py:90
         ("*", "Save with numbering if a data with the same name exists"): "Save with numbering if a data with the same name exists",
-        # fop_types.py:68  # ⛳ 新規翻訳
+        # fop_types.py:91
         ("*", "Always save with numbering to prevent overwriting existing files"): "Always save with numbering to prevent overwriting existing files",
-        # fop_types.py:101
+        # fop_types.py:124
         ("*", "Show tool to save blend file"): "Show tool to save blend file",
-        # fop_types.py:106
+        # fop_types.py:129
         ("*", "Show tool to import fbx data"): "Show tool to import fbx data",
-        # fop_types.py:111
+        # fop_types.py:134
         ("*", "Show tool to export fbx data"): "Show tool to export fbx data",
-        # fop_types.py:117
+        # fop_types.py:140
+        ("*", "Select the external data storage method"): "Select the external data storage method",
+        # fop_types.py:146
         ("*", "Folder to save blend file"): "Folder to save blend file",
-        # fop_types.py:123
+        # fop_types.py:152
         ("*", "Whether the blend file is saved"): "Whether the blend file is saved",
-        # fop_types.py:127
+        # fop_types.py:156
         ("*", "Name of the blend file to save"): "Name of the blend file to save",
-        # fop_types.py:132, fop_ui_export.py:40
+        # fop_types.py:161, fop_ui_export.py:40
         ("*", "Save in the same location as the blend file"): "Save in the same location as the blend file",
-        # fop_ui_export.py:36, fop_ui_save.py:64
+        # fop_ui_export.py:36, fop_ui_save.py:68
         ("*", "Auto Numbering"): "Auto Numbering",
-        # fop_ui_export.py:45
+        # fop_ui_export.py:46
         ("*", "Export Options :"): "Export Options :",
-        # fop_ui_export.py:52
+        # fop_ui_export.py:53
         ("*", "Export FBX Data"): "Export FBX Data",
-        # fop_ui_export.py:60
+        # fop_ui_export.py:61
         ("*", "FBX Exported"): "FBX Exported",
-        # fop_ui_export.py:64
+        # fop_ui_export.py:65
         ("*", "Path to export FBX file"): "Path to export FBX file",
-        # fop_ui_export.py:110, fop_ui_export.py:124
+        # fop_ui_export.py:111, fop_ui_export.py:125
         ("*", "Export filename is empty"): "Export filename is empty",
-        # fop_ui_export.py:172, fop_ui_export.py:213
+        # fop_ui_export.py:173, fop_ui_export.py:214
         ("*", "No Armature found in export data"): "No Armature found in export data",
-        # fop_ui_export.py:183, fop_ui_export.py:220
+        # fop_ui_export.py:184, fop_ui_export.py:221
         ("*", "There are {count} mesh objects not linked to any Armature"): "There are {count} mesh objects not linked to any Armature",
-        # fop_ui_export.py:236
+        # fop_ui_export.py:237
         ("*", "FBX data exported to: {path}"): "FBX data exported to: {path}",
-        # fop_ui_export.py:237, fop_ui_export.py:240
+        # fop_ui_export.py:238, fop_ui_export.py:241
         ("*", "FBX data exported"): "FBX data exported",
-        # fop_ui_export.py:247
+        # fop_ui_export.py:248
         ("*", "Please select where you would like to export the FBX file"): "Please select where you would like to export the FBX file",
         # fop_ui_import.py:26
         ("*", "Import Custom Normals"): "Import Custom Normals",
@@ -281,47 +336,81 @@ translation_dict = {
         ("*", "FBX data imported to: {name}"): "FBX data imported to: {name}",
         # fop_ui_import.py:79
         ("*", "Please select the FBX file you wish to import"): "Please select the FBX file you wish to import",
-        # fop_ui_save.py:38
+        # fop_ui_save.py:41
         ("*", "File Name :"): "File Name :",
-        # fop_ui_save.py:44
+        # fop_ui_save.py:47
         ("*", "Save Path :"): "Save Path :",
-        # fop_ui_save.py:52, fop_ui_save.py:55
+        # fop_ui_save.py:56, fop_ui_save.py:59
         ("*", "External Data :"): "External Data :",
-        # fop_ui_save.py:80
+        # fop_ui_save.py:74, fop_ui_save.py:81, fop_ui_save.py:94
+        ("*", "External data storage method selection"): "External data storage method selection",
+        # fop_ui_save.py:101, fop_ui_save.py:109, fop_ui_save.py:87
+        ("*", "Disable Auto-Pack"): "Disable Auto-Pack",
+        # fop_ui_save.py:113
+        ("*", "Pack Mode"): "Pack Mode",
+        # fop_ui_save.py:114
+        ("*", "Resources Packing Mode"): "Resources Packing Mode",
+        # fop_ui_save.py:120
+        ("*", "Path Mode"): "Path Mode",
+        # fop_ui_save.py:121
+        ("*", "External Data Path Mode"): "External Data Path Mode",
+        # fop_ui_save.py:139
         ("*", "Open dialog to select blend file save location"): "Open dialog to select blend file save location",
-        # fop_ui_save.py:95
+        # fop_ui_save.py:154
         ("*", "Save location has been set"): "Save location has been set",
-        # fop_ui_save.py:104
+        # fop_ui_save.py:163
         ("*", "Save blend file"): "Save blend file",
-        # fop_ui_save.py:144
+        # fop_ui_save.py:203
         ("*", "Please select a valid folder to save"): "Please select a valid folder to save",
-        # fop_ui_save.py:206
+        # fop_ui_save.py:303
         ("*", "Invalid folder path"): "Invalid folder path",
-        # fop_ui_save.py:211
+        # fop_ui_save.py:308
         ("*", "Cannot write to the selected folder"): "Cannot write to the selected folder",
-        # fop_ui_save.py:225
+        # fop_ui_save.py:322, fop_ui_save.py:394
         ("*", "Cannot write to the selected location (permission denied)"): "Cannot write to the selected location (permission denied)",
-        # fop_ui_save.py:227
+        # fop_ui_save.py:324, fop_ui_save.py:396
         ("*", "Blend file could not be saved because it is locked or in use"): "Blend file could not be saved because it is locked or in use",
-        # fop_ui_save.py:229
+        # fop_ui_save.py:326, fop_ui_save.py:398
         ("*", "Invalid path. Please check the save location"): "Invalid path. Please check the save location",
-        # fop_ui_save.py:231
+        # fop_ui_save.py:328, fop_ui_save.py:400
         ("*", "Failed to save Blend file: {error}"): "Failed to save Blend file: {error}",
-        # fop_ui_save.py:246, fop_ui_save.py:270
+        # fop_ui_save.py:353, fop_ui_save.py:378, fop_ui_save.py:467
         ("*", "Blend file has been saved"): "Blend file has been saved",
-        # fop_ui_save.py:251
-        ("*", "Packed external data using relative paths and saved the Blend file as {name}"): "Packed external data using relative paths and saved the Blend file as {name}",
-        # fop_ui_save.py:254
-        ("*", "Packed external data using absolute paths and saved the Blend file as {name}"): "Packed external data using absolute paths and saved the Blend file as {name}",
-        # fop_ui_save.py:257
-        ("*", "Unpacked external data using relative paths and saved the Blend file as {name}"): "Unpacked external data using relative paths and saved the Blend file as {name}",
-        # fop_ui_save.py:260
-        ("*", "Unpacked external data using absolute paths and saved the Blend file as {name}"): "Unpacked external data using absolute paths and saved the Blend file as {name}",
-        # fop_ui_save.py:263
-        ("*", "Packed external data  and saved the Blend file as {name}"): "Packed external data  and saved the Blend file as {name}",
-        # fop_ui_save.py:266
-        ("*", "Unpacked external data and saved the Blend file as {name}"): "Unpacked external data and saved the Blend file as {name}",
-        # fop_ui_save.py:286
+        # fop_ui_save.py:359, fop_ui_save.py:446
+        ("*", "Packed external data using relative paths and saved the Blend file as {name}.blend"): "Packed external data using relative paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:362, fop_ui_save.py:448
+        ("*", "Packed external data using absolute paths and saved the Blend file as {name}.blend"): "Packed external data using absolute paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:365, fop_ui_save.py:453
+        ("*", "Unpacked external data using relative paths and saved the Blend file as {name}.blend"): "Unpacked external data using relative paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:368, fop_ui_save.py:455
+        ("*", "Unpacked external data using absolute paths and saved the Blend file as {name}.blend"): "Unpacked external data using absolute paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:371, fop_ui_save.py:450
+        ("*", "Packed external data and saved the Blend file as {name}.blend"): "Packed external data and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:374, fop_ui_save.py:457
+        ("*", "Unpacked external data and saved the Blend file as {name}.blend"): "Unpacked external data and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:413
+        ("*", "Auto-pack disabled, using relative paths and saved the Blend file as {name}.blend"): "Auto-pack disabled, using relative paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:415
+        ("*", "Auto-pack disabled, using absolute paths and saved the Blend file as {name}.blend"): "Auto-pack disabled, using absolute paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:417
+        ("*", "Auto-pack disabled, paths unchanged, and saved the Blend file as {name}.blend"): "Auto-pack disabled, paths unchanged, and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:419
+        ("*", "Auto-pack detected and disabled. UNPACK re-applied before saving."): "Auto-pack detected and disabled. UNPACK re-applied before saving.",
+        # fop_ui_save.py:424
+        ("*", "Resources were automatically re-packed and using relative paths and saved the Blend file as {name}.blend"): "Resources were automatically re-packed and using relative paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:426
+        ("*", "Resources were automatically re-packed and using absolute paths and saved the Blend file as {name}.blend"): "Resources were automatically re-packed and using absolute paths and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:428
+        ("*", "Resources were automatically re-packed and saved the Blend file as {name}.blend"): "Resources were automatically re-packed and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:430, fop_ui_save.py:439
+        ("*", "Some resources were automatically re-packed and saved the Blend file as {name}.blend"): "Some resources were automatically re-packed and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:460
+        ("*", "Packing state kept as-is, paths made relative, and saved the Blend file as {name}.blend"): "Packing state kept as-is, paths made relative, and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:462
+        ("*", "Packing state kept as-is, paths made absolute, and saved the Blend file as {name}.blend"): "Packing state kept as-is, paths made absolute, and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:464
+        ("*", "Packing state kept as-is, paths unchanged, and saved the Blend file as {name}.blend"): "Packing state kept as-is, paths unchanged, and saved the Blend file as {name}.blend",
+        # fop_ui_save.py:482
         ("*", "Please select where you would like to export the blend file"): "Please select where you would like to export the blend file",
         # fop_uix_update.py:47
         ("*", "Update"): "Update",

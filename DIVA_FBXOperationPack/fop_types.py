@@ -31,15 +31,21 @@ class FOP_FBXSettings(bpy.types.PropertyGroup):
         name="Pack Resources",  # リソースのパック
         description="Pack all used external files into this .blend",
         default=False
-)
+    )
+    
+    disable_autopack : BoolProperty(      # リソースの自動パック機能を無効化
+        name="Disable Auto-Pack on UNPACK",
+        description=_("Disable Blenders Automatically Pack Resources when saving in UNPACK mode"),   # Blender'sにすると翻訳抽出エラーが出るので、翻訳側で対応
+        default=False
+    )
 
     # リソースのパック方式
     pack_mode : EnumProperty(
         name="Resources to External Data",
-        description=_("Pack external data mode"),  # 外部データのパック方式
+        description=_("External data pack mode"),  # 外部データのパック方式
         items=[
             ('PACK', _("Pack Resources"), "Pack all used external files into this .blend"),
-            ('UNPACK', _("Unpack Resources"), "Unpack all packed into this .blend to external ones"),
+            ('UNPACK', _("Unpack Resources"), "Unpack all files packed into this .blend to external ones"),
             ('MIXED', _("Auto / Mixed"), _("Do not change packing state")),
         ],
         default='MIXED',

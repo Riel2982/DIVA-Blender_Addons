@@ -67,23 +67,57 @@ def draw_save_ui(layout, self, context, scene):
         row.prop(settings, "blendfile_overwrite_guard", text="")
         row.label(text=_("Auto Numbering"))
 
-        # 外部データ格納方式設定（折りたたみ式）
+        if False:
+            # 外部データ格納方式設定（折りたたみ式）
+            row = box.row(align=True)
+            row.prop(scene, "fop_show_external_data", text="", icon='DOWNARROW_HLT' if scene.fop_show_external_data else 'RIGHTARROW', emboss=False)
+            row.label(text=_("External data storage method selection"))#, icon="FILE_BACKUP") # セクションタイトル
+
+        # 左エリア：外部データ格納方式設定（折りたたみ式）
         row = box.row(align=True)
         row.prop(scene, "fop_show_external_data", text="", icon='DOWNARROW_HLT' if scene.fop_show_external_data else 'RIGHTARROW', emboss=False)
-        row.label(text=_("External data storage method selection"))#, icon="FILE_BACKUP") # セクションタイトル
+        left_split = row.split(factor=0.65, align=True)
+        left = left_split.row(align=True)
+        left.label(text=_("External data storage method selection"))
+
+        # 右エリア：リソースの自動パック機能の無効化オプション（開いているときだけ表示）
+        if scene.fop_show_external_data and settings.pack_mode == 'UNPACK' :
+            right = left_split.row(align=True)
+            right.prop(settings, "disable_autopack", text="")  # チェックボックスのみ
+            right.label(text=_("Disable Auto-Pack"))
+
+        if False:
+            row = box.row(align=True)
+            split = row.split(factor=0.3)
+            left = split.row(align=True)
+            left.prop(scene, "fop_show_external_data", text="", icon='DOWNARROW_HLT' if scene.fop_show_external_data else 'RIGHTARROW', emboss=False)
+            left.label(text=_("External data storage method selection"))
+
+            # 右エリア：リソースの自動パック機能の無効化オプション（開いているときだけ表示）
+            right = split.row(align=True)
+            right.alignment = 'RIGHT'
+            if scene.fop_show_external_data:
+                right.prop(settings, "disable_autopack", text="")
+                right.label(text=_("Disable Auto-Pack"))
 
         if scene.fop_show_external_data:
+            if False:
+                # リソースの自動パック機能の無効化オプション
+                row = box.row()
+                row.separator()
+                row.prop(settings, "disable_autopack", text="")
+                row.label(text=_("Disable Auto-Pack"))
             # Pack mode → 3ボタン切り替え
             row = box.row()
             row.separator()
-            row.label(text=_("Pack Mode"))
-            # row.label(text=_("Pack Resources Mode"), icon='BLANK1')
+            row.label(text=_("Pack Mode"), icon='PACKAGE')
+            # row.label(text=_("Resources Packing Mode"), icon='BLANK1')
             row.prop(settings, "pack_mode", expand=True)
             row.separator()
             # External data mode → 3ボタン切り替え
             row = box.row()
             row.separator()
-            row.label(text=_("Path Mode"))
+            row.label(text=_("Path Mode"), icon='LINKED')
             # row.label(text=_("External Data Path Mode"), icon='BLANK1')
             row.prop(settings, "pass_mode", expand=True)
             row.separator()
@@ -322,56 +356,112 @@ class FOP_OT_SaveBlendFile(bpy.types.Operator):
 
         if False:
             if settings.pack_resources and settings.external_data == 'RELATIVE':    # パック＆相対パス
-                self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
 
             elif settings.pack_resources and settings.external_data == 'ABSOLUTE':      # パック＆絶対パス
-                self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
 
             elif not settings.pack_resources and settings.external_data == 'RELATIVE':      # アンパック＆相対パス
-                self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
 
             elif not settings.pack_resources and settings.external_data == 'ABSOLUTE':      # アンパック＆絶対パス
-                self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
 
             elif settings.pack_resources and settings.external_data == 'MIXED':     # パック・パス変更なし
-                self.report({'INFO'}, _("Packed external data  and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Packed external data and saved the Blend file as {name}.blend").format(name=blend_filename))
 
             elif not settings.pack_resources and settings.external_data == 'MIXED':     # アンパック・パス変更なし
-                self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}").format(name=blend_filename))
+                self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}.blend").format(name=blend_filename))
 
 
             else:       # その他
                 self.report({'INFO'}, _("Blend file has been saved"))
 
-        # リソースの自動パック警告（UNPACKモードのみ）---
+        # 自動リソースパック無効化オプション
         if settings.pack_mode == 'PACK' or settings.pack_mode == 'UNPACK' :
-            if repacked:    # 自動的に再パックされた場合 → 警告のみを出して終了
-                self.report({'WARNING'}, _("Some resources were automatically re-packed and saved the Blend file as {name}").format(name=blend_filename))
-                return {'FINISHED'}
+            if repacked:
+                if settings.disable_autopack:
+                    # 自動リソースパックがONならOFFにして再アンパック
+                    bpy.ops.file.autopack_toggle()  # ON→OFFに切替
+                    unpack_external_data_safely()   # 再アンパック
+                    # 再保存
+                    try:
+                        bpy.ops.wm.save_as_mainfile(filepath=full_path)
+                    except Exception as e:
+                        error_msg = str(e).lower()
+
+                        if "permission" in error_msg or "access" in error_msg:
+                            self.report({'ERROR'}, _("Cannot write to the selected location (permission denied)"))
+                        elif "locked" in error_msg or "in use" in error_msg:
+                            self.report({'ERROR'}, _("Blend file could not be saved because it is locked or in use"))
+                        elif "invalid" in error_msg or "path" in error_msg:
+                            self.report({'ERROR'}, _("Invalid path. Please check the save location"))
+                        else:
+                            self.report({'ERROR'}, _("Failed to save Blend file: {error}").format(error=str(e)))
+
+                        if DEBUG_MODE:
+                            print(f"[FOP] Save failed: {e}")
+                        return {'CANCELLED'}
+                    
+                    # 保存先を再記録
+                    context.scene.fop_blend_saved_path = os.path.dirname(full_path)
+                    if DEBUG_MODE:
+                        print("Last resaved to:", context.scene.fop_blend_saved_path)
+
+                    # 完了報告
+                    if settings.pass_mode == 'RELATIVE': 
+                        self.report({'INFO'}, _("Auto-pack disabled, using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    elif settings.pass_mode == 'ABSOLUTE': 
+                        self.report({'INFO'}, _("Auto-pack disabled, using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    elif settings.pass_mode == 'UNCHANGED':
+                        self.report({'INFO'}, _("Auto-pack disabled, paths unchanged, and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    else :
+                        self.report({'INFO'}, _("Auto-pack detected and disabled. UNPACK re-applied before saving."))
+                    return {'FINISHED'}
+                else:
+                    # 警告のみ
+                    if settings.pass_mode == 'RELATIVE': 
+                        self.report({'INFO'}, _("Resources were automatically re-packed and using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    elif settings.pass_mode == 'ABSOLUTE': 
+                        self.report({'INFO'}, _("Resources were automatically re-packed and using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    elif settings.pass_mode == 'UNCHANGED':
+                        self.report({'INFO'}, _("Resources were automatically re-packed and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    else :
+                        self.report({'WARNING'}, _("Some resources were automatically re-packed and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    return {'FINISHED'}
             else:    # 再パックされなかった場合 → 通常のINFO報告（下に流す）
                 pass
 
+        if False:
+            # リソースの自動パック警告（UNPACKモードのみ）---
+            if settings.pack_mode == 'PACK' or settings.pack_mode == 'UNPACK' :
+                if repacked:    # 自動的に再パックされた場合 → 警告のみを出して終了
+                    self.report({'WARNING'}, _("Some resources were automatically re-packed and saved the Blend file as {name}.blend").format(name=blend_filename))
+                    return {'FINISHED'}
+                else:    # 再パックされなかった場合 → 通常のINFO報告（下に流す）
+                    pass
+
         # 完了報告
         if settings.pack_mode == 'PACK' and settings.pass_mode == 'RELATIVE':    # パック＆相対パス
-            self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packed external data using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'PACK' and settings.pass_mode == 'ABSOLUTE':      # パック＆絶対パス
-            self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packed external data using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'PACK' and settings.pass_mode == 'UNCHANGED':     # パック＆パス変更なし
-            self.report({'INFO'}, _("Packed external data and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packed external data and saved the Blend file as {name}.blend").format(name=blend_filename))
 
         elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'RELATIVE':      # アンパック＆相対パス
-            self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Unpacked external data using relative paths and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'ABSOLUTE':      # アンパック＆絶対パス
-            self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Unpacked external data using absolute paths and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'UNPACK' and settings.pass_mode == 'UNCHANGED':     # アンパック・パス変更なし
-            self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Unpacked external data and saved the Blend file as {name}.blend").format(name=blend_filename))
 
         elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'RELATIVE':    # パックそのまま＆相対パス
-            self.report({'INFO'}, _("Packing state kept as-is, paths made relative, and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packing state kept as-is, paths made relative, and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'ABSOLUTE':      # パックそのまま＆絶対パス
-            self.report({'INFO'}, _("Packing state kept as-is, paths made absolute, and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packing state kept as-is, paths made absolute, and saved the Blend file as {name}.blend").format(name=blend_filename))
         elif settings.pack_mode == 'MIXED' and settings.pass_mode == 'UNCHANGED':     # パックそのまま＆パス変更なし
-            self.report({'INFO'}, _("Packing state kept as-is, paths unchanged, and saved the Blend file as {name}").format(name=blend_filename))
+            self.report({'INFO'}, _("Packing state kept as-is, paths unchanged, and saved the Blend file as {name}.blend").format(name=blend_filename))
 
         else:       # その他
             self.report({'INFO'}, _("Blend file has been saved"))

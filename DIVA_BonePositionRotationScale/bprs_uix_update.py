@@ -7,12 +7,20 @@ import zipfile
 import shutil
 import re
 import datetime
+import urllib.request
+import threading
+import time
+from bpy.props import StringProperty 
+import bpy_extras.io_utils
+from bpy_extras.io_utils import ImportHelper
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
 
-from .bprs_update import save_settings, load_download_folder, get_latest_release_data, get_release_label
+from .bprs_update import save_settings, load_download_folder, get_latest_release_data, get_release_label, download_and_finalize
+
 
 from .bprs_debug import DEBUG_MODE   # デバッグ用
+
 
 # アドオンプリファレンス本体（表示と編集UI）
 class BPRS_AddonPreferences(bpy.types.AddonPreferences):
@@ -49,9 +57,27 @@ def draw_update_ui(layout, scene):
     wm = bpy.context.window_manager
     if wm.bprs_new_release_available:
         display_version = get_release_label()
+        release_info = get_latest_release_data()
+        download_url = release_info.get("download_url", "")
         if display_version:
             row = box.row()
-            row.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
+            split = row.split(factor=0.7)
+            split.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
+
+            # download_url が有効な場合のみボタンを表示
+            if download_url:
+                split.operator("bprs.download_latest_zip", text=("Download"))
+                row.separator()
+            # split.label(text=(""), icon="BLANK1")
+
+    if False:
+        # アドオンの最新リリースのお知らせ
+        wm = bpy.context.window_manager
+        if wm.bprs_new_release_available:
+            display_version = get_release_label()
+            if display_version:
+                row = box.row()
+                row.label(text=_("GitHub has a recent release: ") + display_version, icon="INFO")
 
     if False:
         wm = bpy.context.window_manager
@@ -128,17 +154,67 @@ class BPRS_OT_OpenURL(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class BPRS_OT_ExecuteUpdate(bpy.types.Operator):
+class BPRS_OT_DownloadLatestZip(bpy.types.Operator):
+    bl_idname = "bprs.download_latest_zip"
+    bl_label = "Download Latest ZIP"    # "最新ZIPをダウンロード"
+    bl_description = "Download the latest ZIP file from GitHub"     # "GitHubから最新のZIPファイルをダウンロードします"
+
+    def execute(self, context):
+        release_info = get_latest_release_data()
+        url = release_info.get("download_url", "")
+        version = release_info.get("version", "unknown")
+
+        if not url:
+            self.report({'ERROR'}, _("Download URL could not be retrieved"))
+            return {'CANCELLED'}
+
+        # 保存先フォルダの決定
+        folder = load_download_folder()
+        if not folder or not os.path.isdir(folder):
+            # DLフォルダが未設定または無効 → フォルダ確認オペレーターを呼び出す
+            bpy.ops.bprs.confirm_download_folder('INVOKE_DEFAULT')
+            self.report({'WARNING'}, _("Please specify a valid download folder and run again"))
+            return {'CANCELLED'}
+
+        # 処理の実行
+        success = download_and_finalize(url, folder, context)
+        if success:
+            # 通知フラグを下げる
+            context.window_manager.bprs_new_release_available = False
+
+            # 更新チェック日時を保存
+            save_settings({"update_check": datetime.datetime.now(datetime.timezone.utc).isoformat()})
+
+            self.report({'INFO'}, _("Download completed"))
+            return {'FINISHED'}
+        else:
+            self.report({'ERROR'}, _("Download failed"))
+            return {'CANCELLED'}
+
+
+
+
+class BPRS_OT_ExecuteUpdate(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
     """更新ファイルをインストール"""
     bl_idname = "bprs.execute_update"
     bl_label = "Install Update File"
     bl_description = _("Select a ZIP archive beginning with DIVA_BonePositionRotationScale to install the update")
     # bl_options = {'UNDO'}
 
-    filepath: bpy.props.StringProperty(
+    # ImportHelper 用のファイル選択パス（ダイアログ）
+    filepath_dialog: StringProperty(
         name="Select ZIP File",
         description=_("Choose a ZIP file starting with DIVA_BonePositionRotationScale"),    # DIVA_BonePositionRotationScaleで始まるZIPファイルを選択してください
-        #　filter_glob='*.zip'      # 4.2以降ファイルパスが取得できない原因
+        subtype='FILE_PATH',
+    )
+    filename_ext = ".zip"
+    filter_glob: StringProperty(default="*.zip", options={'HIDDEN'})
+
+    # UIリスト選択用のパス
+    filepath_list: StringProperty(
+        name="Selected from list",
+        description="Path from update candidate list",
+        subtype='FILE_PATH'
     )
 
     # ユーザーにフォルダ選択してもらうためのプロパティ（手動選択時のみ使用想定だがZIPファイル選択ダイアログとして機能）
@@ -165,19 +241,30 @@ class BPRS_OT_ExecuteUpdate(bpy.types.Operator):
         except Exception:
             return None
 
-    def execute(self, context):
-        # 🔹 UIリストが選ばれていて、filepath が空の場合のみ 自動補完
-        if not self.filepath:
-            index = context.scene.bprs_selected_candidate_index
-            candidates = context.scene.bprs_update_candidates
-            if 0 <= index < len(candidates):
-                self.filepath = candidates[index].path
+    # UIからの選択かダイアログかで分岐
+    def invoke(self, context, event):
+        index = context.scene.fst_selected_candidate_index
+        candidates = context.scene.fst_update_candidates
 
-            # それでも filepath が空なら → ダイアログで選択させるべき
-            if not self.filepath:
-                self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))     # ZIPファイルが選択されていません。ファイルを指定してください
-                context.window_manager.fileselect_add(self)
-                return {'RUNNING_MODAL'}
+        if 0 <= index < len(candidates):
+            # リスト選択があればダイアログを開かず直接実行
+            self.filepath_list = candidates[index].path
+            self.filepath = self.filepath_list  # execute 内で使う共通変数にコピー
+            return self.execute(context)
+        else:
+            # 選択がなければダイアログで ZIP ファイルを選択
+            self.report({'INFO'}, _("No ZIP file selected. Please specify a file"))     # ZIPファイルが選択されていません。ファイルを指定してください
+            return super().invoke(context, event)  # ImportHelper の fileselect_add() が呼ばれる
+
+    def execute(self, context):
+        # 選択されたパスを共通変数 filepath にセット
+        if getattr(self, "filepath_dialog", ""):
+            self.filepath = self.filepath_dialog
+
+        # ZIPファイルがない場合はキャンセル
+        if not getattr(self, "filepath", None):
+            self.report({'WARNING'}, _("No ZIP file selected"))
+            return {'CANCELLED'}
 
         # ZIPファイル名の確認（パターンに一致しなければ処理中止）
         filename = os.path.basename(self.filepath)
@@ -227,34 +314,34 @@ class BPRS_OT_ExecuteUpdate(bpy.types.Operator):
 
             # 自動判定失敗 → ユーザーにフォルダを選ばせる
             else:
-                if not self.dirpath:
-                    # ユーザーに状況を説明してからDIR選択させる
-                    self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))    # インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください
-                    context.window_manager.fileselect_add(self)  # DIR選択を促す
-                    return {'RUNNING_MODAL'}
+                if False:
+                    if not self.dirpath:
+                        # ユーザーに状況を説明してからDIR選択させる
+                        self.report({'INFO'}, _("Addon installation folder not found. Please select the destination folder manually"))    # インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください
+                        context.window_manager.fileselect_add(self)  # DIR選択を促す
+                        return {'RUNNING_MODAL'}
 
-                # DIR選択後：キャンセルされた場合は中止＋後始末
-                if not self.dirpath:
-                    self.report({'INFO'}, _("Installation was cancelled"))
-                    shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
-                    context.window_manager.bprs_update_completed = False
+                    # DIR選択後：キャンセルされた場合は中止＋後始末
+                    if not self.dirpath:
+                        self.report({'INFO'}, _("Installation was cancelled"))
+                        shutil.rmtree(extract_path, ignore_errors=True)     # 一時フォルダの削除
+                        context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
                 # 選ばれたフォルダに __init__.py があるか確認
                 manual_init = os.path.join(self.dirpath, "__init__.py")
                 if not os.path.isfile(manual_init):
                     self.report({'WARNING'}, _("__init__.py not found in the selected folder"))
-                    shutil.rmtree(extract_path)
-                    context.window_manager.bprs_update_completed = False
+                    # shutil.rmtree(extract_path)
+                    context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
 
                 manual_name = self.read_bl_info_name(manual_init)
                 if manual_name != source_name:
                     self.report({'WARNING'}, _("Update failed because bl_info.name does not match"))        # bl_info.name が一致しないため、更新できません
-                    shutil.rmtree(extract_path)
-                    context.window_manager.bprs_update_completed = False
+                    shutil.rmtree(extract_path)     # 一時フォルダの削除
+                    context.window_manager.brt_update_completed = False
                     return {'CANCELLED'}
-
                 # 一致したので選択されたフォルダに更新実行
                 target_folder = self.dirpath
 
@@ -276,6 +363,17 @@ class BPRS_OT_ExecuteUpdate(bpy.types.Operator):
 
             # 通知を消す
             context.window_manager.bprs_new_release_available = False
+
+            # __pycache__ 削除（更新後に古いバイトコードを残さない）
+            pycache_path = os.path.join(target_folder, "__pycache__")
+            if os.path.exists(pycache_path):
+                try:
+                    shutil.rmtree(pycache_path)
+                    if DEBUG_MODE:
+                        print(f"[BPRS] __pycache__ deleted: {pycache_path}")  # 古いバイトコードキャッシュを削除しました
+                except Exception as e:
+                    if DEBUG_MODE:
+                        print(f"[BPRS] Failed to delete __pycache__: {e}")
 
             # 更新完了ポップアップ表示
             self.report({'INFO'}, _("Update completed. Please restart Blender"))        # 更新が完了しました。Blenderを再起動してください
@@ -320,7 +418,6 @@ class BPRS_OT_ConfirmDownloadFolder(bpy.types.Operator):
     bl_description = _("Scan the folder and list update candidate files")
 
     def execute(self, context):
-        import os
         scene = context.scene
         folder = scene.bprs_download_folder
 
@@ -338,7 +435,9 @@ class BPRS_OT_ConfirmDownloadFolder(bpy.types.Operator):
         files = os.listdir(folder)
         for fname in sorted(files, reverse=True):
             # if fname.startswith("DIVA_BonePositionRotationScale") and fname.endswith(".zip"):
-            if re.match(r"^DIVA_BonePositionRotationScale.*\.zip$", fname, re.IGNORECASE):
+            # if re.match(r"^DIVA_BonePositionRotationScale.*\.zip$", fname, re.IGNORECASE):    # GameBanana小文字化対応
+            # if re.match(r"^DIVA_BonePositionRotationScale.*( |\.)?v\d+\.\d+\.\d+([ _\.-][a-zA-Z0-9]+)?\.zip$", fname):    # 半角スペース→.変換対応（GitHub）
+            if re.match(r"^DIVA_BonePositionRotationScale.*?( |\.)?v\d+\.\d+\.\d+(?:[ _\.-][a-zA-Z0-9]+)?(?: \(\d+\))?\.zip$", fname):  # 自動ナンバリング対応
                 full_path = os.path.join(folder, fname)
                 timestamp = os.path.getmtime(full_path)
                 import datetime
@@ -393,6 +492,7 @@ def get_classes():
     return [
         BPRS_AddonPreferences,
         BPRS_OT_OpenURL,
+        BPRS_OT_DownloadLatestZip,
         BPRS_OT_ExecuteUpdate,
         BPRS_OT_OpenAddonFolder,
         BPRS_OT_ConfirmDownloadFolder,
@@ -449,6 +549,13 @@ def register_properties():
         default=False   # 初期化未実行（True=初期化済み、以降はスキップ）
     )
 
+    # 通知ログの重複防止
+    bpy.types.WindowManager.bprs_last_display_version = bpy.props.StringProperty(
+        name="Last Display Version",
+        description="Version string last shown in release notification",
+        default=""
+    )
+
 
 def unregister_properties():
     del bpy.types.Scene.bprs_download_folder
@@ -460,3 +567,4 @@ def unregister_properties():
     del bpy.types.WindowManager.bprs_obsolete_cleanup_done
     del bpy.types.WindowManager.bprs_new_release_available
     del bpy.types.WindowManager.bprs_initialized
+    del bpy.types.WindowManager.bprs_last_display_version

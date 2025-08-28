@@ -24,13 +24,13 @@ def draw_export_ui(layout, context, scene):
         # ファイル名（ラベル20%）
         row = box.row()
         split = row.split(factor=0.2)
-        split.label(text="File Name")
+        split.label(text=_("File Name :"))
         split.prop(scene, "bprs_export_filename", text="")
 
         # 出力パス（ラベル20%）
         row = box.row()
         split = row.split(factor=0.2)
-        split.label(text="Export Path")
+        split.label(text=_("Export Path :"))
         row_sub = split.row(align=True)
         row_sub.prop(scene, "bprs_export_filepath", text="")
         row_sub.operator("bprs.export_select_folder", text="", icon='FILE_FOLDER')
@@ -39,15 +39,15 @@ def draw_export_ui(layout, context, scene):
         # チェックボックスを左側に配置
         row = box.row()
         row.prop(scene, "bprs_export_auto_open", text="")  # チェックボックス
-        row.label(text="Auto Open File")  # ラベル
+        row.label(text=_("Auto Open File"))  # ラベル
 
         row = box.row()
         row.prop(scene, "bprs_export_overwrite", text="")  # チェックボックス
-        row.label(text="Overwrite Existing File")  # ラベル
+        row.label(text=_("Overwrite Existing File"))  # ラベル
 
         row = box.row()
         row.prop(scene, "bprs_export_format_json", text="")  # チェックボックス
-        row.label(text="Export as JSON")  # ラベル
+        row.label(text=_("Export as JSON"))  # ラベル
 
         box.operator("bprs.export_bone_data", text="Export Bone Data", icon='EXPORT')
 

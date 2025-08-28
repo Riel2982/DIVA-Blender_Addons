@@ -7,7 +7,11 @@ import zipfile
 import shutil
 import re
 import datetime
+import time
+import urllib.request
 import addon_utils
+import traceback
+
 
 from bpy.app.handlers import persistent
 from bpy.app.translations import pgettext as _
@@ -25,9 +29,9 @@ CHECK_PRE_RELEASE = not USE_VERSION_CHECK
 
 if False:
     # 現在のバージョンと比較して通知を決定（Falseならバージョン関係なく日時基準で通知）
-    CHECK_CURRENT_VERSION = True
+    CHECK_CURRENT_VERSION = False
     # stable以外の通知を出すかどうか
-    CHECK_PRE_RELEASE = False
+    CHECK_PRE_RELEASE = True
 
 # 不要ファイル実行制御フラグ（一括管理）
 ENABLE_OBSOLETE_FILE_REMOVAL = False
@@ -164,6 +168,8 @@ def get_latest_release_info(force=False):
 
             # ZIPファイル照合
             pattern = re.compile(r"^DIVA_BoneRenameTools.*\.zip$", re.IGNORECASE)
+            download_url = ""  # URLを格納する変数
+            matched_zip_found = False   # ZIPファイルの存在初期化
             
             for asset in assets:
                 name = asset.get("name", "")
@@ -171,15 +177,21 @@ def get_latest_release_info(force=False):
                     print("  [BRT] ZIPファイル名:", name)
 
                 if pattern.match(name):
+                    matched_zip_found = True    # ZIPファイルの確認
                     parsed = parse_release_filename(name)
                     version = parsed["version"]
                     status = parsed["status"]
+                    download_url = asset.get("browser_download_url", "")  # URL取得
                     if DEBUG_MODE:
                         print(f"  [BRT] バージョン抽出: {version} / ステータス: {status}")
+                        print(f"  [BRT] URL確認 / {download_url}")
                     break
                 else:
                     if DEBUG_MODE:
                         print("  [BRT] バージョン抽出失敗:", name)
+
+            if not matched_zip_found and DEBUG_MODE:
+                print("[BRT] 対象ZIPが見つかりませんでした")
 
             if not version and DEBUG_MODE:
                 print("[BRT] ZIPファイルからバージョンが抽出できません")
@@ -187,7 +199,8 @@ def get_latest_release_info(force=False):
             release_info = {
                 "published_at": published_at,
                 "version": version or "",
-                "status": status or "unknown"
+                "status": status or "unknown",
+                "download_url": download_url,  # URLを保存
             }
 
             # 保存
@@ -196,17 +209,26 @@ def get_latest_release_info(force=False):
                 "latest_release": release_info             # ← リリース情報
             })
 
+            if DEBUG_MODE:
+                print("[BRT] release_info:", release_info)
+
             return release_info  # dict: {published_at, version}
 
     except Exception as e:
         if DEBUG_MODE:
-            print("[BRT] GitHub取得失敗:", str(e))
+            print("[BRT] GitHub取得失敗:", repr(e))
+            traceback.print_exc()
 
         # 失敗しても取得時刻は記録する
         save_settings({
-            "api_checked_at": now.isoformat()
+            "api_checked_at": now.isoformat(),
+            "latest_release": {
+                "version": "",
+                "status": "unavailable",    # 取得できなかったステータス（他は空っぽに）
+                "download_url": "",
+                "published_at": ""
+            }
         })
-
         return {}  # API取得失敗時
 
 
@@ -361,7 +383,60 @@ def get_release_label():
     return display_version
 
 
+# ダウンロードファイルの自動ナンバリング
+def get_unique_filename(folder, filename):
+    base, ext = os.path.splitext(filename)
+    candidate = filename
+    counter = 1
+    while os.path.exists(os.path.join(folder, candidate)):
+        candidate = f"{base} ({counter}){ext}"
+        counter += 1
+    return candidate
 
+# 更新ファイルのダウンロード
+def download_and_finalize(url, folder, context):
+    scene = context.scene
+    try:
+        # ファイル名と保存先パスの決定
+        filename = os.path.basename(url)
+        filename = get_unique_filename(folder, filename)    # 自動ナンバリング
+        save_path = os.path.join(folder, filename)
+
+        # ダウンロード処理
+        urllib.request.urlretrieve(url, save_path)
+        if DEBUG_MODE:
+            print(f"[BRT] ダウンロード完了: {save_path}")
+
+        # 少し待ってから通知フラグを下げる
+        time.sleep(1.5)
+        if False:
+            context.window_manager.bprs_new_release_available = False   
+            if DEBUG_MODE:
+                print("[BRT] 通知フラグを False に設定しました")
+
+        # 候補リスト更新処理
+        scene.bprs_update_candidates.clear()
+        files = os.listdir(folder)
+        for fname in sorted(files, reverse=True):
+            # if re.match(r"^DIVA_DIVA_BoneRenameTools.*( |\.)?v\d+\.\d+\.\d+([ _\.-][a-zA-Z0-9]+)?\.zip$", fname):
+            if re.match(r"^DIVA_BoneRenameTools.*?( |\.)?v\d+\.\d+\.\d+(?:[ _\.-][a-zA-Z0-9]+)?(?: \(\d+\))?\.zip$", fname):  # 自動ナンバリング対応
+                full_path = os.path.join(folder, fname)
+                timestamp = os.path.getmtime(full_path)
+                date = datetime.datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
+                item = scene.bprs_update_candidates.add()
+                item.name = fname
+                item.path = full_path
+                item.date = date
+
+        if DEBUG_MODE:
+            print("[BRT] 候補リストを更新しました")
+
+        return True
+
+    except Exception as e:
+        if DEBUG_MODE:
+            print(f"[BRT] ダウンロード失敗: {str(e)}")
+        return False
 
 
 
@@ -391,6 +466,8 @@ def remove_obsolete_files_on_startup():
 
     for rel_path in OBSOLETE_FILES:
         abs_path = os.path.join(addon_folder, rel_path)
+
+        # ファイルを削除
         if os.path.isfile(abs_path):
             try:
                 os.remove(abs_path)
@@ -400,6 +477,18 @@ def remove_obsolete_files_on_startup():
             except Exception as e:
                 if DEBUG_MODE:
                     print(f"[BRT] 起動時削除失敗: {abs_path} → {str(e)}")
+
+        # フォルダを削除
+        elif os.path.isdir(abs_path):
+            try:
+                shutil.rmtree(abs_path)
+                deleted_files.append(rel_path + "/")  # フォルダとわかるように表記
+                if DEBUG_MODE:
+                    print(f"[BRT] 起動時にフォルダ削除: {abs_path}")
+            except Exception as e:
+                if DEBUG_MODE:
+                    print(f"[BRT] 起動時フォルダ削除失敗: {abs_path} → {str(e)}")
+
         else:
             if DEBUG_MODE:
                 print(f"[BRT] 起動時削除対象なし: {abs_path}")

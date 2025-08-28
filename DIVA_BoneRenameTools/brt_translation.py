@@ -178,26 +178,18 @@ translation_dict = {
         ("*", "Enter the new bone name"): "新しいボーン名を入力",
         # brt_types.py:162
         ("*", "Remove duplicate identifiers"): ".001 などの複製識別子を削除します",
-        # brt_types.py:167
-        ("*", "show_renumber_tools"): "Rename Selected Bones",
         # brt_types.py:168, brt_ui_rename.py:39
         ("*", "Renames the selected bone rows based on the specified settings"): "選択されたボーン列の名前を指定の設定に基づいて連番リネームします",
         # brt_types.py:168
         ("*", "Show renaming tools based on bone prefixes and numbering rules"): "ボーンの共通接頭辞とルールに基づいた連番リネーム操作を表示",
-        # brt_types.py:173
-        ("*", "show_replace_tools"): "Replace Bone Name",
         # brt_types.py:174, brt_ui_replace.py:46
         ("*", "Replace the selected bone name substring in bulk"): "ボーン名の一部を一括置換",
         # brt_types.py:174
         ("*", "Show tools for substring replacement and removing duplicate identifiers"): "ボーン名の部分文字列置換や.001などの識別子削除を行うツールを表示",
-        # brt_types.py:179
-        ("*", "show_invert_tools"): "Invert Selested Bones",
         # brt_types.py:180, brt_ui_invert.py:82
         ("*", "Invert left/right in selected bone names"): "選択ボーンの左右反転リネーム",
         # brt_types.py:180
         ("*", "Show tools to invert Left/Right identifiers for selected bones"): "選択ボーンの左右識別子を反転するツールを表示",
-        # brt_types.py:185
-        ("*", "show_group_tools"): "Other Rename Tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "左右識別子付きボーン名の一括リネームと、左右識別接尾辞を元に戻すツール",
         # brt_types.py:186
@@ -322,65 +314,77 @@ translation_dict = {
         ("*", "If enabled, automatically selects a linear parent-child chain from selected bone"): "ONの場合、選択ボーンを起点に分岐のない親子構造を自動選択します",
         # brt_ui_replace.py:148
         ("*", "Detected prefix: {prefix}"): "抽出結果: {prefix}",
-        # brt_uix_update.py:21, brt_update - コピー.py:18
+        # brt_uix_update.py:24, brt_update - コピー.py:18
         ("*", "Update"): "アップデート",
-        # brt_uix_update.py:24, brt_update - コピー.py:21
+        # brt_uix_update.py:27, brt_update - コピー.py:21
         ("*", "Check for Updates"): "更新を確認",
-        # brt_uix_update.py:27, brt_update - コピー.py:24
+        # brt_uix_update.py:30, brt_update - コピー.py:24
         ("*", "Install"): "インストール",
-        # brt_uix_update.py:28, brt_update - コピー.py:25
+        # brt_uix_update.py:31, brt_update - コピー.py:25
         ("*", "Open Addon Folder"): "アドオンフォルダを開く",
-        # brt_uix_update.py:34
+        # brt_uix_update.py:45
+        ("*", "GitHub has a preview release: "): "",
+        # brt_uix_update.py:47
         ("*", "GitHub has a recent release: "): "Githubに最新リリースがあり",
-        # brt_uix_update.py:43, brt_uix_update.py:44
+        # brt_uix_update.py:61, brt_uix_update.py:62
         ("*", "GitHub has a recent release. "): "Githubに最新リリースあり / ",
-        # brt_uix_update.py:48
+        # brt_uix_update.py:66
         ("*", "Path to ZIP download folder "): "ZIP保存先フォルダ ",
-        # brt_uix_update.py:58, brt_update - コピー.py:39
+        # brt_uix_update.py:76, brt_update - コピー.py:39
         ("*", "Update file list: "): "更新ファイル一覧：",
-        # brt_uix_update.py:91, brt_update - コピー.py:97
+        # brt_uix_update.py:109, brt_update - コピー.py:97
         ("*", "Opens the GitHub release page to check for update files"): "GitHubのリリースページを開き、アップデートファイルを確認できます",
-        # brt_uix_update.py:115, brt_update - コピー.py:115
+        # brt_uix_update.py:140
+        ("*", "Download URL could not be retrieved"): "ダウンロードURLが取得できません",
+        # brt_uix_update.py:148
+        ("*", "Please specify a valid download folder and run again"): "ZIP保存先フォルダを指定後、再び実行してください",
+        # brt_uix_update.py:160
+        ("*", "Download completed"): "ダウンロードが完了しました",
+        # brt_uix_update.py:163
+        ("*", "Download failed"): "ダウンロードできませんでした",
+        # brt_uix_update.py:172, brt_update - コピー.py:115
         ("*", "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update"): "アップデートをインストールするには、DIVA_BoneRenameToolsで始まるZIPファイルを選択してください",
-        # brt_uix_update.py:120, brt_update - コピー.py:120
+        # brt_uix_update.py:178, brt_update - コピー.py:120
         ("*", "Choose a ZIP file starting with DIVA_BoneRenameTools"): "DIVA_BoneRenameToolsで始まるZIPファイルを選択してください",
-        # brt_uix_update.py:127, brt_update - コピー.py:127
+        # brt_uix_update.py:194, brt_update - コピー.py:127
         ("*", "Choose the folder where the addon is installed"): "アドオンがインストールされているフォルダを選択してください",
-        # brt_uix_update.py:158, brt_update - コピー.py:158
+        # brt_uix_update.py:227, brt_update - コピー.py:158
         ("*", "No ZIP file selected. Please specify a file"): "ZIPファイルが選択されていません。ファイルを指定してください",
-        # brt_uix_update.py:166, brt_update - コピー.py:167
+        # brt_uix_update.py:237
+        ("*", "No ZIP file selected"): "ZIPファイルを選択してください",
+        # brt_uix_update.py:244, brt_update - コピー.py:167
         ("*", "Only ZIP files starting with DIVA_BoneRenameTools can be processed"): "DIVA_BoneRenameTools で始まるZIPファイル以外は処理できません",
-        # brt_uix_update.py:183, brt_update - コピー.py:184
+        # brt_uix_update.py:261, brt_update - コピー.py:184
         ("*", "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file"): "ZIP内に DIVA_BoneRenameTools フォルダまたは __init__.py が見つかりません",
-        # brt_uix_update.py:190, brt_update - コピー.py:191
+        # brt_uix_update.py:268, brt_update - コピー.py:191
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "ZIP内の bl_info.name を取得できません",
-        # brt_uix_update.py:212, brt_update - コピー.py:214
+        # brt_uix_update.py:291, brt_update - コピー.py:214
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "インストール先のアドオンフォルダが見つかりませんでした。インストール先を選択してください",
-        # brt_uix_update.py:218, brt_update - コピー.py:220
+        # brt_uix_update.py:297, brt_update - コピー.py:220
         ("*", "Installation was cancelled"): "インストールはキャンセルされました",
-        # brt_uix_update.py:226, brt_update - コピー.py:229
+        # brt_uix_update.py:305, brt_update - コピー.py:229
         ("*", "__init__.py not found in the selected folder"): "選択されたフォルダに __init__.py が見つかりません",
-        # brt_uix_update.py:233, brt_update - コピー.py:236
+        # brt_uix_update.py:312, brt_update - コピー.py:236
         ("*", "Update failed because bl_info.name does not match"): "bl_info.name が一致しないため、更新できません",
-        # brt_uix_update.py:261, brt_uix_update.py:53, brt_update - コピー.py:255, brt_update - コピー.py:34
+        # brt_uix_update.py:340, brt_uix_update.py:71, brt_update - コピー.py:255, brt_update - コピー.py:34
         ("*", "Update completed. Please restart Blender"): "更新が完了しました。Blenderを再起動してください",
-        # brt_uix_update.py:266, brt_update - コピー.py:260
+        # brt_uix_update.py:345, brt_update - コピー.py:260
         ("*", "Update failed: {error}"): "更新に失敗しました: {error}",
-        # brt_uix_update.py:274, brt_update - コピー.py:268
+        # brt_uix_update.py:353, brt_update - コピー.py:268
         ("*", "Please select a ZIP file"): "ZIPファイルを選択してください",
-        # brt_uix_update.py:275, brt_update - コピー.py:269
+        # brt_uix_update.py:354, brt_update - コピー.py:269
         ("*", "Please restart Blender after the update"): "更新後はBlenderを再起動してください",
-        # brt_uix_update.py:282, brt_update - コピー.py:276
+        # brt_uix_update.py:361, brt_update - コピー.py:276
         ("*", "Opens the folder where this addon is installed"): "現在のアドオンフォルダを開く",
-        # brt_uix_update.py:300, brt_update - コピー.py:294
+        # brt_uix_update.py:379, brt_update - コピー.py:294
         ("*", "Scan the folder and list update candidate files"): "ZIPファイルリストの更新",
-        # brt_uix_update.py:314, brt_update - コピー.py:307
+        # brt_uix_update.py:393, brt_update - コピー.py:307
         ("*", "Download folder setting has been saved"): "DLフォルダ設定が保存されました",
-        # brt_uix_update.py:337, brt_update - コピー.py:330
+        # brt_uix_update.py:417, brt_update - コピー.py:330
         ("*", "Sort update files by file name. Click again to toggle order"): "ZIPファイル名ソート(A–Z / Z–A)",
-        # brt_uix_update.py:356, brt_update - コピー.py:349
+        # brt_uix_update.py:436, brt_update - コピー.py:349
         ("*", "Sort update files by update/download date. Click again to toggle order"): "日時順ソート(newest ↔ oldest)",
-        # brt_uix_update.py:388, brt_update - コピー.py:380
+        # brt_uix_update.py:469, brt_update - コピー.py:380
         ("*", "Specify the folder where the update ZIP is stored"): "更新用ZIPが保存されているフォルダを指定してください",
         # brt_update - コピー.py:29
         ("*", "Path to ZIP download folder"): "ZIP保存先フォルダ",
@@ -562,26 +566,18 @@ translation_dict = {
         ("*", "Enter the new bone name"): "Enter the new bone name",
         # brt_types.py:162
         ("*", "Remove duplicate identifiers"): "Remove duplicate identifiers",
-        # brt_types.py:167
-        ("*", "show_renumber_tools"): "show_renumber_tools",
         # brt_types.py:168, brt_ui_rename.py:39
         ("*", "Renames the selected bone rows based on the specified settings"): "Renames the selected bone rows based on the specified settings",
         # brt_types.py:168
         ("*", "Show renaming tools based on bone prefixes and numbering rules"): "Show renaming tools based on bone prefixes and numbering rules",
-        # brt_types.py:173
-        ("*", "show_replace_tools"): "show_replace_tools",
         # brt_types.py:174, brt_ui_replace.py:46
         ("*", "Replace the selected bone name substring in bulk"): "Replace the selected bone name substring in bulk",
         # brt_types.py:174
         ("*", "Show tools for substring replacement and removing duplicate identifiers"): "Show tools for substring replacement and removing duplicate identifiers",
-        # brt_types.py:179
-        ("*", "show_invert_tools"): "show_invert_tools",
         # brt_types.py:180, brt_ui_invert.py:82
         ("*", "Invert left/right in selected bone names"): "Invert left/right in selected bone names",
         # brt_types.py:180
         ("*", "Show tools to invert Left/Right identifiers for selected bones"): "Show tools to invert Left/Right identifiers for selected bones",
-        # brt_types.py:185
-        ("*", "show_group_tools"): "show_group_tools",
         # brt_types.py:186
         ("*", "Batch renaming for symmetric bone names and revert option"): "Batch renaming for symmetric bone names and revert option",
         # brt_types.py:186
@@ -706,65 +702,77 @@ translation_dict = {
         ("*", "If enabled, automatically selects a linear parent-child chain from selected bone"): "If enabled, automatically selects a linear parent-child chain from selected bone",
         # brt_ui_replace.py:148
         ("*", "Detected prefix: {prefix}"): "Detected prefix: {prefix}",
-        # brt_uix_update.py:21, brt_update - コピー.py:18
+        # brt_uix_update.py:24, brt_update - コピー.py:18
         ("*", "Update"): "Update",
-        # brt_uix_update.py:24, brt_update - コピー.py:21
+        # brt_uix_update.py:27, brt_update - コピー.py:21
         ("*", "Check for Updates"): "Check for Updates",
-        # brt_uix_update.py:27, brt_update - コピー.py:24
+        # brt_uix_update.py:30, brt_update - コピー.py:24
         ("*", "Install"): "Install",
-        # brt_uix_update.py:28, brt_update - コピー.py:25
+        # brt_uix_update.py:31, brt_update - コピー.py:25
         ("*", "Open Addon Folder"): "Open Addon Folder",
-        # brt_uix_update.py:34
+        # brt_uix_update.py:45
+        ("*", "GitHub has a preview release: "): "GitHub has a preview release: ",
+        # brt_uix_update.py:47
         ("*", "GitHub has a recent release: "): "GitHub has a recent release: ",
-        # brt_uix_update.py:43, brt_uix_update.py:44
+        # brt_uix_update.py:61, brt_uix_update.py:62
         ("*", "GitHub has a recent release. "): "GitHub has a recent release. ",
-        # brt_uix_update.py:48
+        # brt_uix_update.py:66
         ("*", "Path to ZIP download folder "): "Path to ZIP download folder ",
-        # brt_uix_update.py:58, brt_update - コピー.py:39
+        # brt_uix_update.py:76, brt_update - コピー.py:39
         ("*", "Update file list: "): "Update file list: ",
-        # brt_uix_update.py:91, brt_update - コピー.py:97
+        # brt_uix_update.py:109, brt_update - コピー.py:97
         ("*", "Opens the GitHub release page to check for update files"): "Opens the GitHub release page to check for update files",
-        # brt_uix_update.py:115, brt_update - コピー.py:115
+        # brt_uix_update.py:140
+        ("*", "Download URL could not be retrieved"): "Download URL could not be retrieved",
+        # brt_uix_update.py:148
+        ("*", "Please specify a valid download folder and run again"): "Please specify a valid download folder and run again",
+        # brt_uix_update.py:160
+        ("*", "Download completed"): "Download completed",
+        # brt_uix_update.py:163
+        ("*", "Download failed"): "Download failed",
+        # brt_uix_update.py:172, brt_update - コピー.py:115
         ("*", "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update"): "Select a ZIP archive beginning with DIVA_BoneRenameTools to install the update",
-        # brt_uix_update.py:120, brt_update - コピー.py:120
+        # brt_uix_update.py:178, brt_update - コピー.py:120
         ("*", "Choose a ZIP file starting with DIVA_BoneRenameTools"): "Choose a ZIP file starting with DIVA_BoneRenameTools",
-        # brt_uix_update.py:127, brt_update - コピー.py:127
+        # brt_uix_update.py:194, brt_update - コピー.py:127
         ("*", "Choose the folder where the addon is installed"): "Choose the folder where the addon is installed",
-        # brt_uix_update.py:158, brt_update - コピー.py:158
+        # brt_uix_update.py:227, brt_update - コピー.py:158
         ("*", "No ZIP file selected. Please specify a file"): "No ZIP file selected. Please specify a file",
-        # brt_uix_update.py:166, brt_update - コピー.py:167
+        # brt_uix_update.py:237
+        ("*", "No ZIP file selected"): "No ZIP file selected",
+        # brt_uix_update.py:244, brt_update - コピー.py:167
         ("*", "Only ZIP files starting with DIVA_BoneRenameTools can be processed"): "Only ZIP files starting with DIVA_BoneRenameTools can be processed",
-        # brt_uix_update.py:183, brt_update - コピー.py:184
+        # brt_uix_update.py:261, brt_update - コピー.py:184
         ("*", "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file"): "Missing DIVA_BoneRenameTools folder or __init__.py inside the ZIP file",
-        # brt_uix_update.py:190, brt_update - コピー.py:191
+        # brt_uix_update.py:268, brt_update - コピー.py:191
         ("*", "Could not retrieve bl_info.name from the ZIP file"): "Could not retrieve bl_info.name from the ZIP file",
-        # brt_uix_update.py:212, brt_update - コピー.py:214
+        # brt_uix_update.py:291, brt_update - コピー.py:214
         ("*", "Addon installation folder not found. Please select the destination folder manually"): "Addon installation folder not found. Please select the destination folder manually",
-        # brt_uix_update.py:218, brt_update - コピー.py:220
+        # brt_uix_update.py:297, brt_update - コピー.py:220
         ("*", "Installation was cancelled"): "Installation was cancelled",
-        # brt_uix_update.py:226, brt_update - コピー.py:229
+        # brt_uix_update.py:305, brt_update - コピー.py:229
         ("*", "__init__.py not found in the selected folder"): "__init__.py not found in the selected folder",
-        # brt_uix_update.py:233, brt_update - コピー.py:236
+        # brt_uix_update.py:312, brt_update - コピー.py:236
         ("*", "Update failed because bl_info.name does not match"): "Update failed because bl_info.name does not match",
-        # brt_uix_update.py:261, brt_uix_update.py:53, brt_update - コピー.py:255, brt_update - コピー.py:34
+        # brt_uix_update.py:340, brt_uix_update.py:71, brt_update - コピー.py:255, brt_update - コピー.py:34
         ("*", "Update completed. Please restart Blender"): "Update completed. Please restart Blender",
-        # brt_uix_update.py:266, brt_update - コピー.py:260
+        # brt_uix_update.py:345, brt_update - コピー.py:260
         ("*", "Update failed: {error}"): "Update failed: {error}",
-        # brt_uix_update.py:274, brt_update - コピー.py:268
+        # brt_uix_update.py:353, brt_update - コピー.py:268
         ("*", "Please select a ZIP file"): "Please select a ZIP file",
-        # brt_uix_update.py:275, brt_update - コピー.py:269
+        # brt_uix_update.py:354, brt_update - コピー.py:269
         ("*", "Please restart Blender after the update"): "Please restart Blender after the update",
-        # brt_uix_update.py:282, brt_update - コピー.py:276
+        # brt_uix_update.py:361, brt_update - コピー.py:276
         ("*", "Opens the folder where this addon is installed"): "Opens the folder where this addon is installed",
-        # brt_uix_update.py:300, brt_update - コピー.py:294
+        # brt_uix_update.py:379, brt_update - コピー.py:294
         ("*", "Scan the folder and list update candidate files"): "Scan the folder and list update candidate files",
-        # brt_uix_update.py:314, brt_update - コピー.py:307
+        # brt_uix_update.py:393, brt_update - コピー.py:307
         ("*", "Download folder setting has been saved"): "Download folder setting has been saved",
-        # brt_uix_update.py:337, brt_update - コピー.py:330
+        # brt_uix_update.py:417, brt_update - コピー.py:330
         ("*", "Sort update files by file name. Click again to toggle order"): "Sort update files by file name. Click again to toggle order",
-        # brt_uix_update.py:356, brt_update - コピー.py:349
+        # brt_uix_update.py:436, brt_update - コピー.py:349
         ("*", "Sort update files by update/download date. Click again to toggle order"): "Sort update files by update/download date. Click again to toggle order",
-        # brt_uix_update.py:388, brt_update - コピー.py:380
+        # brt_uix_update.py:469, brt_update - コピー.py:380
         ("*", "Specify the folder where the update ZIP is stored"): "Specify the folder where the update ZIP is stored",
         # brt_update - コピー.py:29
         ("*", "Path to ZIP download folder"): "Path to ZIP download folder",
