@@ -4,8 +4,8 @@ DIVAのモデル編集に活用するBlenderアドオン集。
 **Blender 3.6** にて検証済み。  
 
 - **FBX Operatios Pack**  
-  - FBXのインポートとエクスポートをサポートするツール。
-  - 要標準アドオンFBX format。
+  - DIVAモデルのFBXのインポートとエクスポートをサポートするツール。
+  - Blender標準アドオンである**"FBX format"**導入必須です。
 
 - **Bone Position Rotation Scale**
   - Blenderのアーマチュアからボーンデータ（位置・回転・スケール・親ボーン情報）を取得するツール。
@@ -40,8 +40,9 @@ Verified on **Blender 3.6**.
 
 
 - **FBX Operation Pack**
-  - fbx 
-  - FBX format.
+  - Supports importing and exporting DIVA models in FBX format.  
+  - Requires the built-in Blender add-on **"FBX format"** to be enabled.  
+
 
 - **Bone Position Rotation Scale**  
   - Retrieves bone data (position, rotation, scale, and parent relationships) from Blender's armature system.  
