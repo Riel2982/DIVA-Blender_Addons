@@ -221,19 +221,7 @@ class BRT_OT_DetectCommonPrefix(bpy.types.Operator):
                 extend_by_common_group=False,
                 child_only=self.select_children_only  # ← ここで切り替え
             )
-        '''
-        if self.use_auto_select:
-            if self.select_children_only:
-                brt_sub.select_child_chain_only(        # 末端方向のみ
-                    bones[0].name,
-                    prefix_filter=prefix if self.filter_inconsistent else None
-                )
-            else:
-                brt_sub.select_linear_chain_inclusive(
-                    bones[0].name,
-                    prefix_filter=prefix if self.filter_inconsistent else None
-                )
-        '''
+
                 
         from .brt_rename import extract_rename_settings
 

@@ -4,6 +4,9 @@ import bpy
 from bpy.app.translations import pgettext as _
 from .brt_sub import extract_common_group, clean_name
 
+from .brt_debug import DEBUG_MODE   # デバッグ用
+
+
 # --- セクション 3: 反転リネーム ------------------------------------------
 def panel_invert_ui(layout, context, scene):
     box3 = layout.box()
@@ -59,20 +62,10 @@ def panel_invert_ui(layout, context, scene):
             if not scene.brt_bone_x_mirror:
                 row.label(text=" ", icon="BLANK1")  
 
-        '''
-        row = box3.row()
-        row.prop(scene, "brt_duplicate_and_rename", text="")  # チェックボックス
-        row.label(text=_("複製してリネーム")) # 非連動
-        
-        row = box3.row()
-        row.prop(scene, "brt_bone_x_mirror", text="")  # チェックボックス
-        row.label(text=_("選択ボーンをXミラー")) # 非連動
-
-        if scene.brt_bone_x_mirror:     # ONならドロップダウン表示
-            row.prop(scene, "brt_mirror_mode", text="")       # 判別ペアのドロップダウン（選択中のセットに応じた項目）
-        '''
         # 選択ボーンの反転リネーム（Invert Left/Right Bone Names）
         box3.operator("brt.invert_selected_bones", text=_("Invert Left/Right Bone Names"), icon="GROUP_BONE") # 実行ボタン
+
+
 
 class BRT_OT_InvertSelectedBones(bpy.types.Operator):
     """選択ボーンの左右反転リネーム"""
@@ -119,7 +112,10 @@ class BRT_OT_InvertSelectedBones(bpy.types.Operator):
             rule_enum="000",   # 任意の設定値
             rule_index=int(props.bone_rule)
         )
-        
+
+        if renamed == 0:        # Rename対象のボーンがない時
+            self.report({'WARNING'}, _("No bones were renamed. Operation cancelled."))
+            return {'CANCELLED'}
 
         self.report({'INFO'}, _("Renamed {count} bones").format(count=renamed))
         return {'FINISHED'}
@@ -199,20 +195,8 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
             filter_inconsistent=self.filter_inconsistent
         )
 
-        '''
-        # 最初に選択されているボーンを起点に線形チェーンを選択
-        prefix = brt_sub.detect_common_prefix(
-            bones=bones,
-            suffix_enum=context.scene.brt_rename_suffix,
-            rule_enum=context.scene.brt_rename_rule
-        ) if self.filter_inconsistent else None
 
-        brt_sub.select_linear_chain_inclusive(
-            bones[0].name,
-            prefix_filter=prefix
-        )
-        '''
-        if False:
+        if DEBUG_MODE:
             # ▶ コンソールに選択ボーン名を表示
             print(f"\n▶ [LinearChain] 実行オプション:")
             print(f" - filter_inconsistent: {self.filter_inconsistent}")
@@ -230,7 +214,7 @@ class BRT_OT_SelectLinearChain(bpy.types.Operator):
         elif mode == 'EDIT_ARMATURE':
             selected_bones = [b.name for b in obj.data.edit_bones if b.select]
 
-        if False:
+        if DEBUG_MODE:
             print(f"\n▶ [LinearChain] 選択ボーン一覧（{len(selected_bones)}本）:")
             for name in selected_bones:
                 print(f" - {name}")        

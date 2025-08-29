@@ -83,7 +83,6 @@ def mirror_bone_global(target, mirror_mode):
 
         target.roll = math.radians(roll_deg)
 
-# 選択中のボーンに対して、識別パターンに基づいて名前を反転リネーム
 def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror=False, assign_identifier=False, suffix_enum="wj", rule_enum="000", rule_index=0):
     from .brt_sub import detect_common_prefix
 
@@ -95,134 +94,94 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
     if initial_mode not in {'POSE', 'EDIT_ARMATURE'}:
         return 0
 
-    # 対象ボーン収集（Pose or Edit）
-    if initial_mode == 'POSE':
-        bones = [b for b in obj.pose.bones if b.bone.select]
-    elif initial_mode == 'EDIT_ARMATURE':
-        bones = [b for b in obj.data.edit_bones if b.select]
-
-    if DEBUG_MODE:
-        # デバック用
-        print(f"▶ apply_mirrored_rename: mode = {initial_mode}")
-        print(f"▶ 選択ボーン数: {len(bones)}")
-
-    if not bones:
+    # 選択ボーンの取得
+    bones = obj.pose.bones if initial_mode == 'POSE' else obj.data.edit_bones
+    selected_bones = [b for b in bones if b.select]
+    if not selected_bones:
         return 0
 
-    # 選ばれた識別子セットとルールに基づく辞書を取得
+    if DEBUG_MODE:
+        print(f"▶ apply_mirrored_rename: mode = {initial_mode}")
+        print(f"▶ 選択ボーン数: {len(selected_bones)}")
+
+    # パターン辞書の取得
     rule_index = rule_index if assign_identifier else None
     mirror_map = get_pattern_map_from_prefs(context, pattern_name, rule_index)
     if not mirror_map:
         return 0
 
-    # プレフィックスを抽出（必要なら）
-    prefix = detect_common_prefix(bones, suffix_enum, rule_enum) if assign_identifier else None
+    prefix = detect_common_prefix(selected_bones, suffix_enum, rule_enum) if assign_identifier else None
+    ident_list = list(mirror_map["flip"].keys())
 
     if DEBUG_MODE:
-        # デバック用
         print(f"▶ mirror_map: {mirror_map}")
         print(f"▶ prefix: {prefix}")
+        print(f"▶ ident_list: {ident_list}")
+
+    bpy.ops.object.mode_set(mode='EDIT')  # ミラー・複製はEDITモードで実行
 
     renamed = 0
-    bpy.ops.object.mode_set(mode='EDIT')  # ミラーや複製はEDITで実行
-
-    bone_map = {}  # オリジナル名 → 複製ボーン を記録する辞書
-
-    # 識別子リストを抽出（flip対象として登録されているすべて）
-    ident_list = list(mirror_map["flip"].keys())
+    bone_map = {}
 
     for bone in obj.data.edit_bones:
         if not bone.select:
             continue
 
-        target = bone
-
+        # --- STEP 1: 複製処理（オプション） ---
         if duplicate:
-            # _copyサフィックスを明示的に付与した新しいボーンを作成
-            src_name = bone.name + "_copy"
-            target = obj.data.edit_bones.new(src_name)
+            new_name = bone.name + "_copy"
+            target = obj.data.edit_bones.new(new_name)
             target.head = bone.head.copy()
             target.tail = bone.tail.copy()
             target.roll = bone.roll
             target.use_connect = False
             target.parent = None
-            renamed += 1
             bone_map[bone.name] = target
 
-        mirror_mode = context.scene.brt_mirror_mode
-
-        if mirror:
-            mirror_mode = context.scene.brt_mirror_mode
-
-            if duplicate:   # 複製しない時はミラーしない
-                # apply_mirror_transform(target, mirror_mode)   # ローカル軸
-                mirror_bone_global(target, mirror_mode)   # グローバル軸
-            
-            # 名前反転と識別子付与の順序処理
-            name = strip_copy_suffix(target.name)  # "_copy"除去済みのベース名
-
-            # flip処理（識別子が既に含まれている場合のみ）
-            has_identifier = has_structured_identifier(name, ident_list)
-            if has_identifier:
-                name = apply_name_flip(name, mirror_map["flip"])
-                if DEBUG_MODE:
-                    print(f"▶ 名前反転: {target.name} → {name}")
-                renamed += 1
-
-            # 識別子の付与（反転後の target に対して）
-            if assign_identifier:
-                actual_side = determine_side(target)  # ←ここを bone ではなく target にする！
-                identifier = (
-                    mirror_map.get("left") if actual_side == "L"
-                    else mirror_map.get("right") if actual_side == "R"
-                    else ""
-                )
-                prefix_fallback = prefix or derive_local_prefix(name)
-                name = insert_identifier_by_structure(name, identifier, prefix_fallback)
-                if DEBUG_MODE:
-                    print(f"▶ 識別子付与: {target.name} → {name}")
-                renamed += 1
-
-            target.name = name
-
-            
-        '''
-        if mirror:
-            # X軸方向を反転してミラー
-            target.head[0] *= -1
-            target.tail[0] *= -1
-            
-            # ロールも反転（Z軸を基準に反転するようなイメージ）
-            target.roll *= -1
-        '''
-
-        # STEP1: _copy を除去して base name を取得
-        name = strip_copy_suffix(target.name)
-
-        # STEP2: すでに識別子を持っていれば flip 処理のみ
-        if has_structured_identifier(name, ident_list):
-            new_name = apply_name_flip(name, mirror_map["flip"])
             if DEBUG_MODE:
-                print(f"▶ 名前反転: {name} → {new_name}")
-            renamed += 1
-            target.name = new_name
+                print(f"▶ 複製: {bone.name} → {target.name}")
+        else:
+            target = bone
 
-        # STEP3: 識別子がない場合 → 空間位置から判断して付与
+        # --- STEP 2: ミラー処理（オプション） ---
+        if mirror and duplicate:
+            mirror_mode = context.scene.brt_mirror_mode
+            mirror_bone_global(target, mirror_mode)
+
+            if DEBUG_MODE:
+                print(f"▶ ミラー適用: {target.name} / mode = {mirror_mode}")
+
+        # --- STEP 3: 名前処理 ---
+        base_name = strip_copy_suffix(target.name)
+
+        # ① flip処理（識別子が含まれている場合）
+        if has_structured_identifier(base_name, ident_list):
+            flipped_name = apply_name_flip(base_name, mirror_map["flip"])
+            if DEBUG_MODE:
+                print(f"▶ 名前反転: {base_name} → {flipped_name}")
+            target.name = flipped_name
+            renamed += 1
+        # ② 識別子付与（オプション）
         elif assign_identifier:
-            actual_side = determine_side(target)  # ← target は反転済みの状態
+            actual_side = determine_side(target)
+
+            if DEBUG_MODE:
+                x = target.head.x if hasattr(target, "head") else 0
+                print(f"▶ 判定: {target.name} → x = {x:.4f} → side = {actual_side}")
+
             identifier = (
                 mirror_map.get("left") if actual_side == "L"
                 else mirror_map.get("right") if actual_side == "R"
                 else ""
             )
-            prefix_fallback = prefix or derive_local_prefix(name)
-            new_name = insert_identifier_by_structure(name, identifier, prefix_fallback)
+            prefix_fallback = prefix or derive_local_prefix(base_name)
+            new_name = insert_identifier_by_structure(base_name, identifier, prefix_fallback)
             if DEBUG_MODE:
-                print(f"▶ 識別子付与: {name} → {new_name}")
-            renamed += 1
+                print(f"▶ 識別子付与: {base_name} → {new_name} / side = {actual_side}")
             target.name = new_name
+            renamed += 1
 
-    
+    # --- STEP 4: 親子関係の再接続（複製時のみ） ---
     if duplicate:
         for orig_name, target in bone_map.items():
             orig_bone = obj.data.edit_bones.get(orig_name)
@@ -233,23 +192,34 @@ def apply_mirrored_rename(context, pattern_name: str, *, duplicate=False, mirror
                     target.parent = parent_target
                     if orig_bone.use_connect:
                         target.use_connect = True
-                        target.head = parent_target.tail.copy()  # 接続点を一致させる
+                        target.head = parent_target.tail.copy()
                     else:
                         target.use_connect = False
-                        # 接続しない場合は、head/tailを元のローカル位置のまま維持する
-                        
 
-    # 編集完了後に元のモードに戻す（Blenderの仕様に準拠）
-    if initial_mode == 'EDIT_ARMATURE':
-        bpy.ops.object.mode_set(mode='EDIT')
-    else:
-        bpy.ops.object.mode_set(mode=initial_mode)
+                    if DEBUG_MODE:
+                        print(f"▶ 親子再接続: {target.name} → parent = {parent_target.name}")
+
+    # --- STEP 5: モード復帰 ---
+    MODE_MAP = {
+        'EDIT_ARMATURE': 'EDIT',
+        'POSE': 'POSE',
+        'OBJECT': 'OBJECT'
+    }
+
+    # 初期モードを取得
+    initial_mode = bpy.context.mode
+
+    # マッピングして mode_set に渡す
+    mapped_mode = MODE_MAP.get(initial_mode, 'OBJECT')
+    bpy.ops.object.mode_set(mode=mapped_mode)   # 旧EDIT_ARMATURE 
 
     if DEBUG_MODE:
-        # デバック用
         print(f"▶ 処理完了: renamed = {renamed}")
 
     return renamed
+
+
+
 
 # 指定されたパターン名に基づいて置換辞書を返す
 def get_pattern_map_from_prefs(context, pattern_label: str, rule_index: Optional[int]) -> dict:
@@ -287,18 +257,9 @@ def get_pattern_map_from_prefs(context, pattern_label: str, rule_index: Optional
                     "flip": full_flip     # 反転には全識別子を使う
                 }
 
-            '''
-            # 🔧 assign_identifier=True → 単一ルールだけ使う
-            elif rule_index < len(p.rules):
-                r = p.rules[rule_index]
-                return {
-                    "left": r.left,
-                    "right": r.right,
-                    "flip": {r.left: r.right, r.right: r.left}
-                }
-            '''
 
     return {}
+
 def apply_name_flip(name, flip_map):
     for left, right in flip_map.items():
         if right in name:
@@ -307,39 +268,22 @@ def apply_name_flip(name, flip_map):
             return name.replace(left, right)
     return name  # flip対象なし
 
-'''
-# ボーン名に対して左右識別子に基づく置換を適用
-def apply_name_flip(name: str, mapping: dict) -> str:
-    for a, b in mapping.items():
-        if a in name:
-            return name.replace(a, b)
-    return name
-'''
-    
-'''
-# サフィックス除去関数（_copy式に変えたので使わない）
-def strip_duplicate_suffix(name: str) -> str:
-    """
-    Blenderが自動で付ける `.001`, `.002` などを除去。
-    例: 'Head_L.001' → 'Head_L'
-    """
-    return re.sub(r"\.\d{3}$", "", name)
-'''
+
     
 # _copy' で終わっていれば除去
 def strip_copy_suffix(name: str) -> str:
     return name[:-5] if name.endswith("_copy") else name
 
-# ボーンの左右側を判定（EDITモード・POSEモード兼用）
+# X軸位置で左右判定（+X → L, −X → R, ≈0 → C（中央））
 def determine_side(bone) -> str:
-    """ bone.head.x が + なら 'R'、- なら 'L'、0に近い場合は 'C'（中央扱い）"""
+    # Blenderのローカル空間では、X軸正方向が右、負方向が左が一般的だが、アーマチュアの左右規則と逆
     x = bone.head.x if hasattr(bone, "head") else 0
-    if x > 0.0001:
-        return "R"
-    elif x < -0.0001:
-        return "L"
-    else:
-        return "C"
+    if x > 0.0001:      # +XはBlenderの扱いは右側だが
+        return "L"      # 実際は左手側
+    elif x < -0.0001:   # -XはBlender上は左側扱いだが
+        return "R"      # 実際は右手側
+    else:               # ほぼ0位置
+        return "C"      # 中央として扱う
 
 
 

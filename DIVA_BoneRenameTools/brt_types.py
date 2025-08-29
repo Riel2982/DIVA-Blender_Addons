@@ -4,41 +4,6 @@ import bpy
 from bpy.app.translations import pgettext as _
 from .brt_json import get_bone_pattern_items, get_rule_items
 
-'''
-def get_bone_pattern_items(self, context):
-    prefs = context.preferences.addons["DIVA_BoneRenameTools"].preferences
-    items = []
-
-    for i, pattern in enumerate(prefs.bone_patterns):
-        label = pattern.label.strip()
-
-        # 識別子としてそのまま使える名前に（ascii前提）
-        identifier = label
-        name = label  # 表示用にもそのまま使う（日本語でない前提）
-
-        items.append((identifier, name, ""))
-
-    return items
-
-# 選択したボーン識別子セットの識別子ルールを取得
-def get_rule_items(self, context):
-    prefs = context.preferences.addons.get("DIVA_BoneRenameTools")
-    if not prefs:
-        return []
-
-    label = self.bone_pattern  # 現在のセットラベル
-    patterns = prefs.preferences.bone_patterns
-
-    for pattern in patterns:
-        if pattern.label == label:
-            return [
-                (str(i), f"{r.right} / {r.left}", "")
-                for i, r in enumerate(pattern.rules)
-                if r.right and r.left
-            ]
-
-    return []
-'''
 
 # プロパティグループ
 class BRT_InvertSelectedBonesProps(bpy.types.PropertyGroup):

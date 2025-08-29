@@ -4,6 +4,10 @@ import bpy
 import re
 from os.path import commonprefix
 
+
+from .brt_debug import DEBUG_MODE   # デバッグ用
+
+
 def clean_name(name):
     base = name.split(".")[0]  # 「.」より右を除外
 
@@ -91,19 +95,7 @@ def select_linear_chain_inclusive(
     if not bone or not is_valid(bone):
         return
 
-    '''
-    # 親方向に一本道をさかのぼる
-    current = bone
-    while True:
-        parent = get_parent(current)
-        if not parent or len(parent.children) != 1:
-            break
-        # 親が prefix に一致しなければ止める
-        if prefix_filter and not clean_name(get_name(parent)).startswith(prefix_filter):
-            break
-        current = parent
-    root = current
-    '''
+
     # 親方向に一本道をさかのぼる（child_only=False のときのみ）
     root = bone
     if not child_only:
@@ -154,29 +146,7 @@ def select_linear_chain_inclusive(
                 current = children[0]
             else:
                 break
-    '''
-    # 子方向に一本道をたどる（分岐があってもそのボーンまでは含める）
-    chain = []
-    current = root
-    while current:
-        # ここでフィルタを適用
-        cname = clean_name(get_name(current))
-        if prefix_filter and not cname.startswith(prefix_filter):
-            break  # フィルタと一致しない → 以降は除外
-        chain.append(current)
-        children = get_children(current)
-        if len(children) == 1:
-            current = children[0]
-        else:
-            break
-    '''
-    '''            
-    # 共通グループによる選択範囲拡張
-    if extend_by_common_group:
-        for b in bones:
-            if b not in chain and extract_common_group(clean_name(get_name(b))) == target_group:
-                chain.append(b)
-    '''
+
     # 共通グループによる選択範囲拡張
     if extend_by_common_group:
         base_clean = clean_name(get_name(bone))
@@ -190,7 +160,7 @@ def select_linear_chain_inclusive(
             if b_group != base_group:
                 continue
 
-            if False:
+            if DEBUG_MODE:
                 print("[StrictChain]" if filter_inconsistent else "[OpenChain]",
                     "基準ボーン名:", get_name(b),
                     "clean_name:", b_clean,
@@ -249,7 +219,7 @@ def extend_chain_strict(
     base_clean = clean_name(base_name)
     base_group = extract_common_group(base_clean)
 
-    if False:
+    if DEBUG_MODE:
         print("[StrictChain] 基準ボーン名       :", base_name)
         print("[StrictChain] clean_name         :", base_clean)
         print("[StrictChain] extract_group      :", base_group)
@@ -302,7 +272,7 @@ def extend_chain_open(
     base_clean = clean_name(base_name)
     base_group = extract_common_group(base_clean)
 
-    if False:
+    if DEBUG_MODE:
         print("[OpenChain] 基準ボーン名       :", base_name)
         print("[OpenChain] clean_name         :", base_clean)
         print("[OpenChain] extract_group      :", base_group)

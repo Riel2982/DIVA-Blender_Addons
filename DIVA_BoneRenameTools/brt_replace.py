@@ -12,11 +12,18 @@ from .brt_debug import DEBUG_MODE   # デバッグ用
 def strip_number_suffix(name: str) -> str:
     return re.sub(r"\.\d{3,}$", "", name)
 
+# _copy（アドオン付与+.001含む）除去
+def strip_copy_suffix(name: str) -> str:
+    return re.sub(r"_copy(?:\.\d{3,})?$", "", name)
+
+
 # 最後の処理として末尾の .001 などを除去（安全に）
 def sanitize_duplicate_suffixes(bones):
     existing = {b.name for b in bones}
     for bone in bones:
-        cleaned = strip_number_suffix(bone.name)
+        cleaned = strip_number_suffix(bone.name)    # bone.nameから重複識別子削除（対象がなくてもcleandに代入）
+        cleaned = strip_copy_suffix(cleaned)  # 上記結果のcleandからcopy系を更に除去
+
         # すでに同名が存在していない場合のみ再設定
         if cleaned != bone.name and cleaned not in existing:
             try:
@@ -53,7 +60,8 @@ def replace_bone_names_by_rule(context, source, target):
             bone.name = new_name
             matched += 1
 
-    if context.scene.brt_remove_number_suffix:
+    # 実際に置き換えが発生したときのみ重複識別子を除去
+    if matched > 0 and context.scene.brt_remove_number_suffix:
         sanitize_duplicate_suffixes(selected_bones)
 
     if matched == 0:

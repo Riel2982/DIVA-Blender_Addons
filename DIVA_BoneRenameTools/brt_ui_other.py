@@ -31,18 +31,26 @@ class BRT_OT_RenameGroups(bpy.types.Operator):
         obj = context.object
         mode = context.mode
 
-        if mode == 'OBJECT':
+        if mode == 'OBJECT':    # オブジェクトモード（全アーマチュアを対象に）
             if not obj or obj.type != 'ARMATURE':
                 self.report({'WARNING'}, _("No armature is selected"))
                 return {'CANCELLED'}
 
-            rename_bones_and_vertex_groups()
+            # 処理ロジック
+            renamed, skipped = rename_bones_and_vertex_groups()
 
+            if renamed == 0:    # リネーム対象が存在しない時
+                if skipped > 0:     # 付与済みだった時
+                    self.report({'INFO'}, _("All target names already had .R/.L suffixes; no changes made"))
+                else:
+                    self.report({'WARNING'}, _("No bone name with left/right identifier was found"))
+                return {'CANCELLED'}
+
+            # 完了報告
             self.report({'INFO'}, _("Symmetric renaming applied successfully"))
-
             return {'FINISHED'}
 
-        elif mode in {'EDIT_ARMATURE', 'POSE'}:
+        elif mode in {'EDIT_ARMATURE', 'POSE'}: # EDITモードまたはポーズモード（選択したボーンを対象に）
             selected = []
             if mode == 'EDIT_ARMATURE':
                 selected = [b for b in obj.data.edit_bones if b.select]
@@ -50,20 +58,24 @@ class BRT_OT_RenameGroups(bpy.types.Operator):
                 selected = [pb for pb in obj.pose.bones if pb.bone.select]
 
             if not selected:
-                self.report({'WARNING'}, _("No bones selected"))
+                self.report({'WARNING'}, _("No bones selected"))    # ボーン未選択（キャンセル）
                 return {'CANCELLED'}
 
-            renamed = rename_selected_bones()
+            # 処理ロジック
+            renamed, skipped = rename_selected_bones()
 
-            if renamed == 0:
-                self.report({'WARNING'}, _("No bone name with left/right identifier was found"))
+            if renamed == 0:    # リネーム対象が存在しない時
+                if skipped > 0:     # 付与済みだった時
+                    self.report({'INFO'}, _("All target names already had .R/.L suffixes; no changes made"))
+                else:
+                    self.report({'WARNING'}, _("No bone name with left/right identifier was found"))
                 return {'CANCELLED'}
 
+            # 完了報告
             self.report({'INFO'}, _("Symmetric renaming applied successfully"))
-
             return {'FINISHED'}
 
-        self.report({'WARNING'}, _("No armature is selected"))
+        self.report({'WARNING'}, _("No armature is selected"))  # アーマチュア未選択（キャンセル）
         return {'CANCELLED'}
 
 
@@ -78,17 +90,23 @@ class BRT_OT_RevertNames(bpy.types.Operator):
         obj = context.object
         mode = context.mode
 
-        if mode == 'OBJECT':
+        if mode == 'OBJECT':    # オブジェクトモード（全アーマチュアを対象に）
             if not obj or obj.type != 'ARMATURE':
                 self.report({'WARNING'}, _("No armature is selected"))
                 return {'CANCELLED'}
           
-            revert_renamed_names()
+            # 処理ロジック
+            reverted = revert_renamed_names()
 
+            if reverted == 0:    # リネーム対象が存在しない時
+                self.report({'WARNING'}, _("Undo target identifier not found"))
+                return {'CANCELLED'}
+
+            # 完了報告
             self.report({'INFO'}, _("Symmetric renaming reverted"))
             return {'FINISHED'}
 
-        elif mode in {'EDIT_ARMATURE', 'POSE'}:
+        elif mode in {'EDIT_ARMATURE', 'POSE'}:  # EDITモードまたはポーズモード（選択したボーンを対象に）
             selected = []
             if mode == 'EDIT_ARMATURE':
                 selected = [b for b in obj.data.edit_bones if b.select]
@@ -96,19 +114,21 @@ class BRT_OT_RevertNames(bpy.types.Operator):
                 selected = [pb for pb in obj.pose.bones if pb.bone.select]
 
             if not selected:
-                self.report({'WARNING'}, _("No bones selected"))
+                self.report({'WARNING'}, _("No bones selected"))    # ボーン未選択（キャンセル）
                 return {'CANCELLED'}
 
+            # 処理ロジック
             reverted = revert_selected_bone_names()
 
-            if reverted == 0:
+            if reverted == 0:    # リネーム対象が存在しない時
                 self.report({'WARNING'}, _("Undo target identifier not found"))
                 return {'CANCELLED'}
 
-            self.report({'INFO'}, _("Symmetric renaming reverted"))
+            # 完了報告
+            self.report({'INFO'}, _("Symmetric renaming reverted"))     
             return {'FINISHED'}
 
-        self.report({'WARNING'}, _("No armature is selected"))
+        self.report({'WARNING'}, _("No armature is selected"))      # アーマチュア未選択
         return {'CANCELLED'}
 
 
