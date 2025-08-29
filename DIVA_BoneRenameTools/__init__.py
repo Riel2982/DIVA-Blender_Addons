@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Bone Rename Tools",
     "author": "Riel",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (3, 0, 0),
     "location": "View3D > Sidebar > DIVA > Bone Rename Tools",
     "description": "Tools for renaming bones, assigning identifiers, and managing naming rules for armatures",
