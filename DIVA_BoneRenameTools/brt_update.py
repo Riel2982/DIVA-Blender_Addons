@@ -34,7 +34,7 @@ if False:
     CHECK_PRE_RELEASE = True
 
 # 不要ファイル実行制御フラグ（一括管理）
-ENABLE_OBSOLETE_FILE_REMOVAL = False
+ENABLE_OBSOLETE_FILE_REMOVAL = True
 
 
 # 設定ファイル関連の関数 -------------------------------------
@@ -443,10 +443,14 @@ def download_and_finalize(url, folder, context):
 
 # アドオン起動時・Blendファイル展開時・アドオン有効化時関連の関数 -------------------------------------
 
-# フラグに応じて不要ファイル削除を実行
 def remove_obsolete_files_on_startup():
     # 更新後に削除する不要ファイル一覧（相対パス）
     OBSOLETE_FILES = [
+        "rename_bones.py",
+        "rename_detect.py",
+        "rename_groups.py",
+        "rename_rules.py",
+        "rename_symmetry.py",
         # "brt_main.py",
         # "brt_sub.py",     # コメントアウトで一時的に除外も可能
         # "brt_import.py",
