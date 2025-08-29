@@ -404,12 +404,6 @@ def download_and_finalize(url, folder, context):
         if DEBUG_MODE:
             print(f"[MWR] ダウンロード完了: {save_path}")
 
-        # 少し待ってから通知フラグを下げる
-        time.sleep(1.5)
-        if False:
-            context.window_manager.mwr_new_release_available = False   
-            if DEBUG_MODE:
-                print("[MWR] 通知フラグを False に設定しました")
 
         # 候補リスト更新処理
         scene.mwr_update_candidates.clear()

@@ -65,15 +65,6 @@ class DIVA_PT_MeshWeightReflectorPanel(bpy.types.Panel):
             row_right.prop(props, "apply_modifiers", text="")
             row_right.label(text=_("Apply Modifiers"))
 
-        if False:   # 均等表示        
-            # 複製してミラー（チェックボタン）
-            row = box.row()
-            row.prop(props, "duplicate_and_mirror", text="")  # チェックボックス
-            row.label(text=_("Duplicate and Mirror"))  # ラベル
-
-            # モディファイア適用オプション（右側）
-            row.prop(props, "apply_modifiers", text="")
-            row.label(text=_("Apply Modifiers"))
 
         if not DEBUG_MODE:
             # 複製してミラー（チェックボタン）
@@ -182,13 +173,6 @@ class DIVA_OT_MeshWeightReflector(bpy.types.Operator):
                 self.report({'ERROR'}, _("Symmetrization failed"))
             return {'FINISHED'}
 
-        if False:
-            # ✅ 対称化モードチェック
-            if props.symmetrize_mode:
-                # 新オペレーターに切り替え実行
-                # bpy.ops.mwr.symmetrize_mesh_weights('INVOKE_DEFAULT')  # 対称化モードオペレーター
-                bpy.ops.mwr.symmetrize_mesh_weights('EXEC_DEFAULT')  # 対称化モードオペレーター
-                return {'FINISHED'}
 
         if DEBUG_MODE:
             # ミラー処理実行（対称化モードではないとき）

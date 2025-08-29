@@ -243,8 +243,8 @@ class BPRS_OT_ExecuteUpdate(bpy.types.Operator, bpy_extras.io_utils.ImportHelper
 
     # UIからの選択かダイアログかで分岐
     def invoke(self, context, event):
-        index = context.scene.fst_selected_candidate_index
-        candidates = context.scene.fst_update_candidates
+        index = context.scene.bprs_selected_candidate_index
+        candidates = context.scene.bprs_update_candidates
 
         if 0 <= index < len(candidates):
             # リスト選択があればダイアログを開かず直接実行

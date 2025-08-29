@@ -54,15 +54,6 @@ def draw_update_ui(layout, scene):
                 split.operator("mwr.download_latest_zip", text=("Download"))
                 row.separator()
 
-    if False:
-        wm = bpy.context.window_manager
-        if getattr(wm, "mwr_new_release_available", False): # 最新リリースがあるとき
-            release_info = get_latest_release_data()
-            version = release_info.get("version", "")
-            if version:
-                row = box.row()
-                # row.label(text=_("GitHub has a recent release. ") + version + ".", icon="INFO")   # バージョンの後にピリオドがついてしまう。
-                row.label(text=_("GitHub has a recent release. ") + version, icon="INFO")
 
     # ダウンロード先パスのラベル＋操作群をまとめて一行に並べる
     row = box.row()
@@ -215,8 +206,8 @@ class MWR_OT_ExecuteUpdate(bpy.types.Operator, bpy_extras.io_utils.ImportHelper)
 
     # UIからの選択かダイアログかで分岐
     def invoke(self, context, event):
-        index = context.scene.fst_selected_candidate_index
-        candidates = context.scene.fst_update_candidates
+        index = context.scene.mwr_selected_candidate_index
+        candidates = context.scene.mwr_update_candidates
 
         if 0 <= index < len(candidates):
             # リスト選択があればダイアログを開かず直接実行

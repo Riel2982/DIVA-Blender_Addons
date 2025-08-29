@@ -27,14 +27,6 @@ class BRT_AddonPreferences(bpy.types.AddonPreferences):
         prefs = self  # アドオンプリファレンス本体（表示と編集UI）
         scene = context.scene
         wm = context.window_manager
-
-        '''
-        # 初回描画時だけ、描画後に初期化処理を遅延実行（DLフォルダを更新）
-        from .brt_update import initialize_candidate_list_delayed
-        if not prefs.initialized:
-            prefs.initialized = True
-            bpy.app.timers.register(initialize_candidate_list_delayed)
-        '''
             
         # 更新用UI
         draw_update_ui(layout, scene)

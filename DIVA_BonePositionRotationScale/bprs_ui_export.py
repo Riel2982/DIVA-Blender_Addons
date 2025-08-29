@@ -52,27 +52,6 @@ def draw_export_ui(layout, context, scene):
         box.operator("bprs.export_bone_data", text="Export Bone Data", icon='EXPORT')
 
 
-if False:
-    # タイムスタンプを付与する関数
-    def get_timestamp():
-        return time.strftime("%Y%m%d_%H%M%S")
-
-    # ファイル名をチェックしてリネームする関数（上書きするかどうかをチェック）
-    def rename_existing_file(filepath, overwrite):
-        if os.path.exists(filepath):
-            if overwrite:
-                return None  # 上書きモードの場合、リネームせずそのまま使用
-            else:
-                file_dir, file_name = os.path.split(filepath)
-                file_base, file_ext = os.path.splitext(file_name)
-                new_name = f"{file_base}_{get_timestamp()}{file_ext}"
-                new_filepath = os.path.join(file_dir, new_name)
-                os.rename(filepath, new_filepath)
-                return new_filepath
-        return None
-
-
-
 # フォルダ選択オペレーター
 class BPRS_OT_SelectFolder(bpy.types.Operator):
     """フォルダ選択ダイアログを開く"""
@@ -162,29 +141,7 @@ class BPRS_OT_ExportBoneData(bpy.types.Operator):
                 self.report({'WARNING'}, _("No armature selected"))
                 return {'CANCELLED'}
 
-            '''
-            # **JSON変換処理**
-            if scene.bprs_export_format_json:
-                bone_data_json = [
-                    {
-                        "Signature": "OSG",
-                        "Name": parts[0].strip(),
-                        "ParentName": parts[1].split(":")[-1].strip(),
-                        "Position": parts[2].split(":")[-1].strip(),
-                        "Rotation": parts[3].split(":")[-1].strip(),
-                        "Scale": parts[4].split(":")[-1].strip()
-                    }
-                    for line in bone_data.split("\n\n")
-                    for parts in [line.split("\n")]
-                    if len(parts) >= 5
-                ]
 
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    json.dump(bone_data_json, f, indent=4)
-            else:
-                with open(filepath, 'w', encoding='utf-8') as f:
-                    f.write(bone_data)
-            '''
             # **JSON変換処理**
             if scene.bprs_export_format_json:
                 bone_data_json = convert_bone_data_to_json(bone_data)

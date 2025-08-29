@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Bone Position Rotation Scale",
     "author": "Saltlapse, Riel",
-    "version": (0, 2, 0),
+    "version": (0, 2, 1),
     "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA > Bone Position Rotation Scale",
     "description": "This addon converts bone data from Blender armatures into the DIVA format.",

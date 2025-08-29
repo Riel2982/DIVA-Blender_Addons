@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DIVA - Mesh Weight Reflector",
     "author": "Riel",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (3, 0, 0),
     "location": "3D View > Sidebar > DIVA > Mesh Weight Reflector",
     "description": "Automatically separates mirrored meshes and applies symmetrical weight copying to vertex groups.",
